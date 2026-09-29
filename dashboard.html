@@ -4,6 +4,29 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>T.U.L.O.N.G. Dispatch Dashboard</title>
+
+<!-- SEO -->
+<meta name="description" content="T.U.L.O.N.G. Dispatch Dashboard: real-time tactical unit locator and incident grid for faster last-mile emergency response.">
+<meta name="keywords" content="TULONG, dispatch dashboard, tactical unit locator, network grid, emergency response, Cebu, Philippines">
+<meta name="author" content="T.U.L.O.N.G.">
+<meta name="robots" content="noindex, nofollow">
+<meta name="theme-color" content="#02101D">
+<meta name="application-name" content="T.U.L.O.N.G.">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="T.U.L.O.N.G.">
+<meta property="og:title" content="T.U.L.O.N.G. Dispatch Dashboard">
+<meta property="og:description" content="Real-time data for faster, coordinated last-mile emergency response.">
+<meta property="og:image" content="tulonglogo.png">
+<meta property="og:locale" content="en_PH">
+<meta name="twitter:card" content="summary">
+<meta name="twitter:title" content="T.U.L.O.N.G. Dispatch Dashboard">
+<meta name="twitter:description" content="Real-time data for faster, coordinated last-mile emergency response.">
+<meta name="twitter:image" content="tulonglogo.png">
+
+<!-- Favicon -->
+<link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
+<link rel="apple-touch-icon" href="tulonglogo.png">
+
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
@@ -200,7 +223,9 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 window.firebaseSignOut = () => signOut(auth);
-onAuthStateChanged(auth, user => { if (!user) window.location.href = 'login.html'; });
+// Not signed in -> index page. Skipped while an intentional logout is in progress
+// so the logout button can send the user to index.html instead.
+onAuthStateChanged(auth, user => { if (!user && !window.isLoggingOut) window.location.href = 'index.html'; });
 
 // Expose Firestore primitives to the classic (non-module) script below,
 // so the existing incident functions can read/write shared data.
@@ -332,8 +357,8 @@ L.Control.geocoder({
     } else alert("Search result is outside the T.U.L.O.N.G. coverage area.");
 }).addTo(map);
 
-const fireIcon      = L.icon({ iconUrl:"fireStation1.png",      iconSize:[30,30] });
-const volunteerIcon = L.icon({ iconUrl:"volunteerStation1.png",  iconSize:[30,30] });
+const fireIcon      = L.icon({ iconUrl:"fireStation1.png",      iconSize:[30,30], className:"st-icon st-bfp" });
+const volunteerIcon = L.icon({ iconUrl:"volunteerStation1.png",  iconSize:[30,30], className:"st-icon st-vol" });
 
 // ============================================================
 // INCIDENT SYSTEM — backed by Firestore 'incidents' collection.
@@ -726,8 +751,8 @@ const sc = document.getElementById('station-container');
 document.getElementById('station-count').innerText = x0.length;
 x0.forEach(s => {
     L.marker([s.lat,s.lng],{icon:s.type==="bfp"?fireIcon:volunteerIcon}).addTo(map)
-     .bindPopup(`<b>${s.name}</b><br>📞 ${s.number||"N/A"}`);
-    const d=document.createElement('div'); d.className='station-item';
+     .bindPopup(`<b>${s.name}</b><br>📞 ${s.number||"N/A"}`, {className: s.type==="bfp" ? "st-bfp-popup" : "st-vol-popup"});
+    const d=document.createElement('div'); d.className='station-item '+(s.type==='bfp'?'st-bfp-item':'st-vol-item');
     d.innerHTML=`<b>${s.type.toUpperCase()}</b>: ${s.name}`;
     d.onclick=()=>map.flyTo([s.lat,s.lng],16); sc.appendChild(d);
 });
@@ -900,11 +925,19 @@ async function pollAll() {
 }
 
 // ============================================================
-// LOGOUT
+// LOGOUT — signs out, then goes to index.html
+// (window.isLoggingOut stops the auth listener from redirecting to login.html first)
 // ============================================================
 document.getElementById('logout-trigger').addEventListener('click', function() {
     if (confirm("CONFIRM SYSTEM LOGOUT?\nPLEASE DOWNLOAD EOD REPORT FIRST")) {
-        window.firebaseSignOut&&window.firebaseSignOut().then(()=>{ window.location.href='login.html'; }).catch(e=>console.error(e));
+        window.isLoggingOut = true;
+        if (window.firebaseSignOut) {
+            window.firebaseSignOut()
+                .then(()=>{ window.location.href='index.html'; })
+                .catch(e=>{ window.isLoggingOut=false; console.error(e); });
+        } else {
+            window.location.href='index.html';
+        }
     }
 });
 
@@ -1067,6 +1100,8 @@ setTimeout(pollTerminalRx, 1500);
     padding: 32px 36px;
     width: 460px;
     max-width: 95vw;
+    max-height: 95vh;
+    overflow-y: auto;
     box-shadow: 0 0 60px rgba(255,90,54,0.25), 0 24px 48px rgba(0,0,0,0.6);
     position: relative;
     animation: modalIn 0.25s ease;
@@ -1161,6 +1196,81 @@ setTimeout(pollTerminalRx, 1500);
 .reg-pw-toggle:hover { color: #ff5a36; }
 </style>
 
+<!-- ══════════════════════════════════════════════════════
+     STYLE OVERRIDES — fonts, login-page palette, gradient buttons, legal bar.
+     Kept AFTER all other <style> blocks so it wins over them.
+     ══════════════════════════════════════════════════════ -->
+<style>
+:root{--dark:#02101D;--blue:#3d6fa8;--acc:#ff5a36;--acc-deep:#c73e1d;--grey:#8b96a3;--grey-light:#c7ced6;--grey-dark:#3a4451;}
+
+/* Fonts: Open Sans for body text and every form control, Georgia for headline/label text */
+body,.leaflet-container,.leaflet-popup-content{font-family:'Open Sans',Tahoma,Geneva,Verdana,sans-serif;}
+button,input,select,textarea{font-family:inherit;}
+.brand-badge,.stat-number,.report-btn,.excel-btn,.wipe-btn,.register-btn,.logout-btn,.section-lbl,.uc-id,
+.terminal-header-left,.reg-modal-title,.reg-submit,.reg-section-lbl,.t-send-btn,h2{font-family:Georgia,serif;}
+/* Terminal + credential output stay monospace on purpose */
+.terminal-log,.t-input,.t-target-select,.reg-token-display{font-family:'Courier New',monospace;}
+
+/* Palette taken from the login page */
+body{background:var(--dark);}
+.header-container{background:rgba(2,16,29,.92);border-bottom:1px solid rgba(61,111,168,.5);}
+.sidebar{background:var(--dark);border-right:1px solid rgba(61,111,168,.35);}
+.stat-box{background:rgba(2,16,29,.85);border:1px solid rgba(61,111,168,.35);}
+.stat-label,.uc-sub{color:var(--grey);}
+.section-lbl{border-top:1px solid rgba(61,111,168,.35);color:var(--grey);}
+.unit-card{background:rgba(2,16,29,.85);border-color:rgba(61,111,168,.35);}
+.station-item{border-bottom:1px solid rgba(61,111,168,.3);}
+.station-item:hover{background:rgba(61,111,168,.25);}
+.map-counter-overlay,.blynk-bar{background:rgba(2,16,29,.92);}
+.blynk-bar{border-color:var(--blue);}
+.terminal-panel{background:var(--dark);}
+.terminal-header,.terminal-input-row{background:#04182b;border-color:rgba(61,111,168,.4);}
+.reg-modal{background:var(--dark);border-color:var(--blue);}
+.reg-input,.reg-select,.t-input,.t-target-select{background:rgba(2,16,29,.85);border-color:var(--grey-dark);}
+.reg-token-display{background:rgba(2,16,29,.85);}
+
+/* Gradient buttons — one colour per function */
+button{transition:filter .2s, box-shadow .2s, transform .1s;}
+/* Report emergency = red-orange */
+.report-btn{background:linear-gradient(45deg,#ff5a36,#c73e1d);}
+.report-btn:hover{background:linear-gradient(45deg,#ff7a5a,#d94a26);box-shadow:0 0 15px rgba(255,90,54,.4);}
+.report-btn.report-active{background:linear-gradient(45deg,#ffcc00,#e0a800);color:#000;}
+/* Export EOD = green */
+.excel-btn{background:linear-gradient(45deg,#2e9e6b,#217346);color:#fff;border:none;}
+.excel-btn:hover{background:linear-gradient(45deg,#3bb87e,#2a8a58);color:#fff;box-shadow:0 0 15px rgba(46,158,107,.4);}
+/* Wipe map = dark red (destructive) */
+.wipe-btn{background:linear-gradient(45deg,#b3261e,#5c0f0f);}
+.wipe-btn:hover{background:linear-gradient(45deg,#d63a30,#7a1717);box-shadow:0 0 15px rgba(179,38,30,.45);}
+/* Register vehicle = blue */
+.register-btn{background:linear-gradient(45deg,#3d6fa8,#0a1f3d);color:#fff;border:none;}
+.register-btn:hover{background:linear-gradient(45deg,#5288c4,#12305c);color:#fff;box-shadow:0 0 15px rgba(61,111,168,.5);}
+/* Logout = grey */
+.logout-btn{background:linear-gradient(45deg,#5b6673,#3a4451);color:#fff;border:1px solid var(--grey);}
+.logout-btn:hover{background:linear-gradient(45deg,#6f7b89,#4a5568);color:#fff;box-shadow:0 0 15px rgba(139,150,163,.35);}
+/* Terminal send = blue */
+.t-send-btn{background:linear-gradient(45deg,#3d6fa8,#0a1f3d);color:#fff;border:none;}
+.t-send-btn:hover{background:linear-gradient(45deg,#5288c4,#12305c);color:#fff;}
+/* Modal submit = blue */
+.reg-submit{background:linear-gradient(45deg,#3d6fa8,#0a1f3d);box-shadow:0 4px 20px rgba(61,111,168,.35);}
+.reg-submit:hover{box-shadow:0 6px 28px rgba(61,111,168,.55);}
+/* Popup buttons (these use inline styles in the JS, hence !important) */
+button[onclick^="placeIncident('fire'"]{background:linear-gradient(45deg,#ff5a36,#c73e1d)!important;border-radius:4px;}
+button[onclick^="placeIncident('med'"]{background:linear-gradient(45deg,#4da3ff,#1f5fa8)!important;border-radius:4px;}
+button[onclick^="resolveIncident"]{background:linear-gradient(45deg,#2e9e6b,#217346)!important;border-radius:4px;}
+button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f0f)!important;border-radius:4px;}
+
+/* Station borders: BFP = red-orange, Volunteer = blue */
+.st-icon{border-radius:50%;background:#fff;padding:1px;box-sizing:border-box;}
+.st-bfp{border:3px solid #ff5a36;box-shadow:0 0 6px rgba(255,90,54,.7);}
+.st-vol{border:3px solid #3d6fa8;box-shadow:0 0 6px rgba(61,111,168,.8);}
+.station-item{border-left:4px solid transparent;border-radius:3px;}
+.st-bfp-item{border-left-color:#ff5a36;}
+.st-vol-item{border-left-color:#3d6fa8;}
+.st-bfp-popup .leaflet-popup-content-wrapper{border:2px solid #ff5a36;}
+.st-vol-popup .leaflet-popup-content-wrapper{border:2px solid #3d6fa8;}
+
+</style>
+
 <!-- Modal HTML -->
 <div class="reg-overlay" id="reg-overlay" onclick="if(event.target===this)closeRegisterModal()">
     <div class="reg-modal">
@@ -1236,8 +1346,8 @@ setTimeout(pollTerminalRx, 1500);
 
 <script type="module">
 // Firebase imports for registration
-import { initializeApp, getApps } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-import { getAuth, createUserWithEmailAndPassword, updateProfile } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+import { getAuth, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const regFirebaseConfig = {
@@ -1250,10 +1360,12 @@ const regFirebaseConfig = {
     measurementId:     "G-725VM27SEM"
 };
 
-// Reuse existing app if already initialized
-const regApp  = getApps().length ? getApps()[0] : initializeApp(regFirebaseConfig);
-const regAuth = getAuth(regApp);
-const regDb   = getFirestore(regApp);
+// FIX: create the operator's login on a SEPARATE (secondary) Firebase app.
+// Previously the main app was reused, so creating the account signed the admin out
+// and the Firestore writes then ran as the new operator (which caused the error).
+const regApp  = getApps().find(a => a.name === 'tulong-register') || initializeApp(regFirebaseConfig, 'tulong-register');
+const regAuth = getAuth(regApp);         // only used to create the operator account
+const regDb   = getFirestore(getApp());  // main app => Firestore writes happen as the signed-in admin
 
 window.openRegisterModal  = () => { document.getElementById('reg-overlay').classList.add('active'); clearRegForm(); };
 window.closeRegisterModal = () => document.getElementById('reg-overlay').classList.remove('active');
@@ -1269,7 +1381,10 @@ function clearRegForm() {
     const st=document.getElementById('reg-status');
     st.className='reg-status'; st.textContent='';
     document.getElementById('reg-token-display').style.display='none';
-    document.getElementById('reg-submit-btn').disabled=false;
+    const b = document.getElementById('reg-submit-btn');
+    b.disabled = false;
+    b.innerHTML = '&#43; REGISTER UNIT &amp; CREATE ACCOUNT';  // reset after a previous success
+    b.style.background = '';
 }
 
 function regStatus(type, msg) {
@@ -1298,11 +1413,12 @@ window.submitRegistration = async function() {
     regStatus('', '');
 
     try {
-        // Create Firebase Auth account
+        // Create Firebase Auth account (on the secondary app, admin session is untouched)
         const cred = await createUserWithEmailAndPassword(regAuth, email, password);
         await updateProfile(cred.user, { displayName: name });
+        await signOut(regAuth); // drop the secondary session; admin stays logged in
 
-        // Save vehicle + user metadata in Firestore
+        // Save vehicle + user metadata in Firestore (as the admin)
         await setDoc(doc(regDb, 'vehicles', unitId), {
             unitId, type: vtype, plate, station,
             blynkToken: token || '',
@@ -1335,7 +1451,7 @@ window.submitRegistration = async function() {
         `;
 
         btn.textContent = '✓ REGISTERED';
-        btn.style.background = 'linear-gradient(135deg,#0f2d1a,#27ae60)';
+        btn.style.background = 'linear-gradient(45deg,#2e9e6b,#217346)';
 
     } catch (err) {
         btn.disabled = false;
@@ -1343,14 +1459,12 @@ window.submitRegistration = async function() {
             'auth/email-already-in-use': '⚠ This email is already registered.',
             'auth/invalid-email':        '⚠ Invalid email address.',
             'auth/weak-password':        '⚠ Password is too weak.',
+            'permission-denied':         '⚠ Account created, but Firestore rules block the admin from writing to "vehicles"/"users".',
         };
         regStatus('err', msgs[err.code] || `⚠ Error: ${err.message}`);
     }
 };
 </script>
-<footer style="text-align:center;padding:10px;font-size:10px;color:#4a5568;letter-spacing:1px;background:#011a33;border-top:1px solid #043a6d;">
-    <a href="terms.html" style="color:#8b949e;text-decoration:none;margin:0 12px;text-transform:uppercase;">Terms of Service</a>
-    <a href="privacy.html" style="color:#8b949e;text-decoration:none;margin:0 12px;text-transform:uppercase;">Privacy Policy</a>
-</footer>
+
 </body>
 </html>
