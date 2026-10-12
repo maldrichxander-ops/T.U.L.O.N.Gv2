@@ -401,6 +401,62 @@ button, input, select, textarea { font-family: inherit; }
 @keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 .toast-title { font-family: Georgia, serif; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
 .toast-body  { font-size: 10px; color: var(--muted); }
+
+/* ── MOBILE GPS SHARING (phones only) ── */
+.gps-modal-backdrop {
+    position: fixed; inset: 0; z-index: 10000; display: none;
+    align-items: flex-end; justify-content: center;
+    background: rgba(0,0,0,0.6); padding: 16px;
+}
+.gps-modal-backdrop.open { display: flex; }
+.gps-modal {
+    width: 100%; max-width: 420px; background: #02101D;
+    border: 1px solid var(--border); border-top: 3px solid var(--accent);
+    border-radius: 12px; padding: 20px; box-shadow: 0 -8px 32px rgba(0,0,0,0.6);
+    animation: gpsUp 0.3s ease;
+}
+@keyframes gpsUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
+.gps-modal h3 { font-family: Georgia, serif; font-size: 17px; color: #fff; margin-bottom: 8px; }
+.gps-modal p  { font-size: 13px; line-height: 1.55; color: var(--text); margin-bottom: 10px; }
+.gps-modal ul { margin: 0 0 14px 18px; font-size: 12px; line-height: 1.6; color: var(--muted); }
+.gps-modal .gps-error {
+    display: none; font-size: 12px; line-height: 1.5; color: #ffb199;
+    background: rgba(255,77,77,0.1); border: 1px solid rgba(255,77,77,0.35);
+    border-radius: 6px; padding: 10px 12px; margin-bottom: 14px;
+}
+.gps-modal .gps-error.show { display: block; }
+.gps-actions { display: flex; gap: 10px; }
+.gps-btn {
+    flex: 1; min-height: 46px; border-radius: 8px; border: 1px solid var(--grey);
+    font-size: 13px; font-weight: 700; letter-spacing: 0.5px; cursor: pointer; color: #fff;
+    background: linear-gradient(45deg, #5b6673, #3a4451);
+}
+.gps-btn.primary { border: none; background: linear-gradient(45deg, #ff5a36, #c73e1d); }
+.gps-btn:active { transform: scale(0.98); }
+.gps-btn[disabled] { opacity: 0.6; cursor: wait; }
+
+/* Status bar at the bottom of the map while on a phone */
+.gps-bar {
+    position: fixed; left: 12px; right: 12px; bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+    z-index: 9000; display: none; align-items: center; gap: 10px;
+    background: rgba(2,16,29,0.95); border: 1px solid var(--border); border-radius: 10px;
+    padding: 10px 10px 10px 14px; box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+}
+.gps-bar.show { display: flex; }
+.gps-bar-dot { width: 10px; height: 10px; border-radius: 50%; background: #444; flex: none; }
+.gps-bar.live .gps-bar-dot { background: var(--green); animation: pulse 2s infinite; }
+.gps-bar.warn .gps-bar-dot { background: var(--amber); }
+.gps-bar.err  .gps-bar-dot { background: var(--red); }
+.gps-bar-text { flex: 1; min-width: 0; line-height: 1.3; }
+.gps-bar-title { font-size: 12px; font-weight: 700; color: #fff; }
+.gps-bar-sub   { font-size: 11px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.gps-bar-btn {
+    flex: none; min-height: 40px; padding: 0 14px; border-radius: 6px; border: none; cursor: pointer;
+    font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff;
+    background: linear-gradient(45deg, #ff5a36, #c73e1d);
+}
+.gps-bar.live .gps-bar-btn { background: linear-gradient(45deg, #5b6673, #3a4451); }
+body.gps-mobile .blynk-status { bottom: 84px; }
 </style>
 </head>
 <body>
@@ -410,7 +466,7 @@ button, input, select, textarea { font-family: inherit; }
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
 import {
-    getFirestore, doc, getDoc, collection, updateDoc, onSnapshot
+    getFirestore, doc, getDoc, collection, updateDoc, onSnapshot, setDoc, serverTimestamp
 } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const app  = initializeApp({
@@ -433,6 +489,10 @@ window.fsIncidents  = collection(db, 'incidents');
 window.fsDoc        = (id) => doc(db, 'incidents', id);
 window.fsUpdateDoc  = updateDoc;
 window.fsOnSnapshot = onSnapshot;
+// Mobile GPS sharing: one document per signed-in user in "liveLocations"
+window.fsLiveDoc         = (uid) => doc(db, 'liveLocations', uid);
+window.fsSetDoc          = setDoc;
+window.fsServerTimestamp = serverTimestamp;
 window.dispatchEvent(new Event('firestoreReady'));
 
 onAuthStateChanged(auth, async user => {
@@ -452,7 +512,7 @@ onAuthStateChanged(auth, async user => {
         }
         window.dispatchEvent(new Event('userReady'));
     } catch(e) {
-        window.currentUser = { name: user.displayName || user.email, email: user.email };
+        window.currentUser = { uid: user.uid, name: user.displayName || user.email, email: user.email };
         window.dispatchEvent(new Event('userReady'));
     }
 });
@@ -599,6 +659,34 @@ onAuthStateChanged(auth, async user => {
 
 <!-- TOAST CONTAINER -->
 <div class="toast-container" id="toast-container"></div>
+
+<!-- MOBILE GPS: consent prompt (shown before the browser's own location prompt) -->
+<div class="gps-modal-backdrop" id="gps-modal" role="dialog" aria-modal="true" aria-labelledby="gps-modal-title">
+    <div class="gps-modal">
+        <h3 id="gps-modal-title">📍 Share your live location?</h3>
+        <p>T.U.L.O.N.G. can use this phone's GPS so the admin dashboard can see where you are on the map during response.</p>
+        <ul>
+            <li>Only shared while this page is open and sharing is on.</li>
+            <li>Your phone will ask for location permission next.</li>
+            <li>You can stop sharing at any time from the bar at the bottom.</li>
+        </ul>
+        <div class="gps-error" id="gps-error" role="alert"></div>
+        <div class="gps-actions">
+            <button class="gps-btn" id="gps-not-now" type="button">Not now</button>
+            <button class="gps-btn primary" id="gps-allow" type="button">Allow location</button>
+        </div>
+    </div>
+</div>
+
+<!-- MOBILE GPS: status bar -->
+<div class="gps-bar" id="gps-bar" aria-live="polite">
+    <div class="gps-bar-dot"></div>
+    <div class="gps-bar-text">
+        <div class="gps-bar-title" id="gps-bar-title">Location sharing is off</div>
+        <div class="gps-bar-sub" id="gps-bar-sub">The admin can't see you on the map</div>
+    </div>
+    <button class="gps-bar-btn" id="gps-bar-btn" type="button">Turn on</button>
+</div>
 
 <script>
 // ══════════════════════════════════════════════════════
@@ -1081,7 +1169,10 @@ window.confirmLogout = function() {
     if (confirm('Confirm logout from T.U.L.O.N.G. Operator Dashboard?')) {
         window.isLoggingOut = true;
         if (window._fbSignOut) {
-            window._fbSignOut()
+            // mark this phone as no longer sharing before the session ends
+            Promise.resolve(window.stopGpsSharing && window.stopGpsSharing())
+                .catch(() => {})
+                .then(() => window._fbSignOut())
                 .then(() => { window.location.href = 'index.html'; })
                 .catch(e => { window.isLoggingOut = false; console.error(e); });
         } else {
@@ -1099,6 +1190,178 @@ window.togglePanel = function() {
     document.getElementById('panel-toggle').innerHTML = hidden ? '&#9664;' : '&#9654;';
     setTimeout(() => map.invalidateSize(), 300);
 };
+
+// ══════════════════════════════════════════════════════
+// MOBILE GPS SHARING
+// Phones only. Flow: our own consent prompt -> browser permission prompt ->
+// watchPosition -> throttled writes to Firestore "liveLocations/{uid}",
+// which the admin dashboard listens to and shows on its map.
+// ══════════════════════════════════════════════════════
+const gps = (function () {
+    const IS_MOBILE = /Android|iPhone|iPad|iPod|Mobile|Opera Mini|IEMobile/i.test(navigator.userAgent)
+        || (navigator.maxTouchPoints > 1 && /Macintosh/.test(navigator.userAgent)); // iPadOS
+    const PREF_KEY      = 'tulong-gps-sharing';   // remembers that this user turned sharing on
+    const MIN_MOVE_M    = 10;     // send when moved at least this far...
+    const MIN_GAP_MS    = 4000;   // ...but not more often than this
+    const HEARTBEAT_MS  = 30000;  // re-send even when standing still, so the admin sees it's still live
+
+    const modal   = document.getElementById('gps-modal');
+    const errBox  = document.getElementById('gps-error');
+    const allowBt = document.getElementById('gps-allow');
+    const bar     = document.getElementById('gps-bar');
+    const barT    = document.getElementById('gps-bar-title');
+    const barS    = document.getElementById('gps-bar-sub');
+    const barBtn  = document.getElementById('gps-bar-btn');
+
+    let watchId = null, heartbeat = null, lastPos = null, lastSent = { t: 0, lat: null, lng: null };
+    let meMarker = null, meCircle = null, firstFix = true;
+    let attempt = 0;   // bumps on every start/stop so a late reply from a cancelled request is ignored
+
+    function pref(v) {
+        try { if (v === undefined) return localStorage.getItem(PREF_KEY) === 'on'; localStorage.setItem(PREF_KEY, v ? 'on' : 'off'); }
+        catch (e) { return false; }
+    }
+    function distM(a1, o1, a2, o2) {
+        const R = 6371000, r = Math.PI / 180;
+        const dA = (a2 - a1) * r, dO = (o2 - o1) * r;
+        const h = Math.sin(dA / 2) ** 2 + Math.cos(a1 * r) * Math.cos(a2 * r) * Math.sin(dO / 2) ** 2;
+        return 2 * R * Math.asin(Math.sqrt(h));
+    }
+    function setBar(state, title, sub, btnText) {
+        bar.className = 'gps-bar show ' + state;
+        barT.textContent = title; barS.textContent = sub; barBtn.textContent = btnText;
+    }
+    function openModal(errMsg) {
+        errBox.textContent = errMsg || '';
+        errBox.classList.toggle('show', !!errMsg);
+        allowBt.disabled = false;
+        allowBt.textContent = errMsg ? 'Try again' : 'Allow location';
+        modal.classList.add('open');
+        allowBt.focus();
+    }
+    function closeModal() { modal.classList.remove('open'); }
+
+    function errorText(err) {
+        if (!window.isSecureContext) return 'Location only works on a secure (https://) link. Open the dashboard from its https address.';
+        if (!('geolocation' in navigator)) return "This browser doesn't support location. Try Chrome or Safari.";
+        switch (err && err.code) {
+            case 1: return "Location permission was blocked. Open your browser's site settings for this page, set Location to Allow, then tap Try again.";
+            case 2: return "Your phone couldn't get a GPS fix. Turn on Location / GPS in your phone settings and move near a window or outdoors.";
+            case 3: return 'Getting your location took too long. Check that GPS is on and tap Try again.';
+            default: return "Couldn't start location sharing. Please try again.";
+        }
+    }
+
+    async function send(pos, force) {
+        const u = window.currentUser;
+        if (!u || !u.uid || !window.fsSetDoc) return;
+        const { latitude: lat, longitude: lng, accuracy, heading, speed } = pos.coords;
+        const now = Date.now();
+        const moved = lastSent.lat == null ? Infinity : distM(lastSent.lat, lastSent.lng, lat, lng);
+        if (!force && !((moved >= MIN_MOVE_M && now - lastSent.t >= MIN_GAP_MS) || now - lastSent.t >= HEARTBEAT_MS)) return;
+        lastSent = { t: now, lat, lng };
+        try {
+            await window.fsSetDoc(window.fsLiveDoc(u.uid), {
+                uid: u.uid,
+                name: u.name || u.email || 'Operator',
+                unitId: u.unitId || null,
+                vehicleType: u.vehicleType || null,
+                lat, lng,
+                accuracy: Math.round(accuracy || 0),
+                heading: Number.isFinite(heading) ? heading : null,
+                speed: Number.isFinite(speed) ? speed : null,
+                active: true,
+                source: 'mobile',
+                clientTime: now,
+                updatedAt: window.fsServerTimestamp()
+            }, { merge: true });
+            setBar('live', 'Sharing live location', `±${Math.round(accuracy)} m · updated ${new Date().toLocaleTimeString('en-PH', { hour12: false })}`, 'Stop');
+        } catch (e) {
+            console.error('GPS upload failed:', e);
+            setBar('err', "Location isn't reaching the admin",
+                e.code === 'permission-denied' ? 'Ask your admin to allow "liveLocations" in Firestore rules' : 'Check your internet connection',
+                'Stop');
+        }
+    }
+
+    function showMe(pos) {
+        const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        if (!meMarker) {
+            meCircle = L.circle([lat, lng], { radius: accuracy, color: '#4da3ff', weight: 1, fillColor: '#4da3ff', fillOpacity: 0.12 }).addTo(map);
+            meMarker = L.circleMarker([lat, lng], { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 })
+                .addTo(map).bindPopup('<b style="color:#fff;">You</b><br><small>Live location from this phone</small>');
+        } else {
+            meMarker.setLatLng([lat, lng]); meCircle.setLatLng([lat, lng]); meCircle.setRadius(accuracy);
+        }
+        const gpsEl = document.getElementById('mv-gps');
+        if (gpsEl) gpsEl.textContent = `${lat.toFixed(5)}, ${lng.toFixed(5)} (phone)`;
+        if (firstFix) { firstFix = false; map.flyTo([lat, lng], 16); }
+    }
+
+    function onPos(pos) { lastPos = pos; showMe(pos); send(pos, false); }
+    function onErr(err) {
+        if (err.code === 3 && lastPos) return; // a slow update while already sharing is fine; keep watching
+        stop(false);
+        setBar('err', 'Location sharing stopped', err.code === 1 ? 'Permission blocked in browser settings' : 'No GPS signal', 'Turn on');
+        openModal(errorText(err));
+    }
+
+    function start() {
+        if (!window.isSecureContext || !('geolocation' in navigator)) { openModal(errorText()); return; }
+        const mine = ++attempt;
+        allowBt.disabled = true; allowBt.textContent = 'Waiting for your phone…';
+        setBar('warn', 'Getting your location…', 'Allow location when your phone asks', 'Cancel');
+        // This call is what makes the browser show its own "Allow location?" prompt
+        navigator.geolocation.getCurrentPosition(pos => {
+            if (mine !== attempt) return;   // user cancelled while we were waiting
+            closeModal(); pref(true); firstFix = true;
+            onPos(pos);   // first fix is always sent (lastSent was reset)
+            if (watchId === null) watchId = navigator.geolocation.watchPosition(onPos, onErr, { enableHighAccuracy: true, maximumAge: 5000, timeout: 20000 });
+            clearInterval(heartbeat);
+            heartbeat = setInterval(() => { if (lastPos) send(lastPos, false); }, HEARTBEAT_MS);
+            showToast('info', 'Location sharing on', 'The admin can now see you on the map');
+        }, err => { if (mine === attempt) onErr(err); }, { enableHighAccuracy: true, maximumAge: 0, timeout: 20000 });
+    }
+
+    async function stop(userChose) {
+        attempt++;
+        allowBt.disabled = false;
+        const wasSharing = watchId !== null;
+        if (watchId !== null) { navigator.geolocation.clearWatch(watchId); watchId = null; }
+        clearInterval(heartbeat); heartbeat = null; lastPos = null; lastSent = { t: 0, lat: null, lng: null };
+        if (meMarker) { map.removeLayer(meMarker); map.removeLayer(meCircle); meMarker = meCircle = null; }
+        if (userChose) pref(false);
+        setBar('', 'Location sharing is off', "The admin can't see you on the map", 'Turn on');
+        const u = window.currentUser;
+        if (wasSharing && u && u.uid && window.fsSetDoc) {
+            try { await window.fsSetDoc(window.fsLiveDoc(u.uid), { active: false, clientTime: Date.now(), updatedAt: window.fsServerTimestamp() }, { merge: true }); }
+            catch (e) { console.error('GPS stop update failed:', e); }
+        }
+    }
+
+    function init() {
+        if (!IS_MOBILE) return;
+        document.body.classList.add('gps-mobile');
+        setBar('', 'Location sharing is off', "The admin can't see you on the map", 'Turn on');
+        barBtn.addEventListener('click', () => { (watchId !== null || allowBt.disabled) ? stop(true) : openModal(); });
+        allowBt.addEventListener('click', start);
+        document.getElementById('gps-not-now').addEventListener('click', () => { closeModal(); stop(false); });
+        modal.addEventListener('click', e => { if (e.target === modal) closeModal(); });
+
+        // If they turned sharing on before AND the browser still has permission, resume quietly;
+        // otherwise always ask with our own prompt first.
+        const ask = () => openModal();
+        if (pref() && navigator.permissions && navigator.permissions.query) {
+            navigator.permissions.query({ name: 'geolocation' })
+                .then(p => (p.state === 'granted' ? start() : ask()))
+                .catch(ask);
+        } else ask();
+    }
+
+    return { init, stop };
+})();
+window.stopGpsSharing = () => gps.stop(false);
+window.addEventListener('userReady', () => gps.init(), { once: true });
 
 // ══════════════════════════════════════════════════════
 // START
