@@ -364,6 +364,32 @@
             .login-card { animation: none; }
         }
     </style>
+<style>
+/* ═══ 800x480 view only — desktop/laptop/phone layouts are unaffected ═══ */
+@media (max-width:900px) and (max-height:600px){
+  body{padding:10px 14px;}
+  .login-card{grid-template-columns:1fr 1fr;max-width:760px;border-radius:10px;}
+  .brand-panel{padding:16px 22px;border-right:1px solid rgba(61,111,168,.35);border-bottom:none;}
+  .brand-panel::before{width:4px;height:auto;bottom:0;}
+  .form-panel{padding:16px 22px;order:0;}
+  .logo-area img{height:52px;margin-bottom:6px;}
+  .brand-name{font-size:22px;letter-spacing:4px;margin-bottom:3px;}
+  .subtitle{font-size:9px;letter-spacing:1.5px;}
+  .about-section{margin-top:12px;}
+  .about-text{font-size:11px;line-height:1.5;}
+  .tactical-footer{margin-top:12px;}
+  .back-btn{padding:6px 12px;font-size:11px;}
+  .legal-links{margin-top:10px;font-size:9px;}
+  .form-title{font-size:16px;margin-bottom:3px;}
+  .form-sub{font-size:11px;margin-bottom:12px;}
+  .input-group{margin-bottom:10px;}
+  label{font-size:10px;margin-bottom:4px;}
+  input{padding:8px 10px;font-size:13px;}
+  .login-btn{padding:10px;font-size:13px;margin-top:4px;}
+  .route-status{margin-top:8px;padding:6px 10px;font-size:11px;}
+  .system-footer{margin-top:8px;font-size:9px;letter-spacing:2px;}
+}
+</style>
 </head>
 <body>
 
