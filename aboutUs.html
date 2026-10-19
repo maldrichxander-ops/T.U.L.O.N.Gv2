@@ -187,6 +187,31 @@
             .unit { offset-distance: 100%; }
         }
     </style>
+<style>
+/* ═══ 800x480 view only — desktop/laptop/phone layouts are unaffected ═══ */
+@media (max-width:900px) and (max-height:600px){
+  .page{padding:0 20px;}
+  .topbar{padding:10px 0;}
+  .brand img{height:34px;}
+  .brand span{font-size:18px;letter-spacing:3px;}
+  .back-btn{padding:7px 14px;font-size:14px;}
+  .hero{grid-template-columns:1.05fr 1fr;gap:24px;padding:26px 0 24px;}
+  h1{font-size:60px;margin:12px 0 10px;letter-spacing:2px;}
+  .badge{font-size:10px;}
+  .hero-sub{font-size:16px;letter-spacing:2px;}
+  .route-panel{padding:12px 12px 8px;}
+  .route-caption{font-size:10px;}
+  .story{grid-template-columns:1.2fr 1fr;gap:24px;padding:26px 0;}
+  .lead{font-size:24px;}
+  .story-side p{font-size:12px;line-height:1.6;margin-bottom:12px;padding-left:12px;}
+  .team-wrap{padding:10px 0 30px;}
+  h2{font-size:28px;margin-bottom:14px;}
+  .team-grid{display:flex;grid-template-columns:none;height:210px;gap:8px;}
+  .operator-card{aspect-ratio:auto;}
+  .operator-card:hover,.operator-card:focus-visible{flex:3.2;}
+  .footer{padding:14px 0 18px;font-size:9px;letter-spacing:2px;}
+}
+</style>
 </head>
 <body>
 
