@@ -507,7 +507,7 @@ loginForm.addEventListener('submit', async (e) => {
 
         // ── Step 2: Route by email — only one admin account ──
         // ONLY this exact email is routed to the admin dashboard.
-        // Every other account, no exceptions, goes to user-dashboard.
+        // Every other account, no exceptions, goes to operator-dashboard.
         // NOTE: update this to match whatever admin email you create
         // in Firebase Console → Authentication → Users.
         const ADMIN_EMAIL = 'admin@tulong.com';
@@ -516,14 +516,14 @@ loginForm.addEventListener('submit', async (e) => {
             btn.innerText = "ACCESS GRANTED — ADMIN";
             btn.style.background = "linear-gradient(45deg, #ff5a36, #c73e1d)";
             setStatus('admin', '🔴 ADMIN ACCESS — Routing to Command Dashboard...');
-            setTimeout(() => { window.location.href = 'dashboard.html'; }, 1000);
+            setTimeout(() => { window.location.href = 'admin-dashboard'; }, 1000);
 
         } else {
             // Every registered operator lands here — no exceptions
             btn.innerText = "ACCESS GRANTED — OPERATOR";
             btn.style.background = "linear-gradient(45deg, #3d6fa8, #0a1f3d)";
             setStatus('operator', '🔵 OPERATOR ACCESS — Routing to Unit Dashboard...');
-            setTimeout(() => { window.location.href = 'user-dashboard.html'; }, 1000);
+            setTimeout(() => { window.location.href = 'operator-dashboard'; }, 1000);
         }
 
     } catch (error) {
