@@ -282,7 +282,7 @@ window.dispatchEvent(new Event('firestoreReady'));
          <button class="register-btn" onclick="openRegisterModal()">&#43; Register Emergency Vehicle</button>
         <button class="logout-btn" id="logout-trigger">&#x2715; Terminate Session</button>
 
-        <div class="section-lbl">Fire Stations</div>
+        <div class="section-lbl">Fire Stations &amp; Rescue</div>
         <div class="station-list" id="station-container"></div>
     </div>
 
@@ -361,6 +361,7 @@ L.Control.geocoder({
 
 const fireIcon      = L.icon({ iconUrl:"fireStation1.png",      iconSize:[30,30], className:"st-icon st-bfp" });
 const volunteerIcon = L.icon({ iconUrl:"volunteerStation1.png",  iconSize:[30,30], className:"st-icon st-vol" });
+const ambulanceIcon = L.icon({ iconUrl:"AMBULANCE.png",          iconSize:[30,30], className:"st-icon st-amb" });
 
 // ============================================================
 // INCIDENT SYSTEM — backed by Firestore 'incidents' collection.
@@ -716,46 +717,69 @@ async function drawRouteToIncident(unitId, fromLat, fromLon, incidentId) {
 // ============================================================
 const x0 = [
     {name:"BFP Regional Office VII",            number:"(032) 517 9027",   lat:10.2979789, lng:123.8922118, type:"bfp"},
-    {name:"Cebu City Fire Station (Pari-an)",   number:"(032) 255 0785",   lat:10.2993222, lng:123.9034484, type:"bfp"},
-    {name:"Labangon Fire Station",              number:"(032) 261 0911",   lat:10.2991806, lng:123.8810782, type:"bfp"},
-    {name:"Guadalupe Fire Sub-Station",         number:"+63 947 523 6144", lat:10.3225746, lng:123.8840113, type:"bfp"},
-    {name:"Lahug Fire Sub-Station",             number:"(032) 256 0541",   lat:10.3243147, lng:123.8985383, type:"bfp"},
+    {name:"Pari-an Fire Sub-Station",           number:"(032) 255-0785",   lat:10.2993222, lng:123.9034484, type:"bfp"},
+    {name:"Labangon Fire Sub-Station",          number:"(032) 887-5920",   lat:10.2991806, lng:123.8810782, type:"bfp"},
+    {name:"Guadalupe Fire Sub-Station",         number:"(032) 401-4190", lat:10.3225746, lng:123.8840113, type:"bfp"},
+    {name:"Lahug Fire Sub-Station",             number:"(032) 326-5755",   lat:10.3243147, lng:123.8985383, type:"bfp"},
     {name:"Apas Fire Sub-Station",              number:"(032) 416 5103",   lat:10.3371357, lng:123.9048811, type:"bfp"},
-    {name:"Mabolo Fire Sub-Station",            number:null,               lat:10.3122927, lng:123.9159289, type:"bfp"},
+    {name:"Mabolo Fire Sub-Station",            number:"(032) 326-9169",               lat:10.3122927, lng:123.9159289, type:"bfp"},
     {name:"Cebu Business Park Sub-Station",     number:"0917 505 1100",    lat:10.3138334, lng:123.9083305, type:"bfp"},
-    {name:"BFP R7 Mandaue City",                number:"(032) 344 4747",   lat:10.3230721, lng:123.9412341, type:"bfp"},
-    {name:"BFP Gun-Ob (Main/COMMEL)",           number:"(032) 340-0252",   lat:10.3019,    lng:123.9512,    type:"bfp"},
+    {name:"Mandaue City Fire Station",          number:"(032) 344-4747",   lat:10.3230721, lng:123.9412341, type:"bfp"},
+    {name:"Fire Station 1 — Gun-ob / Hoopsdome", number:"(032) 340-0252",   lat:10.3019,    lng:123.9512,    type:"bfp"},
     {name:"Lapu-Lapu City Fire Station 1",      number:"0999 972 1111",    lat:10.30525,   lng:123.958844,  type:"bfp"},
-    {name:"Poblacion Sub-Station (Stn 2)",      number:"(032) 326-4638",   lat:10.313143,  lng:123.948846,  type:"bfp"},
-    {name:"Babag Sub-Station (Stn 3)",          number:"(032) 410-8229",   lat:10.28666,   lng:123.944331,  type:"bfp"},
-    {name:"Marigondon Sub-Station (Stn 4)",     number:"(032) 328-0917",   lat:10.27591,   lng:123.975443,  type:"bfp"},
-    {name:"Mactan Sub-Station (Stn 5)",         number:"(032) 342-8508",   lat:10.309056,  lng:124.01114,   type:"bfp"},
-    {name:"Olango Island Fire Station (Stn 6)", number:"0923-815-7696",    lat:10.271054,  lng:124.060161,  type:"bfp"},
+    {name:"Fire Station 2 — Poblacion",         number:"(032) 342-8510",   lat:10.313143,  lng:123.948846,  type:"bfp"},
+    {name:"Fire Station 3 — Babag",             number:"(032) 340-4821",   lat:10.28666,   lng:123.944331,  type:"bfp"},
+    {name:"Marigondon Fire Station",            number:"(032) 495-1890",   lat:10.27591,   lng:123.975443,  type:"bfp"},
+    {name:"Mactan Fire Sub-Station",            number:"(032) 342-8508",   lat:10.309056,  lng:124.01114,   type:"bfp"},
+    {name:"Olango Fire Station",                number:"(032) 511-5171",    lat:10.271054,  lng:124.060161,  type:"bfp"},
     {name:"TINAGO Fire Brigade",                number:null,               lat:10.2971754, lng:123.9088248, type:"volunteer"},
     {name:"LAHUG Fire Brigade",                 number:null,               lat:10.3244675, lng:123.8985555, type:"volunteer"},
     {name:"Cebu Filipino-Chinese VFB",          number:"(032) 254 0200",   lat:10.310547,  lng:123.8891627, type:"volunteer"},
     {name:"NARF Rescue and Fire Brigade",       number:null,               lat:10.3159419, lng:123.8959584, type:"volunteer"},
     {name:"Cebu Chamber VFB",                   number:"(032) 254 0200",   lat:10.3009152, lng:123.9012345, type:"volunteer"},
     {name:"ERUF Fire Brigade",                  number:"0918 921 0000",    lat:10.2964812, lng:123.9029182, type:"volunteer"},
-    {name:"ERUF Lapu-Lapu",                     number:"(032) 340-2994",   lat:10.317454,  lng:123.963162,  type:"volunteer"},
+    {name:"ERUF Base 2 Lapu-Lapu Ambulance",    number:"(032) 340-2994",   lat:10.317454,  lng:123.963162,  type:"ambulance"},
     {name:"Naga City Fire Station",             number:"(032) 272 6410",   lat:10.2080,    lng:123.7580,    type:"bfp"},
     {name:"Talisay City Fire Station",          number:"(032) 272 8277",   lat:10.2450,    lng:123.8490,    type:"bfp"},
     {name:"Minglanilla Fire Station",           number:"(032) 273 2830",   lat:10.2440,    lng:123.7960,    type:"bfp"},
-    {name:"Liloan Fire Station",                number:"(032) 564 3781",   lat:10.3990,    lng:123.9990,    type:"bfp"},
+    {name:"Liloan Fire Station",                number:"0905 350 3109",   lat:10.3990,    lng:123.9990,    type:"bfp"},
     {name:"Argao Fire Station",                 number:"(032) 367 7680",   lat:9.8790,     lng:123.5950,    type:"bfp"},
     {name:"Bogo City Fire Station",             number:"(032) 434 8575",   lat:11.0506,    lng:124.0048,    type:"bfp"},
     {name:"Danao City Fire Station",            number:"(032) 200 4000",   lat:10.5233,    lng:124.0300,    type:"bfp"},
     {name:"Toledo City Fire Station",           number:"(032) 322 5755",   lat:10.3789,    lng:123.6386,    type:"bfp"},
-    {name:"Consolacion Fire Station",           number:"(032) 423 3037",   lat:10.3794,    lng:123.9535,    type:"bfp"},
+    {name:"Consolacion Fire Station",           number:"(032) 344-8299",   lat:10.3794,    lng:123.9535,    type:"bfp"},
+    // Added from the updated hotline list. approx:true = exact address not found; pin is at the barangay / city hall
+    {name:"Talamban Fire Sub-Station",          number:"(032) 328-2864",   lat:10.3698668, lng:123.9167797, type:"bfp"},
+    {name:"Pahina Central Fire Sub-Station",    number:"(032) 234-5687",   lat:10.2980275, lng:123.8921712, type:"bfp"},
+    {name:"San Nicolas Fire Sub-Station",       number:"(032) 262-8530",   lat:10.2922596, lng:123.8914651, type:"bfp"},
+    {name:"Basak Fire Sub-Station (Mandaue)",   number:"(032) 265-8946",   lat:10.3545172, lng:123.9500406, type:"bfp"},
+    {name:"Subangdaku Fire Sub-Station",        number:"(032) 349-6856",   lat:10.3231820, lng:123.9245216, type:"bfp", approx:true},
+    {name:"Maguikay Fire and Rescue Station",   number:"(032) 345-1028",   lat:10.3397601, lng:123.9360042, type:"bfp", approx:true},
+    {name:"Cubacub Fire Station",               number:"(032) 265-8946",   lat:10.3713621, lng:123.9400479, type:"bfp", approx:true},
+    {name:"Tayud Fire Station",                 number:"0916 561 5726",    lat:10.3624068, lng:123.9824304, type:"bfp", approx:true},
+    {name:"Basak Fire Station (Lapu-Lapu)",     number:"(032) 340-4308",   lat:10.2895732, lng:123.9655201, type:"bfp", approx:true},
+    {name:"Cebu City Command Center (C3 Ambulance)", number:"0932 537 7770", lat:10.2928665, lng:123.9016715, type:"ambulance", approx:true},
+    {name:"ERUF Ambulance",                     number:"0998 545 8526",    lat:10.2964812, lng:123.9029182, type:"ambulance"},
+    {name:"Red Cross Ambulance (Cebu Chapter)", number:"0917 143 1562",    lat:10.3123129, lng:123.8917510, type:"ambulance"},
+    {name:"REAVO Ambulance",                    number:"0908 868 8350",    lat:10.3167190, lng:123.8907131, type:"ambulance", approx:true},
+    {name:"Lapu-Lapu City Rescue",              number:"0999 972 1111",    lat:10.3164608, lng:123.9652281, type:"ambulance", approx:true},
+    {name:"Liloan Rescue Unit",                 number:"0938 909 2041",    lat:10.3996398, lng:123.9995024, type:"ambulance", approx:true},
 ];
 
 const sc = document.getElementById('station-container');
 document.getElementById('station-count').innerText = x0.length;
+const ST_STYLE = {
+    bfp:       { icon: fireIcon,      cls: 'bfp', label: 'BFP' },
+    volunteer: { icon: volunteerIcon, cls: 'vol', label: 'VOLUNTEER' },
+    ambulance: { icon: ambulanceIcon, cls: 'amb', label: 'AMBULANCE' },
+};
 x0.forEach(s => {
-    L.marker([s.lat,s.lng],{icon:s.type==="bfp"?fireIcon:volunteerIcon}).addTo(map)
-     .bindPopup(`<b>${s.name}</b><br>📞 ${s.number||"N/A"}`, {className: s.type==="bfp" ? "st-bfp-popup" : "st-vol-popup"});
-    const d=document.createElement('div'); d.className='station-item '+(s.type==='bfp'?'st-bfp-item':'st-vol-item');
-    d.innerHTML=`<b>${s.type.toUpperCase()}</b>: ${s.name}`;
+    const st = ST_STYLE[s.type] || ST_STYLE.bfp;
+    const approxNote = s.approx ? `<br><small style="color:#ffcc00;">Approximate location — please verify</small>` : '';
+    L.marker([s.lat,s.lng],{icon:st.icon}).addTo(map)
+     .bindPopup(`<b>${s.name}</b><br>📞 ${s.number||"N/A"}${approxNote}`, {className: `st-${st.cls}-popup`});
+    const d=document.createElement('div'); d.className=`station-item st-${st.cls}-item`;
+    d.innerHTML=`<b>${st.label}</b>: ${s.name}${s.approx ? ' <span style="color:#ffcc00;" title="Approximate location">&asymp;</span>' : ''}`;
     d.onclick=()=>map.flyTo([s.lat,s.lng],16); sc.appendChild(d);
 });
 
@@ -1269,6 +1293,10 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
 .st-vol-item{border-left-color:#3d6fa8;}
 .st-bfp-popup .leaflet-popup-content-wrapper{border:2px solid #ff5a36;}
 .st-vol-popup .leaflet-popup-content-wrapper{border:2px solid #3d6fa8;}
+/* Ambulance / rescue = green */
+.st-amb{border:3px solid #2e9e6b;box-shadow:0 0 6px rgba(46,158,107,.8);}
+.st-amb-item{border-left-color:#2e9e6b;}
+.st-amb-popup .leaflet-popup-content-wrapper{border:2px solid #2e9e6b;}
 
 </style>
 
