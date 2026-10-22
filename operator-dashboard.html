@@ -246,6 +246,23 @@ button, input, select, textarea { font-family: inherit; }
     background: rgba(255,204,0,0.1); color: var(--yellow); border: 1px solid rgba(255,204,0,0.2);
 }
 
+/* ── EVENT LOG ── */
+.log-tabs { display: flex; gap: 4px; padding: 6px 8px 0; flex-shrink: 0; }
+.log-tab {
+    flex: 1; padding: 5px 4px; border-radius: 4px; cursor: pointer;
+    background: var(--card); border: 1px solid var(--border); color: var(--muted);
+    font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: all .15s;
+}
+.log-tab span { opacity: .8; margin-left: 2px; }
+.log-tab:hover { color: #fff; }
+.log-tab.active { color: #fff; border-color: var(--accent); background: rgba(255,90,54,0.12); }
+.incident-item.resolved { opacity: .78; border-left: 3px solid #2e9e6b; }
+.incident-item.active   { border-left: 3px solid var(--amber); }
+.log-state { font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+.log-state.is-active   { background: rgba(240,136,62,0.15); color: var(--amber); }
+.log-state.is-resolved { background: rgba(46,158,107,0.15); color: #3bb87e; }
+.inc-times { font-size: 9px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+
 /* ── STATION ITEMS ── */
 .station-item {
     background: var(--card); border: 1px solid var(--border); border-radius: 6px;
@@ -267,6 +284,11 @@ button, input, select, textarea { font-family: inherit; }
 .st-icon { border-radius: 50%; background: #fff; padding: 1px; box-sizing: border-box; }
 .st-bfp { border: 3px solid #ff5a36; box-shadow: 0 0 6px rgba(255,90,54,.7); }
 .st-vol { border: 3px solid #3d6fa8; box-shadow: 0 0 6px rgba(61,111,168,.8); }
+/* Ambulance / rescue = green */
+.stn-amb { background: rgba(46,158,107,0.18); color: #3bb87e; }
+.st-amb-item { border-left-color: #2e9e6b; }
+.st-amb { border: 3px solid #2e9e6b; box-shadow: 0 0 6px rgba(46,158,107,.8); }
+.stn-approx { font-size: 8px; font-weight: 700; color: #ffcc00; letter-spacing: 0.5px; }
 
 /* ── MAP OVERLAYS ── */
 .map-overlay-counter {
@@ -346,6 +368,7 @@ button, input, select, textarea { font-family: inherit; }
 .status-select { width: 100%; padding: 5px; margin-top: 5px; background: #fff; color: #000; border: 1px solid #ccc; font-size: 12px; }
 .st-bfp-popup .leaflet-popup-content-wrapper { border: 2px solid #ff5a36 !important; }
 .st-vol-popup .leaflet-popup-content-wrapper { border: 2px solid #3d6fa8 !important; }
+.st-amb-popup .leaflet-popup-content-wrapper { border: 2px solid #2e9e6b !important; }
 
 /* ── GRADIENT BUTTON (Resolve = green, same as admin dashboard) ── */
 .resolve-btn {
@@ -379,6 +402,10 @@ button, input, select, textarea { font-family: inherit; }
     background: linear-gradient(45deg, #ff5a36, #c73e1d);
 }
 .alert-pop.med .alert-view { background: linear-gradient(45deg, #4da3ff, #1f5fa8); }
+.alert-pop.resolved { border-left-color: #2e9e6b; }
+.alert-pop.resolved .a-dot { background: #2e9e6b; animation: none; }
+.alert-pop.resolved .alert-view { background: linear-gradient(45deg, #2e9e6b, #217346); }
+
 .alert-view:hover { filter: brightness(1.12); }
 .alert-close {
     position: absolute; top: 4px; right: 6px; background: none; border: none;
@@ -457,11 +484,90 @@ button, input, select, textarea { font-family: inherit; }
 }
 .gps-bar.live .gps-bar-btn { background: linear-gradient(45deg, #5b6673, #3a4451); }
 body.gps-mobile .blynk-status { bottom: 84px; }
+
+/* ══════════ SMALL SCREEN (800x480) — only below 900px wide AND 600px tall; desktop unchanged ══════════ */
+.rp-tabs { display: none; }
+@media (max-width: 900px) and (max-height: 600px) {
+    /* Header: one compact row */
+    .header { height: 44px; padding: 0 10px; }
+    .header-left { gap: 8px; }
+    .header-left img { height: 26px !important; }
+    .logo-badge { font-size: 10px; letter-spacing: 1.5px; padding: 3px 7px; }
+    .header-title { font-size: 13px; letter-spacing: 1px; }
+    .live-clock { font-size: 17px; letter-spacing: 2px; }
+    .live-date { display: none; }
+    .header-right { gap: 8px; }
+    .user-badge { padding: 3px 8px; gap: 6px; border-radius: 6px; }
+    .user-avatar { width: 24px; height: 24px; font-size: 10px; }
+    .user-name { font-size: 10px; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-unit { display: none; }
+    .logout-btn { padding: 5px 9px; font-size: 9px; }
+    #sync-banner { padding: 4px 10px !important; font-size: 10px !important; }
+
+    /* Status ribbon: thin strip */
+    .status-ribbon { height: 34px; }
+    .stat-pill { padding: 0 8px; gap: 6px; }
+    .stat-icon { font-size: 13px; }
+    .stat-num { font-size: 15px; }
+    .stat-lbl { font-size: 7px; letter-spacing: 1px; white-space: nowrap; }
+
+    /* Map overlay: compact */
+    .map-overlay-counter { padding: 7px 10px; min-width: 0; border-radius: 6px; }
+    .ov-title { font-size: 8px; letter-spacing: 1px; margin-bottom: 4px; }
+    .ov-body { margin-top: 5px; }
+    .ov-row { margin-bottom: 2px; gap: 10px; }
+    .ov-label { font-size: 10px; }
+    .ov-val { font-size: 14px; }
+    .ov-divider { margin: 5px 0; }
+    .ov-toggle { width: 18px; height: 18px; font-size: 12px; }
+    .leaflet-control-zoom a { width: 26px !important; height: 26px !important; line-height: 26px !important; }
+    .panel-toggle { height: 44px; width: 18px; font-size: 11px; }
+    .blynk-status { bottom: 6px; left: 6px; padding: 3px 8px; font-size: 9px; }
+
+    /* Right panel: narrower, one section at a time via tabs */
+    .right-panel { width: 250px; }
+    .rp-tabs { display: flex; gap: 3px; padding: 5px 6px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
+    .rp-tab {
+        flex: 1; min-height: 30px; border-radius: 4px; cursor: pointer;
+        background: var(--card); border: 1px solid var(--border); color: var(--muted);
+        font-size: 9px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+        display: flex; align-items: center; justify-content: center; gap: 4px;
+    }
+    .rp-tab b { font-size: 8px; background: rgba(255,90,54,.18); color: var(--accent); border-radius: 8px; padding: 0 5px; line-height: 14px; }
+    .rp-tab.on { color: #fff; border-color: var(--accent); background: rgba(255,90,54,.14); }
+    .right-panel[data-pane] .panel-section:not(.pane-on) { display: none !important; }
+    .right-panel[data-pane] .panel-section.pane-on { height: auto !important; flex: 1 1 auto; min-height: 0; }
+    .right-panel[data-pane] #my-vehicle-section.pane-on { flex: 0 0 auto; }
+    .panel-hdr { padding: 6px 10px; }
+    .panel-hdr-title { font-size: 10px; letter-spacing: 1.5px; }
+    .panel-body { padding: 6px; }
+
+    /* Cards */
+    .unit-card, .incident-item, .station-item { padding: 7px 9px; margin-bottom: 5px; }
+    .uc-id { font-size: 13px; }
+    .my-vehicle-panel { padding: 9px; margin: 6px; }
+    .mv-title { margin-bottom: 6px; }
+    .mv-row { margin-bottom: 3px; font-size: 10px; }
+    .mv-status-btn { padding: 5px 2px; font-size: 8px; }
+    .log-tabs { padding: 5px 6px 0; }
+    .log-tab { padding: 4px 2px; font-size: 8px; letter-spacing: .5px; }
+
+    /* Notifications: smaller and out of the header's way */
+    .alert-container { top: 86px; left: 8px; max-height: calc(100vh - 100px); }
+    .alert-pop { width: 220px; padding: 7px 26px 7px 9px; }
+    .alert-title { font-size: 11px; }
+    .toast-container { top: 50px; right: 8px; }
+    .toast { min-width: 0; width: 230px; padding: 8px 12px; }
+    .toast-title { font-size: 12px; }
+
+    /* Popups */
+    .leaflet-popup-content { margin: 10px 12px; font-size: 12px; }
+}
 </style>
 </head>
 <body>
 
-<!-- FIREBASE — Auth + Firestore (incidents shared live with dashboard.html) -->
+<!-- FIREBASE — Auth + Firestore (incidents shared live with admin-dashboard.html) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -578,7 +684,7 @@ onAuthStateChanged(auth, async user => {
     <div class="stat-pill">
         <div class="stat-icon">🏥</div>
         <div class="stat-info">
-            <div class="stat-num green" id="stat-stations">32</div>
+            <div class="stat-num green" id="stat-stations">0</div>
             <div class="stat-lbl">Nearby Stations</div>
         </div>
     </div>
@@ -630,24 +736,29 @@ onAuthStateChanged(auth, async user => {
             <div class="panel-body" id="unit-list"></div>
         </div>
 
-        <!-- ACTIVE INCIDENTS -->
-        <div class="panel-section" style="height:200px;">
+        <!-- EVENT LOG (active + resolved incidents) -->
+        <div class="panel-section" style="height:280px;">
             <div class="panel-hdr">
                 <div class="panel-hdr-title">
-                    <span class="pulse-dot amber"></span> Active Incidents
+                    <span class="pulse-dot amber"></span> Event Log
                 </div>
-                <div class="panel-hdr-count" id="incident-count-badge">0</div>
+                <div class="panel-hdr-count" id="incident-count-badge">0 active</div>
+            </div>
+            <div class="log-tabs" role="tablist">
+                <button class="log-tab active" data-filter="all"      onclick="setLogFilter('all')">All <span id="log-n-all">0</span></button>
+                <button class="log-tab"        data-filter="active"   onclick="setLogFilter('active')">Active <span id="log-n-active">0</span></button>
+                <button class="log-tab"        data-filter="resolved" onclick="setLogFilter('resolved')">Resolved <span id="log-n-resolved">0</span></button>
             </div>
             <div class="panel-body" id="incident-list">
-                <div class="empty-state"><div class="empty-state-icon">✅</div>No active incidents</div>
+                <div class="empty-state"><div class="empty-state-icon">📋</div>No events yet</div>
             </div>
         </div>
 
         <!-- FIRE STATIONS -->
         <div class="panel-section grow">
             <div class="panel-hdr">
-                <div class="panel-hdr-title">🏥 Fire Stations</div>
-                <div class="panel-hdr-count">32</div>
+                <div class="panel-hdr-title">🏥 Stations &amp; Rescue</div>
+                <div class="panel-hdr-count" id="station-count-badge">0</div>
             </div>
             <div class="panel-body" id="station-list"></div>
         </div>
@@ -708,7 +819,9 @@ const UNITS = [
     { id: "F-001", token: "DQ8eqlsc7wjL4A7M540oteHKRw-HWBYS", type: "firetruck" },
     { id: "A-003", token: "TOKEN_A003_HERE",                   type: "ambulance" },
 ];
-const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LOCATION=7;
+// GPS now uses two basic Double datastreams instead of the Location (map pin) datastream:
+// V7 = latitude, V8 = longitude
+const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LAT=7, V_LON=8;
 
 let unitStates   = {};
 let unitMarkers  = {};
@@ -752,55 +865,94 @@ window.toggleOverlay = function() {
 };
 mapOverlay.addTo(map);
 
-// Station icons: BFP = red-orange border, Volunteer = blue border
+// Station icons: BFP = red-orange border, Volunteer = blue border, Ambulance / rescue = green border
 const fireIcon = L.icon({ iconUrl:"fireStation1.png", iconSize:[28,28], className:"st-icon st-bfp" });
 const volIcon  = L.icon({ iconUrl:"volunteerStation1.png", iconSize:[28,28], className:"st-icon st-vol" });
+const ambIcon  = L.icon({ iconUrl:"AMBULANCE.png", iconSize:[28,28], className:"st-icon st-amb" });
 
 // ══════════════════════════════════════════════════════
 // FIRE STATIONS DATA
 // ══════════════════════════════════════════════════════
 const STATIONS = [
     {name:"BFP Regional Office VII",            number:"(032) 517 9027",   lat:10.2979789, lng:123.8922118, type:"bfp"},
-    {name:"Cebu City Fire Station (Pari-an)",   number:"(032) 255 0785",   lat:10.2993222, lng:123.9034484, type:"bfp"},
-    {name:"Labangon Fire Station",              number:"(032) 261 0911",   lat:10.2991806, lng:123.8810782, type:"bfp"},
-    {name:"Guadalupe Fire Sub-Station",         number:"+63 947 523 6144", lat:10.3225746, lng:123.8840113, type:"bfp"},
-    {name:"Lahug Fire Sub-Station",             number:"(032) 256 0541",   lat:10.3243147, lng:123.8985383, type:"bfp"},
+    {name:"Pari-an Fire Sub-Station",           number:"(032) 255-0785",   lat:10.2993222, lng:123.9034484, type:"bfp"},
+    {name:"Labangon Fire Sub-Station",          number:"(032) 887-5920",   lat:10.2991806, lng:123.8810782, type:"bfp"},
+    {name:"Guadalupe Fire Sub-Station",         number:"(032) 401-4190", lat:10.3225746, lng:123.8840113, type:"bfp"},
+    {name:"Lahug Fire Sub-Station",             number:"(032) 326-5755",   lat:10.3243147, lng:123.8985383, type:"bfp"},
     {name:"Apas Fire Sub-Station",              number:"(032) 416 5103",   lat:10.3371357, lng:123.9048811, type:"bfp"},
-    {name:"Mabolo Fire Sub-Station",            number:"N/A",              lat:10.3122927, lng:123.9159289, type:"bfp"},
+    {name:"Mabolo Fire Sub-Station",            number:"(032) 326-9169",               lat:10.3122927, lng:123.9159289, type:"bfp"},
     {name:"Cebu Business Park Sub-Station",     number:"0917 505 1100",    lat:10.3138334, lng:123.9083305, type:"bfp"},
-    {name:"BFP R7 Mandaue City",                number:"(032) 344 4747",   lat:10.3230721, lng:123.9412341, type:"bfp"},
+    {name:"Mandaue City Fire Station",          number:"(032) 344-4747",   lat:10.3230721, lng:123.9412341, type:"bfp"},
+    {name:"Fire Station 1 — Gun-ob / Hoopsdome", number:"(032) 340-0252",   lat:10.3019,    lng:123.9512,    type:"bfp"},
     {name:"Lapu-Lapu City Fire Station 1",      number:"0999 972 1111",    lat:10.30525,   lng:123.958844,  type:"bfp"},
-    {name:"TINAGO Fire Brigade",                number:"N/A",              lat:10.2971754, lng:123.9088248, type:"volunteer"},
-    {name:"LAHUG Fire Brigade",                 number:"N/A",              lat:10.3244675, lng:123.8985555, type:"volunteer"},
+    {name:"Fire Station 2 — Poblacion",         number:"(032) 342-8510",   lat:10.313143,  lng:123.948846,  type:"bfp"},
+    {name:"Fire Station 3 — Babag",             number:"(032) 340-4821",   lat:10.28666,   lng:123.944331,  type:"bfp"},
+    {name:"Marigondon Fire Station",            number:"(032) 495-1890",   lat:10.27591,   lng:123.975443,  type:"bfp"},
+    {name:"Mactan Fire Sub-Station",            number:"(032) 342-8508",   lat:10.309056,  lng:124.01114,   type:"bfp"},
+    {name:"Olango Fire Station",                number:"(032) 511-5171",    lat:10.271054,  lng:124.060161,  type:"bfp"},
+    {name:"TINAGO Fire Brigade",                number:null,               lat:10.2971754, lng:123.9088248, type:"volunteer"},
+    {name:"LAHUG Fire Brigade",                 number:null,               lat:10.3244675, lng:123.8985555, type:"volunteer"},
     {name:"Cebu Filipino-Chinese VFB",          number:"(032) 254 0200",   lat:10.310547,  lng:123.8891627, type:"volunteer"},
+    {name:"NARF Rescue and Fire Brigade",       number:null,               lat:10.3159419, lng:123.8959584, type:"volunteer"},
+    {name:"Cebu Chamber VFB",                   number:"(032) 254 0200",   lat:10.3009152, lng:123.9012345, type:"volunteer"},
     {name:"ERUF Fire Brigade",                  number:"0918 921 0000",    lat:10.2964812, lng:123.9029182, type:"volunteer"},
-    {name:"Talisay City Fire Station",          number:"(032) 272 8277",   lat:10.2450,    lng:123.8490,    type:"bfp"},
+    {name:"ERUF Base 2 Lapu-Lapu Ambulance",    number:"(032) 340-2994",   lat:10.317454,  lng:123.963162,  type:"ambulance"},
     {name:"Naga City Fire Station",             number:"(032) 272 6410",   lat:10.2080,    lng:123.7580,    type:"bfp"},
-    {name:"Consolacion Fire Station",           number:"(032) 423 3037",   lat:10.3794,    lng:123.9535,    type:"bfp"},
-    {name:"Liloan Fire Station",                number:"(032) 564 3781",   lat:10.3990,    lng:123.9990,    type:"bfp"},
-    {name:"Danao City Fire Station",            number:"(032) 200 4000",   lat:10.5233,    lng:124.0300,    type:"bfp"},
+    {name:"Talisay City Fire Station",          number:"(032) 272 8277",   lat:10.2450,    lng:123.8490,    type:"bfp"},
+    {name:"Minglanilla Fire Station",           number:"(032) 273 2830",   lat:10.2440,    lng:123.7960,    type:"bfp"},
+    {name:"Liloan Fire Station",                number:"0905 350 3109",   lat:10.3990,    lng:123.9990,    type:"bfp"},
+    {name:"Argao Fire Station",                 number:"(032) 367 7680",   lat:9.8790,     lng:123.5950,    type:"bfp"},
     {name:"Bogo City Fire Station",             number:"(032) 434 8575",   lat:11.0506,    lng:124.0048,    type:"bfp"},
+    {name:"Danao City Fire Station",            number:"(032) 200 4000",   lat:10.5233,    lng:124.0300,    type:"bfp"},
+    {name:"Toledo City Fire Station",           number:"(032) 322 5755",   lat:10.3789,    lng:123.6386,    type:"bfp"},
+    {name:"Consolacion Fire Station",           number:"(032) 344-8299",   lat:10.3794,    lng:123.9535,    type:"bfp"},
+    // Added from the updated hotline list. approx:true = exact address not found; pin is at the barangay / city hall
+    {name:"Talamban Fire Sub-Station",          number:"(032) 328-2864",   lat:10.3698668, lng:123.9167797, type:"bfp"},
+    {name:"Pahina Central Fire Sub-Station",    number:"(032) 234-5687",   lat:10.2980275, lng:123.8921712, type:"bfp"},
+    {name:"San Nicolas Fire Sub-Station",       number:"(032) 262-8530",   lat:10.2922596, lng:123.8914651, type:"bfp"},
+    {name:"Basak Fire Sub-Station (Mandaue)",   number:"(032) 265-8946",   lat:10.3545172, lng:123.9500406, type:"bfp"},
+    {name:"Subangdaku Fire Sub-Station",        number:"(032) 349-6856",   lat:10.3231820, lng:123.9245216, type:"bfp", approx:true},
+    {name:"Maguikay Fire and Rescue Station",   number:"(032) 345-1028",   lat:10.3397601, lng:123.9360042, type:"bfp", approx:true},
+    {name:"Cubacub Fire Station",               number:"(032) 265-8946",   lat:10.3713621, lng:123.9400479, type:"bfp", approx:true},
+    {name:"Tayud Fire Station",                 number:"0916 561 5726",    lat:10.3624068, lng:123.9824304, type:"bfp", approx:true},
+    {name:"Basak Fire Station (Lapu-Lapu)",     number:"(032) 340-4308",   lat:10.2895732, lng:123.9655201, type:"bfp", approx:true},
+    {name:"Cebu City Command Center (C3 Ambulance)", number:"0932 537 7770", lat:10.2928665, lng:123.9016715, type:"ambulance", approx:true},
+    {name:"ERUF Ambulance",                     number:"0998 545 8526",    lat:10.2964812, lng:123.9029182, type:"ambulance"},
+    {name:"Red Cross Ambulance (Cebu Chapter)", number:"0917 143 1562",    lat:10.3123129, lng:123.8917510, type:"ambulance"},
+    {name:"REAVO Ambulance",                    number:"0908 868 8350",    lat:10.3167190, lng:123.8907131, type:"ambulance", approx:true},
+    {name:"Lapu-Lapu City Rescue",              number:"0999 972 1111",    lat:10.3164608, lng:123.9652281, type:"ambulance", approx:true},
+    {name:"Liloan Rescue Unit",                 number:"0938 909 2041",    lat:10.3996398, lng:123.9995024, type:"ambulance", approx:true},
 ];
 
 const stationListEl = document.getElementById('station-list');
+const ST_STYLE = {
+    bfp:       { icon: fireIcon, cls: 'bfp', label: 'BFP' },
+    volunteer: { icon: volIcon,  cls: 'vol', label: 'Volunteer' },
+    ambulance: { icon: ambIcon,  cls: 'amb', label: 'Ambulance' },
+};
 STATIONS.forEach(s => {
-    L.marker([s.lat, s.lng], {icon: s.type==='bfp' ? fireIcon : volIcon})
+    const st  = ST_STYLE[s.type] || ST_STYLE.bfp;
+    const num = s.number || 'N/A';
+    const approxNote = s.approx ? '<br><small style="color:#ffcc00;">Approximate location — please verify</small>' : '';
+    L.marker([s.lat, s.lng], {icon: st.icon})
      .addTo(map)
-     .bindPopup(`<div style="color:#c9d1d9"><b style="color:#fff;">${s.name}</b><br>📞 ${s.number}</div>`,
-                {className: s.type==='bfp' ? 'st-bfp-popup' : 'st-vol-popup'});
+     .bindPopup(`<div style="color:#c9d1d9"><b style="color:#fff;">${s.name}</b><br>📞 ${num}${approxNote}</div>`,
+                {className: `st-${st.cls}-popup`});
 
     const el = document.createElement('div');
-    el.className = 'station-item ' + (s.type==='bfp' ? 'st-bfp-item' : 'st-vol-item');
+    el.className = `station-item st-${st.cls}-item`;
     el.innerHTML = `
-        <div><span class="stn-type-badge ${s.type==='bfp'?'stn-bfp':'stn-vol'}">${s.type.toUpperCase()}</span></div>
+        <div><span class="stn-type-badge stn-${st.cls}">${st.label}</span>${s.approx ? ' <span class="stn-approx" title="Approximate location">&asymp; approx.</span>' : ''}</div>
         <div class="stn-name">${s.name}</div>
-        <div class="stn-meta">📞 ${s.number}</div>`;
+        <div class="stn-meta">📞 ${num}</div>`;
     el.onclick = () => map.flyTo([s.lat, s.lng], 16);
     stationListEl.appendChild(el);
 });
+document.getElementById('stat-stations').textContent = STATIONS.length;
+document.getElementById('station-count-badge').textContent = STATIONS.length;
 
 // ══════════════════════════════════════════════════════
-// INCIDENT SYSTEM — real-time from Firestore (shared with dashboard.html)
+// INCIDENT SYSTEM — real-time from Firestore (shared with admin-dashboard.html)
 // Operators can view AND update classification/alarm/resolve;
 // only the admin dashboard can create or delete incidents.
 // ══════════════════════════════════════════════════════
@@ -890,15 +1042,19 @@ function renderIncidentFromDoc(id, data) {
         entry.marker.on('click', () => window.updatePopup(id));
         incidentMarkers[id] = entry;
     }
+    const wasResolved = !!entry.isResolved;
     Object.assign(entry, data, { id });
     entry.marker.setLatLng([data.lat, data.lng]);
     const iconEl = document.getElementById(`uicon-${id}`);
-    if (data.isResolved) dismissAlert(id);
     if (iconEl) iconEl.style.filter = data.isResolved ? "grayscale(100%) opacity(0.5)" : "";
 
     if (isNew && !knownIncidentIds.has(id)) {
         knownIncidentIds.add(id);
-        if (!data.isResolved && initialSyncDone) showEmergencyAlert(id, data);
+        if (!data.isResolved && initialSyncDone) notifier.incident(id, 'new', entry);
+    }
+    if (!isNew && data.isResolved && !wasResolved && initialSyncDone) {
+        notifier.dismissFor(id, 'new');
+        notifier.incident(id, 'resolved', entry);
     }
 }
 function removeIncidentLocally(id) {
@@ -907,33 +1063,72 @@ function removeIncidentLocally(id) {
     map.removeLayer(entry.marker);
     delete incidentMarkers[id];
     knownIncidentIds.delete(id);
-    dismissAlert(id);
+    notifier.dismissFor(id);
 }
+let logFilter = 'all';
+window.setLogFilter = function(f) {
+    logFilter = f;
+    document.querySelectorAll('.log-tab').forEach(b => b.classList.toggle('active', b.dataset.filter === f));
+    renderIncidentList();
+};
+function fmtTime(iso) {
+    if (!iso) return '—';
+    const d = new Date(iso);
+    const today = new Date().toDateString() === d.toDateString();
+    return today ? d.toLocaleTimeString('en-PH', {hour:'2-digit', minute:'2-digit', hour12:false})
+                 : d.toLocaleString('en-PH', {month:'short', day:'numeric', hour:'2-digit', minute:'2-digit', hour12:false});
+}
+function fmtDuration(a, b) {
+    const ms = Math.max(0, new Date(b) - new Date(a));
+    const h = Math.floor(ms / 3600000), m = Math.floor((ms % 3600000) / 60000);
+    return h ? `${h}h ${m}m` : `${m}m`;
+}
+function escHtml(s) { return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
 function renderIncidentList() {
     const el = document.getElementById('incident-list');
     incCounts = {fire:0, med:0};
-    const active = Object.values(incidentMarkers).filter(d => !d.isResolved);
+    const all = Object.values(incidentMarkers)
+        .sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0));
+    const active = all.filter(d => !d.isResolved);
+    const resolved = all.length - active.length;
     active.forEach(d => { if (d.type==='fire') incCounts.fire++; else incCounts.med++; });
-    document.getElementById('incident-count-badge').textContent = active.length;
+    document.getElementById('incident-count-badge').textContent = `${active.length} active`;
+    document.getElementById('log-n-all').textContent = all.length;
+    document.getElementById('log-n-active').textContent = active.length;
+    document.getElementById('log-n-resolved').textContent = resolved;
     document.getElementById('stat-fire').textContent = incCounts.fire;
     document.getElementById('stat-med').textContent  = incCounts.med;
-    if (active.length === 0) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">✅</div>No active incidents</div>';
+
+    const rows = all.filter(d => logFilter === 'all' || (logFilter === 'active' ? !d.isResolved : d.isResolved));
+    if (rows.length === 0) {
+        const msg = logFilter === 'active' ? 'No active incidents' : logFilter === 'resolved' ? 'No resolved incidents yet' : 'No events yet';
+        el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${logFilter === 'active' ? '✅' : '📋'}</div>${msg}</div>`;
         return;
     }
-    el.innerHTML = active.map(d => `
-        <div class="incident-item" onclick="map.flyTo([${d.lat},${d.lng}],16); window.updatePopup('${d.id}')">
+    el.innerHTML = rows.map(d => {
+        const res = !!d.isResolved;
+        const times = res
+            ? `Reported ${fmtTime(d.startTime)} · Resolved ${fmtTime(d.resolvedTime)}${d.resolvedTime ? ` (${fmtDuration(d.startTime, d.resolvedTime)})` : ''}`
+            : `Reported ${fmtTime(d.startTime)} · ${fmtDuration(d.startTime, new Date())} ago`;
+        return `
+        <div class="incident-item ${res ? 'resolved' : 'active'}" onclick="map.flyTo([${d.lat},${d.lng}],17); window.updatePopup('${d.id}')">
             <div class="inc-top">
                 <div class="inc-type ${d.type}">${d.type==='fire'?'🔥 FIRE':'⚕️ MEDICAL'}</div>
-                <div class="inc-id">${d.id}</div>
+                <span class="log-state ${res ? 'is-resolved' : 'is-active'}">${res ? 'Resolved' : 'Active'}</span>
             </div>
-            <div class="inc-addr">${d.address||'Location pending...'}</div>
+            <div class="inc-id">${escHtml(d.id)}</div>
+            <div class="inc-addr">${escHtml(d.address || 'Location pending...')}</div>
             <div class="inc-meta">
-                <span class="inc-tag">${d.status}</span>
-                ${d.alarm&&d.alarm!=='N/A'?`<span class="inc-tag">${d.alarm}</span>`:''}
+                <span class="inc-tag">${escHtml(d.status)}</span>
+                ${d.alarm&&d.alarm!=='N/A'?`<span class="inc-tag">${escHtml(d.alarm)}</span>`:''}
             </div>
-        </div>`).join('');
+            <div class="inc-times">${times}</div>
+        </div>`;
+    }).join('');
 }
+// keep the "x min ago" times fresh
+setInterval(renderIncidentList, 60000);
 
 window.addEventListener('firestoreReady', () => {
     window.fsOnSnapshot(window.fsIncidents, (snapshot) => {
@@ -976,7 +1171,7 @@ async function fetchUnit(unit) {
         const connText = await connRes.text();
         if (connText.toLowerCase().includes('invalid') || connText.trim() !== 'true') { setOffline(unit); return false; }
 
-        const res  = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v${V_STANDBY}&v${V_RESPONDING}&v${V_ARRIVED}&v${V_LOCATION}`);
+        const res  = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v${V_STANDBY}&v${V_RESPONDING}&v${V_ARRIVED}&v${V_LAT}&v${V_LON}`);
         if (!res.ok) { setOffline(unit); return false; }
         const text = await res.text();
         if (text.toLowerCase().includes('invalid')) { setOffline(unit); return false; }
@@ -986,10 +1181,10 @@ async function fetchUnit(unit) {
         const standby    = parseFloat(data[`v${V_STANDBY}`])    > 0;
         const responding = parseFloat(data[`v${V_RESPONDING}`]) > 0;
         const arrived    = parseFloat(data[`v${V_ARRIVED}`])    > 0;
-        const locRaw     = data[`v${V_LOCATION}`];
-        let lon=null, lat=null;
-        if (Array.isArray(locRaw)&&locRaw.length>=2) { lon=parseFloat(locRaw[0]); lat=parseFloat(locRaw[1]); }
-        else if (typeof locRaw==='string'&&locRaw.includes(',')) { const p=locRaw.split(','); lon=parseFloat(p[0]); lat=parseFloat(p[1]); }
+        let lat = parseFloat(data[`v${V_LAT}`]);
+        let lon = parseFloat(data[`v${V_LON}`]);
+        // No GPS fix yet (empty or 0,0) -> treat as no location
+        if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) { lat = null; lon = null; }
         if (lat&&lon) {
             if (lat<4||lat>21||lon<116||lon>127) { [lat,lon]=[lon,lat]; if(lat<4||lat>21||lon<116||lon>127){lat=null;lon=null;} }
         }
@@ -1110,32 +1305,74 @@ async function pollAll() {
 }
 
 // ══════════════════════════════════════════════════════
-// EMERGENCY ALERT POP-UP (left side, small, can be closed)
+// NOTIFICATIONS — everyone with a dashboard open is told about new and resolved incidents
 // ══════════════════════════════════════════════════════
-function dismissAlert(id) {
-    const el = document.getElementById(`alert-${id}`);
-    if (!el) return;
-    el.classList.add('out');
-    setTimeout(() => el.remove(), 300);
-}
-window.dismissAlert = dismissAlert;
-function showEmergencyAlert(id, data) {
-    const box = document.getElementById('alert-container');
-    if (!box || document.getElementById(`alert-${id}`)) return;
-    const isFire = data.type === 'fire';
-    const el = document.createElement('div');
-    el.id = `alert-${id}`;
-    el.className = `alert-pop ${isFire ? 'fire' : 'med'}`;
-    el.innerHTML = `
-        <button class="alert-close" title="Dismiss" onclick="dismissAlert('${id}')">&times;</button>
-        <div class="alert-title"><span class="a-dot"></span>${isFire ? '🔥 FIRE EMERGENCY' : '⚕️ MEDICAL EMERGENCY'}</div>
-        <div class="alert-addr">${data.address || 'Location pending...'}</div>
-        <div class="alert-time">${new Date().toLocaleTimeString('en-PH',{hour12:false})} · ${id}</div>
-        <button class="alert-view" onclick="map.flyTo([${data.lat},${data.lng}],16); dismissAlert('${id}')">View on map</button>`;
-    box.prepend(el);
-    // keep the stack small: drop the oldest beyond 4
-    while (box.children.length > 4) box.lastElementChild.remove();
-}
+const notifier = (function () {
+    let audioCtx = null;
+    function unlock() {
+        try { audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)(); if (audioCtx.state === 'suspended') audioCtx.resume(); } catch (e) {}
+        if ('Notification' in window && Notification.permission === 'default') Notification.requestPermission().catch(() => {});
+    }
+    // Browsers only allow sound / notification permission after the user has interacted with the page once
+    ['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, unlock, { once: true, passive: true }));
+
+    function tone(kind) {
+        if (!audioCtx || audioCtx.state !== 'running') return;
+        const notes = kind === 'resolved' ? [660, 880] : [880, 660, 880];
+        notes.forEach((f, i) => {
+            const o = audioCtx.createOscillator(), g = audioCtx.createGain();
+            o.type = 'sine'; o.frequency.value = f;
+            const t = audioCtx.currentTime + i * 0.18;
+            g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+            o.connect(g).connect(audioCtx.destination); o.start(t); o.stop(t + 0.17);
+        });
+    }
+    function system(title, body, tag) {
+        if (!('Notification' in window) || Notification.permission !== 'granted' || !document.hidden) return;
+        try { const n = new Notification(title, { body, tag, icon: 'tulonglogo.png' }); n.onclick = () => { window.focus(); n.close(); }; } catch (e) {}
+    }
+    function card(id, kind, data) {
+        const box = document.getElementById('alert-container');
+        if (!box) return;
+        const key = `alert-${id}-${kind}`;
+        if (document.getElementById(key)) return;
+        const isFire = data.type === 'fire';
+        const resolved = kind === 'resolved';
+        const el = document.createElement('div');
+        el.id = key;
+        el.dataset.inc = id;
+        el.className = `alert-pop ${resolved ? 'resolved' : (isFire ? 'fire' : 'med')}`;
+        const title = resolved
+            ? `✅ ${isFire ? 'FIRE' : 'MEDICAL'} INCIDENT RESOLVED`
+            : (isFire ? '🔥 FIRE EMERGENCY' : '⚕️ MEDICAL EMERGENCY');
+        el.innerHTML = `
+            <button class="alert-close" title="Dismiss">&times;</button>
+            <div class="alert-title"><span class="a-dot"></span>${title}</div>
+            <div class="alert-addr"></div>
+            <div class="alert-time">${new Date().toLocaleTimeString('en-PH',{hour12:false})} · ${id}${resolved && data.status ? ' · ' + data.status : ''}</div>
+            <button class="alert-view">View on map</button>`;
+        el.querySelector('.alert-addr').textContent = data.address || 'Location pending...';
+        const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 300); };
+        el.querySelector('.alert-close').onclick = close;
+        el.querySelector('.alert-view').onclick = () => { map.flyTo([data.lat, data.lng], 17); close(); };
+        box.prepend(el);
+        while (box.children.length > 5) box.lastElementChild.remove();
+        if (resolved) setTimeout(close, 15000);   // resolved notices clear themselves; new emergencies stay until dismissed
+    }
+    function incident(id, kind, data) {
+        card(id, kind, data);
+        tone(kind);
+        const isFire = data.type === 'fire';
+        system(kind === 'resolved' ? `Incident resolved — ${id}` : `${isFire ? '🔥 Fire' : '⚕️ Medical'} emergency — ${id}`,
+               data.address || '', `${id}-${kind}`);
+    }
+    function dismissFor(id, kind) {
+        document.querySelectorAll(`.alert-pop[data-inc="${id}"]`).forEach(el => {
+            if (!kind || el.id.endsWith('-' + kind)) { el.classList.add('out'); setTimeout(() => el.remove(), 300); }
+        });
+    }
+    return { incident, dismissFor };
+})();
 
 // ══════════════════════════════════════════════════════
 // TOAST NOTIFICATION
@@ -1362,6 +1599,52 @@ const gps = (function () {
 })();
 window.stopGpsSharing = () => gps.stop(false);
 window.addEventListener('userReady', () => gps.init(), { once: true });
+
+// ══════════════════════════════════════════════════════
+// SMALL SCREEN (800x480): side panel shows one section at a time (Units / Events / Stations)
+// ══════════════════════════════════════════════════════
+(function () {
+    const mq = window.matchMedia('(max-width: 900px) and (max-height: 600px)');
+    const panel = document.querySelector('.right-panel');
+    const secOf = sel => document.querySelector(sel)?.closest('.panel-section');
+    const PANES = {
+        units:    [document.getElementById('my-vehicle-section'), secOf('#unit-list')],
+        events:   [secOf('#incident-list')],
+        stations: [secOf('#station-list')],
+    };
+    const tabs = document.createElement('div');
+    tabs.className = 'rp-tabs';
+    tabs.innerHTML = `
+        <button class="rp-tab" data-pane="units" type="button">Units</button>
+        <button class="rp-tab" data-pane="events" type="button">Events <b id="rp-ev-count">0</b></button>
+        <button class="rp-tab" data-pane="stations" type="button">Stations</button>`;
+    panel.prepend(tabs);
+
+    let current = 'units';
+    function show(name) {
+        current = name;
+        tabs.querySelectorAll('.rp-tab').forEach(t => t.classList.toggle('on', t.dataset.pane === name));
+        Object.entries(PANES).forEach(([k, secs]) => secs.forEach(s => s && s.classList.toggle('pane-on', k === name)));
+    }
+    function apply() {
+        if (mq.matches) { panel.dataset.pane = current; show(current); }
+        else delete panel.dataset.pane;
+        setTimeout(() => map.invalidateSize(), 250);
+    }
+    tabs.addEventListener('click', e => { const t = e.target.closest('.rp-tab'); if (t) show(t.dataset.pane); });
+
+    // Events tab badge mirrors the active-incident count
+    const badge = document.getElementById('incident-count-badge');
+    const sync = () => { document.getElementById('rp-ev-count').textContent = parseInt(badge.textContent, 10) || 0; };
+    new MutationObserver(sync).observe(badge, { childList: true, characterData: true, subtree: true });
+    sync();
+
+    // Live Tracking box starts collapsed on the small screen so it doesn't cover the map
+    if (mq.matches && !overlayCollapsed) toggleOverlay();
+
+    (mq.addEventListener ? mq.addEventListener('change', apply) : mq.addListener(apply));
+    apply();
+})();
 
 // ══════════════════════════════════════════════════════
 // START
