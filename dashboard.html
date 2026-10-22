@@ -325,7 +325,9 @@ const UNITS = [
     { id: "F-001", token: "DQ8eqlsc7wjL4A7M540oteHKRw-HWBYS", type: "firetruck" },
     { id: "A-003", token: "TOKEN_A003_HERE",                   type: "ambulance" },
 ];
-const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LOCATION=7;
+// GPS now uses two basic Double datastreams instead of the Location (map pin) datastream:
+// V7 = latitude, V8 = longitude
+const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LAT=7, V_LON=8;
 
 // ============================================================
 // OPENROUTESERVICE — auto-routing when a unit presses RESPONDING
@@ -807,8 +809,8 @@ async function fetchUnit(unit) {
             return false;
         }
 
-        // Step 2: Device confirmed ONLINE — fetch pin values
-        const res = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v${V_STANDBY}&v${V_RESPONDING}&v${V_ARRIVED}&v${V_LOCATION}`);
+        // Step 2: Device confirmed ONLINE — fetch pin values (buttons + V7 latitude + V8 longitude)
+        const res = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v${V_STANDBY}&v${V_RESPONDING}&v${V_ARRIVED}&v${V_LAT}&v${V_LON}`);
         if (!res.ok) { markOffline(); return false; }
         const text = await res.text();
         if (text.toLowerCase().includes('invalid')) { markOffline(); return false; }
@@ -817,11 +819,10 @@ async function fetchUnit(unit) {
         const standby    = parseFloat(data[`v${V_STANDBY}`])    > 0;
         const responding = parseFloat(data[`v${V_RESPONDING}`]) > 0;
         const arrived    = parseFloat(data[`v${V_ARRIVED}`])    > 0;
-        const locRaw     = data[`v${V_LOCATION}`];
-        let lon=null, lat=null;
-        if (Array.isArray(locRaw)&&locRaw.length>=2) { lon=parseFloat(locRaw[0]); lat=parseFloat(locRaw[1]); }
-        else if (typeof locRaw==='string'&&locRaw.includes(',')) { const p=locRaw.split(','); lon=parseFloat(p[0]); lat=parseFloat(p[1]); }
-        else if (locRaw&&typeof locRaw==='object') { lon=parseFloat(locRaw.lon||locRaw[0]); lat=parseFloat(locRaw.lat||locRaw[1]); }
+        let lat = parseFloat(data[`v${V_LAT}`]);
+        let lon = parseFloat(data[`v${V_LON}`]);
+        // No GPS fix yet (empty or 0,0) -> treat as no location
+        if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) { lat = null; lon = null; }
         if (lat&&lon) {
             if (lat<4||lat>21||lon<116||lon>127) { [lat,lon]=[lon,lat]; if(lat<4||lat>21||lon<116||lon>127){lat=null;lon=null;} }
         }
@@ -1588,7 +1589,7 @@ window.submitRegistration = async function() {
 
   function decorateReport(){
     if(!mq.matches || rb.querySelector('svg')) return;
-    const t = rb.textContent.replace(/[\u26A0\uFE0F]/g,'').trim() || 'Report Emergency';
+    const t = rb.textContent.replace(/[⚠️]/g,'').trim() || 'Report Emergency';
     rb.innerHTML = svg('alert') + '<span>' + t + '</span>';
   }
   new MutationObserver(decorateReport).observe(rb,{childList:true});
@@ -1598,7 +1599,7 @@ window.submitRegistration = async function() {
     if(on) decorateReport();
     else if(rb.querySelector('svg')){
       const t = rb.textContent.trim();
-      rb.textContent = (t==='Report Emergency' ? '\u26A0\uFE0F ' : '') + t;
+      rb.textContent = (t==='Report Emergency' ? '⚠️ ' : '') + t;
     }
   }
 
