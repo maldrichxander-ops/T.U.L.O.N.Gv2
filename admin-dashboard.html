@@ -371,7 +371,7 @@ const ambulanceIcon = L.icon({ iconUrl:"AMBULANCE.png",          iconSize:[30,30
 // UI actions below only WRITE to Firestore. The onSnapshot
 // listener further down is what actually creates/updates/
 // removes markers — it's the single source of truth, shared
-// live with user-dashboard.html (operators see the same data).
+// live with operator-dashboard.html (operators see the same data).
 // ============================================================
 let isReporting=false, incidentCounts={fire:0,med:0};
 let activeIncidentMarkers={};   // id -> {marker, type, lat, lng, address, startTime, resolvedTime, timeline, status, alarm, isResolved, lastTacticalLevel}
@@ -1609,7 +1609,7 @@ window.submitRegistration = async function() {
         td.style.display = 'block';
         td.innerHTML = `
             <b style="color:#ff5a36;">USER DASHBOARD LOGIN CREDENTIALS</b><br>
-            🌐 Login URL: <span style="color:#fff;">user-dashboard.html</span><br>
+            🌐 Login URL: <span style="color:#fff;">tulong.services/operator-dashboard</span><br>
             📧 Email: <span style="color:#fff;">${email}</span><br>
             🔑 Password: <span style="color:#fff;">${password}</span><br>
             🚗 Unit: <span style="color:#fff;">${unitId} — ${vtype === 'firetruck' ? '🚒 Firetruck' : '🚑 Ambulance'}</span><br>
