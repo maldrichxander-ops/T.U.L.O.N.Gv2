@@ -1601,7 +1601,7 @@ window.stopGpsSharing = () => gps.stop(false);
 window.addEventListener('userReady', () => gps.init(), { once: true });
 
 // ══════════════════════════════════════════════════════
-// SMALL SCREEN (800x480): side panel shows one section at a time (Units / Events / Stations)
+// SMALL SCREEN (800x480): side panel shows one section at a time
 // ══════════════════════════════════════════════════════
 (function () {
     const mq = window.matchMedia('(max-width: 900px) and (max-height: 600px)');
