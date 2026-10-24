@@ -330,7 +330,7 @@ const UNITS = [
 ];
 // GPS now uses two basic Double datastreams instead of the Location (map pin) datastream:
 // V7 = latitude, V8 = longitude
-const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LAT=7, V_LON=8;
+const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LOC=7;
 
 // ============================================================
 // OPENROUTESERVICE — auto-routing when a unit presses RESPONDING
@@ -934,7 +934,7 @@ async function fetchUnit(unit) {
         }
 
         // Step 2: Device confirmed ONLINE — fetch pin values (buttons + V7 latitude + V8 longitude)
-        const res = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v${V_STANDBY}&v${V_RESPONDING}&v${V_ARRIVED}&v${V_LAT}&v${V_LON}`);
+        const res = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v${V_STANDBY}&v${V_RESPONDING}&v${V_ARRIVED}&v${V_LOC}`);
         if (!res.ok) { markOffline(); return false; }
         const text = await res.text();
         if (text.toLowerCase().includes('invalid')) { markOffline(); return false; }
@@ -943,8 +943,14 @@ async function fetchUnit(unit) {
         const standby    = parseFloat(data[`v${V_STANDBY}`])    > 0;
         const responding = parseFloat(data[`v${V_RESPONDING}`]) > 0;
         const arrived    = parseFloat(data[`v${V_ARRIVED}`])    > 0;
-        let lat = parseFloat(data[`v${V_LAT}`]);
-        let lon = parseFloat(data[`v${V_LON}`]);
+        let lat = null, lon = null;
+{
+    // Location datastream comes back as [lon, lat] (array) or "lon,lat" (string)
+    const raw = data[`v${V_LOC}`];
+    const parts = Array.isArray(raw) ? raw : String(raw ?? '').split(',');
+    const a = parseFloat(parts[0]), b = parseFloat(parts[1]);
+    if (isFinite(a) && isFinite(b) && !(a === 0 && b === 0)) { lon = a; lat = b; }
+}
         // No GPS fix yet (empty or 0,0) -> treat as no location
         if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) { lat = null; lon = null; }
         if (lat&&lon) {
