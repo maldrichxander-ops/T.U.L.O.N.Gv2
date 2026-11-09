@@ -152,7 +152,8 @@
 
         /* Each portrait is shown COMPLETE (never cropped) so the name plate in the photo is always fully readable,
            in full colour, inside a gradient frame. */
-        .gallery { perspective: 1200px; --cw: 204px; --gap: 22px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: var(--gap); padding-bottom: 36px; }
+        .gallery { perspective: 1200px; --gap: 24px; --w: min(100vw - 60px, 1560px); width: var(--w); margin-left: calc((100% - var(--w)) / 2);
+            --cw: min(290px, calc((var(--w) - 4 * var(--gap) - 4px) / 5)); display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: var(--gap); padding-bottom: 36px; }
         .member { margin: 0; position: relative; width: var(--cw); flex: none; border-radius: 18px; --mx: 50%; --my: 30%; }
         .member:nth-child(even) { margin-top: 30px; }          /* gentle wave so it doesn't read as a rigid grid */
         .photo {
@@ -229,7 +230,7 @@
             .hero, .story { grid-template-columns: 1fr; gap: 36px; }
             .hero { padding: 52px 0 48px; }
             .brand span { font-size: 20px; letter-spacing: 3px; }
-            .gallery { --gap: 14px; --cw: calc((100% - 2 * var(--gap)) / 3); }
+            .gallery { --gap: 14px; width: auto; margin-left: 0; --cw: calc((100% - 2 * var(--gap)) / 3); }
             .member:nth-child(even) { margin-top: 0; }
             .member:nth-child(3n+2) { margin-top: 24px; }
         }
@@ -272,7 +273,7 @@
   .team-head{margin-bottom:24px;}
   h2{font-size:28px;margin-bottom:8px;}
   .team-sub{font-size:11px;}
-  .gallery{--cw:118px;--gap:12px;}
+  .gallery{--gap:12px;--cw:calc((100% - 4 * var(--gap)) / 5);}
   .member:nth-child(3n+2){margin-top:0;} .member:nth-child(even){margin-top:18px;}
   .footer{padding:14px 0 18px;font-size:9px;letter-spacing:2px;}
 }
