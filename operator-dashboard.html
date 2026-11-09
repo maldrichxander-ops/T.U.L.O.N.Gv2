@@ -30,7 +30,7 @@
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <style>
 /* ── RESET & BASE ── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -50,15 +50,42 @@
     --card:     rgba(2,16,29,0.85);
     --grey:     #8b96a3;
     --grey-dark:#3a4451;
+    /* Open Sans when online; DejaVu Sans / Liberation Sans are built into Raspberry Pi OS as offline fallbacks */
+    --font: 'Open Sans', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
 }
 body {
     background: var(--bg); color: var(--text);
-    font-family: 'Open Sans', Tahoma, Geneva, Verdana, sans-serif;
+    font-family: var(--font);
     height: 100vh; overflow: hidden;
+    /* sharper text rendering (no synthetic bold, no fake-italic smearing) */
+    -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility; font-synthesis: none;
+    font-variant-numeric: tabular-nums;
     display: flex; flex-direction: column;
 }
 /* Every control uses the same font as the rest of the page */
 button, input, select, textarea { font-family: inherit; }
+
+/* ── SVG ICONS (replace emojis: Raspberry Pi OS has no colour-emoji font, so emojis showed as grey or empty boxes) ── */
+.ico { width: 1em; height: 1em; display: inline-block; vertical-align: -0.15em; flex: none; overflow: visible; }
+.stat-icon { display: flex; align-items: center; }
+.stat-icon.c-fire   { color: #ff5a36; }
+.stat-icon.c-amb    { color: #6ea3e0; }
+.stat-icon.c-inc    { color: #ffcc00; }
+.stat-icon.c-med    { color: #6ea3e0; }
+.stat-icon.c-stn    { color: #3bb87e; }
+.c-fire { color: #ff6633; } .c-med { color: #6ea3e0; } .c-ok { color: #3bb87e; } .c-warn { color: #ffcc00; }
+.sq { display: inline-block; width: 8px; height: 8px; background: var(--accent); margin-right: 6px; vertical-align: 1px; }
+.dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 7px; vertical-align: 0; }
+.dot.amber { background: var(--amber); } .dot.red { background: #ff4d4d; } .dot.green { background: var(--green); }
+.inc-marker {
+    width: 34px; height: 34px; border-radius: 50%; border: 2px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    color: #fff; font-size: 19px; box-shadow: 0 2px 8px rgba(0,0,0,0.55);
+}
+.inc-marker.fire { background: #ff5a36; }
+.inc-marker.med  { background: #3d6fa8; }
+.btn-ico { display: inline-flex; align-items: center; justify-content: center; gap: 6px; }
 
 /* ── HEADER ── */
 .header {
@@ -75,19 +102,19 @@ button, input, select, textarea { font-family: inherit; }
 .header-left { display: flex; align-items: center; gap: 14px; }
 .logo-badge {
     background: linear-gradient(45deg, #ff5a36, #c73e1d);
-    color: #fff; font-family: Georgia, serif; font-weight: 700;
+    color: #fff; font-family: var(--font); font-weight: 700;
     font-size: 13px; letter-spacing: 3px; padding: 5px 12px; border-radius: 5px;
     white-space: nowrap;
 }
-.header-title { font-family: Georgia, serif; font-size: 20px; font-weight: 700; letter-spacing: 2px; }
+.header-title { font-family: var(--font); font-size: 20px; font-weight: 700; letter-spacing: 2px; }
 .header-title span { color: var(--accent); }
 
 .header-center { text-align: center; }
 .live-clock {
-    font-family: Georgia, serif; font-size: 28px; font-weight: 700;
+    font-family: var(--font); font-size: 28px; font-weight: 700;
     letter-spacing: 4px; color: #fff; line-height: 1;
 }
-.live-date { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
+.live-date { font-size: 11px; color: var(--muted); letter-spacing: 2px; text-transform: uppercase; margin-top: 2px; }
 
 .header-right { display: flex; align-items: center; gap: 14px; }
 .user-badge {
@@ -99,16 +126,16 @@ button, input, select, textarea { font-family: inherit; }
     width: 34px; height: 34px; border-radius: 50%;
     background: linear-gradient(135deg, var(--accent), var(--accent-deep));
     display: flex; align-items: center; justify-content: center;
-    font-family: Georgia, serif; font-weight: 700; font-size: 14px;
+    font-family: var(--font); font-weight: 700; font-size: 14px;
 }
 .user-info { line-height: 1.3; }
 .user-name { font-size: 12px; font-weight: 700; color: #fff; }
-.user-unit { font-size: 10px; color: var(--accent); letter-spacing: 1px; }
+.user-unit { font-size: 11px; color: var(--accent); letter-spacing: 1px; }
 .logout-btn {
     background: linear-gradient(45deg, #5b6673, #3a4451);
     border: 1px solid var(--grey); color: #fff;
     border-radius: 6px; padding: 8px 14px;
-    font-family: Georgia, serif;
+    font-family: var(--font);
     font-size: 11px; font-weight: 700; letter-spacing: 1px; cursor: pointer;
     text-transform: uppercase; transition: all 0.2s;
 }
@@ -132,8 +159,8 @@ button, input, select, textarea { font-family: inherit; }
 }
 .stat-icon { font-size: 18px; }
 .stat-info { line-height: 1.2; }
-.stat-num { font-family: Georgia, serif; font-size: 22px; font-weight: 700; line-height: 1; }
-.stat-lbl { font-size: 9px; text-transform: uppercase; letter-spacing: 2px; color: var(--muted); }
+.stat-num { font-family: var(--font); font-size: 22px; font-weight: 700; line-height: 1; }
+.stat-lbl { font-size: 10px; font-weight: 600; text-transform: uppercase; letter-spacing: 1px; color: var(--muted); }
 .stat-num.red    { color: var(--red); }
 .stat-num.blue   { color: var(--accent-blue); }
 .stat-num.green  { color: var(--green); }
@@ -164,12 +191,12 @@ button, input, select, textarea { font-family: inherit; }
     display: flex; align-items: center; justify-content: space-between;
 }
 .panel-hdr-title {
-    font-family: Georgia, serif; font-weight: 700;
+    font-family: var(--font); font-weight: 700;
     font-size: 12px; letter-spacing: 2px; text-transform: uppercase; color: var(--accent);
     display: flex; align-items: center; gap: 6px;
 }
 .panel-hdr-count {
-    font-size: 10px; background: rgba(255,90,54,0.15); color: var(--accent);
+    font-size: 11px; background: rgba(255,90,54,0.15); color: var(--accent);
     padding: 2px 8px; border-radius: 10px; font-weight: 700;
 }
 .panel-body { flex: 1; overflow-y: auto; padding: 8px; }
@@ -188,24 +215,24 @@ button, input, select, textarea { font-family: inherit; }
     content: ''; position: absolute; inset: 0;
     background: linear-gradient(135deg, transparent, rgba(255,255,255,0.01));
 }
-.unit-card:hover { border-color: var(--accent); transform: translateX(2px); }
+.unit-card:hover { border-color: var(--accent); }
 .unit-card.responding { border-left-color: var(--amber); }
 .unit-card.arrived    { border-left-color: var(--red); }
 .unit-card.standby    { border-left-color: var(--green); }
 .unit-card.offline    { border-left-color: #444; opacity: 0.55; }
 
 .uc-top { display: flex; justify-content: space-between; align-items: center; }
-.uc-id  { font-family: Georgia, serif; font-size: 15px; font-weight: 700; color: #fff; }
+.uc-id  { font-family: var(--font); font-size: 15px; font-weight: 700; color: #fff; }
 .uc-badge {
-    font-size: 8px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
+    font-size: 10px; font-weight: 700; padding: 2px 8px; border-radius: 10px;
     text-transform: uppercase; letter-spacing: 1px;
 }
 .badge-standby    { background: rgba(39,174,96,0.15);  color: var(--green); }
 .badge-responding { background: rgba(240,136,62,0.15); color: var(--amber); }
 .badge-arrived    { background: rgba(255,77,77,0.15);  color: var(--red); }
 .badge-offline    { background: rgba(74,85,104,0.2);   color: #666; }
-.uc-type { font-size: 10px; color: var(--muted); margin-top: 3px; }
-.uc-gps  { font-size: 9px; color: #6f8fb0; margin-top: 2px; font-family: 'Courier New', monospace; }
+.uc-type { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.uc-gps  { font-size: 11px; color: #8fb0d0; margin-top: 2px; font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace; }
 
 /* ── PULSE INDICATOR ── */
 .pulse-dot {
@@ -235,14 +262,14 @@ button, input, select, textarea { font-family: inherit; }
 }
 .incident-item:hover { border-color: rgba(255,204,0,0.4); }
 .inc-top { display: flex; justify-content: space-between; align-items: flex-start; }
-.inc-type { font-family: Georgia, serif; font-size: 13px; font-weight: 700; }
+.inc-type { font-family: var(--font); font-size: 13px; font-weight: 700; }
 .inc-type.fire { color: #ff6633; }
 .inc-type.med  { color: var(--accent-blue); }
-.inc-id   { font-size: 9px; color: var(--muted); font-family: 'Courier New', monospace; }
-.inc-addr { font-size: 10px; color: var(--text); margin-top: 4px; line-height: 1.4; }
+.inc-id   { font-size: 10px; color: var(--muted); font-family: 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace; }
+.inc-addr { font-size: 11px; color: var(--text); margin-top: 4px; line-height: 1.4; }
 .inc-meta { display: flex; gap: 10px; margin-top: 6px; flex-wrap: wrap; }
 .inc-tag  {
-    font-size: 9px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
+    font-size: 10px; padding: 2px 8px; border-radius: 10px; font-weight: 600;
     background: rgba(255,204,0,0.1); color: var(--yellow); border: 1px solid rgba(255,204,0,0.2);
 }
 
@@ -251,17 +278,17 @@ button, input, select, textarea { font-family: inherit; }
 .log-tab {
     flex: 1; padding: 5px 4px; border-radius: 4px; cursor: pointer;
     background: var(--card); border: 1px solid var(--border); color: var(--muted);
-    font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; transition: all .15s;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; transition: all .15s;
 }
 .log-tab span { opacity: .8; margin-left: 2px; }
 .log-tab:hover { color: #fff; }
 .log-tab.active { color: #fff; border-color: var(--accent); background: rgba(255,90,54,0.12); }
 .incident-item.resolved { opacity: .78; border-left: 3px solid #2e9e6b; }
 .incident-item.active   { border-left: 3px solid var(--amber); }
-.log-state { font-size: 8px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
+.log-state { font-size: 10px; font-weight: 700; padding: 2px 7px; border-radius: 10px; letter-spacing: 1px; text-transform: uppercase; white-space: nowrap; }
 .log-state.is-active   { background: rgba(240,136,62,0.15); color: var(--amber); }
 .log-state.is-resolved { background: rgba(46,158,107,0.15); color: #3bb87e; }
-.inc-times { font-size: 9px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
+.inc-times { font-size: 10px; color: var(--muted); margin-top: 5px; line-height: 1.45; }
 
 /* ── STATION ITEMS ── */
 .station-item {
@@ -269,11 +296,11 @@ button, input, select, textarea { font-family: inherit; }
     border-left: 4px solid transparent;
     padding: 10px 12px; margin-bottom: 6px; cursor: pointer; transition: all 0.15s;
 }
-.station-item:hover { border-color: rgba(255,90,54,0.4); transform: translateX(2px); }
-.stn-name { font-size: 11px; font-weight: 700; color: #fff; line-height: 1.3; }
-.stn-meta { font-size: 9px; color: var(--muted); margin-top: 3px; }
+.station-item:hover { border-color: rgba(255,90,54,0.4); }
+.stn-name { font-size: 12px; font-weight: 700; color: #fff; line-height: 1.3; }
+.stn-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
 .stn-type-badge {
-    display: inline-block; font-size: 8px; font-weight: 700; padding: 1px 6px;
+    display: inline-block; font-size: 10px; font-weight: 700; padding: 1px 6px;
     border-radius: 3px; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 3px;
 }
 /* BFP = red-orange, Volunteer = blue (same as admin dashboard) */
@@ -288,19 +315,18 @@ button, input, select, textarea { font-family: inherit; }
 .stn-amb { background: rgba(46,158,107,0.18); color: #3bb87e; }
 .st-amb-item { border-left-color: #2e9e6b; }
 .st-amb { border: 3px solid #2e9e6b; box-shadow: 0 0 6px rgba(46,158,107,.8); }
-.stn-approx { font-size: 8px; font-weight: 700; color: #ffcc00; letter-spacing: 0.5px; }
+.stn-approx { font-size: 10px; font-weight: 700; color: #ffcc00; letter-spacing: 0.5px; }
 
 /* ── MAP OVERLAYS ── */
 .map-overlay-counter {
     background: rgba(2,16,29,0.92); border: 1px solid var(--accent-blue);
     border-radius: 8px; padding: 14px 18px; min-width: 180px;
-    backdrop-filter: blur(8px);
     box-shadow: 0 8px 32px rgba(0,0,0,0.5), inset 0 1px 0 rgba(255,255,255,0.04);
 }
-.ov-title { font-size: 9px; letter-spacing: 2px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
+.ov-title { font-size: 10px; font-weight: 600; letter-spacing: 1px; color: var(--muted); text-transform: uppercase; margin-bottom: 10px; }
 .ov-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; }
 .ov-label { font-size: 11px; color: var(--text); }
-.ov-val   { font-family: Georgia, serif; font-size: 20px; font-weight: 700; }
+.ov-val   { font-family: var(--font); font-size: 20px; font-weight: 700; }
 .ov-divider { border: 0; border-top: 1px solid var(--border); margin: 10px 0; }
 
 /* ── HIDE / SHOW CONTROLS ── */
@@ -316,7 +342,7 @@ button, input, select, textarea { font-family: inherit; }
 .right-panel { transition: width 0.25s ease; }
 .right-panel.collapsed { width: 0; border-left: none; }
 .panel-toggle {
-    position: absolute; right: 0; top: 50%; transform: translateY(-50%); z-index: 1000;
+    position: absolute; right: 0; top: calc(50% - 32px); z-index: 1000;
     width: 22px; height: 64px; border: none; cursor: pointer; color: #fff; font-size: 13px;
     border-radius: 6px 0 0 6px; background: linear-gradient(45deg, #ff5a36, #c73e1d);
     box-shadow: -2px 0 10px rgba(0,0,0,0.4); transition: filter .2s;
@@ -329,7 +355,7 @@ button, input, select, textarea { font-family: inherit; }
     border: 1px solid rgba(255,90,54,0.2); border-radius: 8px;
     padding: 14px; margin: 8px;
 }
-.mv-title { font-family: Georgia, serif; font-size: 11px; font-weight: 700; letter-spacing: 2px; color: var(--accent); margin-bottom: 10px; }
+.mv-title { font-family: var(--font); font-size: 11px; font-weight: 700; letter-spacing: 1px; color: var(--accent); margin-bottom: 10px; }
 .mv-row { display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; font-size: 11px; }
 .mv-key { color: var(--muted); }
 .mv-val { color: #fff; font-weight: 600; }
@@ -338,7 +364,7 @@ button, input, select, textarea { font-family: inherit; }
 }
 .mv-status-btn {
     flex: 1; padding: 7px 4px; border-radius: 4px; border: 1px solid var(--border);
-    font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase;
     background: var(--card); color: var(--muted); cursor: default; text-align: center;
 }
 .mv-status-btn.active-standby    { border-color: var(--green); color: var(--green); background: rgba(39,174,96,0.1); }
@@ -349,7 +375,7 @@ button, input, select, textarea { font-family: inherit; }
 .blynk-status {
     position: absolute; bottom: 10px; left: 10px; z-index: 500;
     background: rgba(2,16,29,0.92); border: 1px solid var(--accent-blue);
-    border-radius: 4px; padding: 5px 12px; font-size: 10px; color: var(--muted);
+    border-radius: 4px; padding: 5px 12px; font-size: 11px; color: var(--muted);
     display: flex; align-items: center; gap: 6px;
 }
 .b-dot { width: 6px; height: 6px; border-radius: 50%; background: #444; }
@@ -357,13 +383,13 @@ button, input, select, textarea { font-family: inherit; }
 .b-dot.off { background: var(--red); }
 
 /* ── EMPTY STATE ── */
-.empty-state { text-align: center; padding: 24px 12px; color: var(--muted); font-size: 11px; }
-.empty-state-icon { font-size: 28px; margin-bottom: 8px; opacity: 0.4; }
+.empty-state { text-align: center; padding: 24px 12px; color: var(--muted); font-size: 12px; }
+.empty-state-icon { font-size: 30px; margin-bottom: 8px; opacity: 0.5; line-height: 1; }
 
 /* ── LEAFLET POPUP STYLE ── */
-.leaflet-container, .leaflet-popup-content { font-family: 'Open Sans', Tahoma, Geneva, Verdana, sans-serif; }
+.leaflet-container, .leaflet-popup-content { font-family: var(--font); }
 .leaflet-popup-content-wrapper { background: #02101D !important; border: 1px solid #ff5a3644 !important; color: #c9d1d9 !important; border-radius: 8px !important; }
-.leaflet-popup-content-wrapper b { font-family: Georgia, serif; letter-spacing: 0.3px; }
+.leaflet-popup-content-wrapper b { font-family: var(--font); letter-spacing: 0.3px; }
 .leaflet-popup-tip-container .leaflet-popup-tip { background: #02101D !important; }
 .status-select { width: 100%; padding: 5px; margin-top: 5px; background: #fff; color: #000; border: 1px solid #ccc; font-size: 12px; }
 .st-bfp-popup .leaflet-popup-content-wrapper { border: 2px solid #ff5a36 !important; }
@@ -390,15 +416,16 @@ button, input, select, textarea { font-family: inherit; }
 .alert-pop.fire { border-left-color: #ff5a36; }
 .alert-pop.med  { border-left-color: #4da3ff; }
 .alert-pop.out  { opacity: 0; transform: translateX(-120%); transition: all 0.3s ease; }
-@keyframes alertIn { from { transform: translateX(-120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-.alert-title { font-family: Georgia, serif; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+@keyframes alertIn { from { transform: translateX(-120%); opacity: 0; } to { transform: none; opacity: 1; } }
+@keyframes bannerIn { from { opacity: 0; margin-top: -12px; } to { opacity: 1; margin-top: 0; } }
+.alert-title { font-family: var(--font); font-size: 13px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
 .alert-title .a-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: #ff5a36; animation: pulse-red 1.2s infinite; }
 .alert-pop.med .a-dot { background: #4da3ff; }
-.alert-addr { font-size: 10px; color: var(--text); margin-top: 3px; line-height: 1.35; }
-.alert-time { font-size: 9px; color: var(--muted); margin-top: 3px; }
+.alert-addr { font-size: 11px; color: var(--text); margin-top: 3px; line-height: 1.35; }
+.alert-time { font-size: 10px; color: var(--muted); margin-top: 3px; }
 .alert-view {
     margin-top: 6px; border: none; border-radius: 4px; padding: 4px 10px; cursor: pointer;
-    font-size: 9px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #fff;
     background: linear-gradient(45deg, #ff5a36, #c73e1d);
 }
 .alert-pop.med .alert-view { background: linear-gradient(45deg, #4da3ff, #1f5fa8); }
@@ -425,9 +452,9 @@ button, input, select, textarea { font-family: inherit; }
 }
 .toast.fire { border-left-color: var(--red); }
 .toast.med  { border-left-color: var(--accent); }
-@keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
-.toast-title { font-family: Georgia, serif; font-size: 14px; font-weight: 700; margin-bottom: 3px; }
-.toast-body  { font-size: 10px; color: var(--muted); }
+@keyframes toastIn { from { transform: translateX(120%); opacity: 0; } to { transform: none; opacity: 1; } }
+.toast-title { font-family: var(--font); font-size: 14px; font-weight: 700; margin-bottom: 3px; }
+.toast-body  { font-size: 12px; color: var(--muted); }
 
 /* ── MOBILE GPS SHARING (phones only) ── */
 .gps-modal-backdrop {
@@ -443,7 +470,7 @@ button, input, select, textarea { font-family: inherit; }
     animation: gpsUp 0.3s ease;
 }
 @keyframes gpsUp { from { transform: translateY(40px); opacity: 0; } to { transform: none; opacity: 1; } }
-.gps-modal h3 { font-family: Georgia, serif; font-size: 17px; color: #fff; margin-bottom: 8px; }
+.gps-modal h3 { font-family: var(--font); font-size: 17px; color: #fff; margin-bottom: 8px; }
 .gps-modal p  { font-size: 13px; line-height: 1.55; color: var(--text); margin-bottom: 10px; }
 .gps-modal ul { margin: 0 0 14px 18px; font-size: 12px; line-height: 1.6; color: var(--muted); }
 .gps-modal .gps-error {
@@ -492,76 +519,90 @@ body.gps-mobile .blynk-status { bottom: 84px; }
     .header { height: 44px; padding: 0 10px; }
     .header-left { gap: 8px; }
     .header-left img { height: 26px !important; }
-    .logo-badge { font-size: 10px; letter-spacing: 1.5px; padding: 3px 7px; }
-    .header-title { font-size: 13px; letter-spacing: 1px; }
-    .live-clock { font-size: 17px; letter-spacing: 2px; }
+    .logo-badge { font-size: 11px; letter-spacing: 1px; padding: 3px 7px; }
+    .header-title { font-size: 14px; letter-spacing: 0.5px; }
+    .live-clock { font-size: 18px; letter-spacing: 1px; }
     .live-date { display: none; }
     .header-right { gap: 8px; }
     .user-badge { padding: 3px 8px; gap: 6px; border-radius: 6px; }
     .user-avatar { width: 24px; height: 24px; font-size: 10px; }
-    .user-name { font-size: 10px; max-width: 110px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .user-name { font-size: 12px; max-width: 120px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .user-unit { display: none; }
-    .logout-btn { padding: 5px 9px; font-size: 9px; }
-    #sync-banner { padding: 4px 10px !important; font-size: 10px !important; }
+    .logout-btn { padding: 5px 9px; font-size: 11px; }
+    #sync-banner { padding: 4px 10px !important; font-size: 11px !important; }
 
     /* Status ribbon: thin strip */
-    .status-ribbon { height: 34px; }
+    .status-ribbon { height: 38px; }
     .stat-pill { padding: 0 8px; gap: 6px; }
-    .stat-icon { font-size: 13px; }
-    .stat-num { font-size: 15px; }
-    .stat-lbl { font-size: 7px; letter-spacing: 1px; white-space: nowrap; }
+    .stat-icon { font-size: 16px; }
+    .stat-num { font-size: 16px; }
+    .stat-lbl { font-size: 9px; letter-spacing: 0.3px; white-space: nowrap; }
 
     /* Map overlay: compact */
     .map-overlay-counter { padding: 7px 10px; min-width: 0; border-radius: 6px; }
-    .ov-title { font-size: 8px; letter-spacing: 1px; margin-bottom: 4px; }
+    .ov-title { font-size: 10px; letter-spacing: 0.5px; margin-bottom: 4px; }
     .ov-body { margin-top: 5px; }
     .ov-row { margin-bottom: 2px; gap: 10px; }
-    .ov-label { font-size: 10px; }
-    .ov-val { font-size: 14px; }
+    .ov-label { font-size: 11px; }
+    .ov-val { font-size: 15px; }
     .ov-divider { margin: 5px 0; }
     .ov-toggle { width: 18px; height: 18px; font-size: 12px; }
     .leaflet-control-zoom a { width: 26px !important; height: 26px !important; line-height: 26px !important; }
     .panel-toggle { height: 44px; width: 18px; font-size: 11px; }
-    .blynk-status { bottom: 6px; left: 6px; padding: 3px 8px; font-size: 9px; }
+    .blynk-status { bottom: 6px; left: 6px; padding: 3px 8px; font-size: 10px; }
 
     /* Right panel: narrower, one section at a time via tabs */
-    .right-panel { width: 250px; }
+    .right-panel { width: 260px; }
     .rp-tabs { display: flex; gap: 3px; padding: 5px 6px; flex-shrink: 0; border-bottom: 1px solid var(--border); }
     .rp-tab {
         flex: 1; min-height: 30px; border-radius: 4px; cursor: pointer;
         background: var(--card); border: 1px solid var(--border); color: var(--muted);
-        font-size: 9px; font-weight: 700; letter-spacing: .8px; text-transform: uppercase;
+        font-size: 11px; font-weight: 700; letter-spacing: .3px; text-transform: uppercase;
         display: flex; align-items: center; justify-content: center; gap: 4px;
     }
-    .rp-tab b { font-size: 8px; background: rgba(255,90,54,.18); color: var(--accent); border-radius: 8px; padding: 0 5px; line-height: 14px; }
+    .rp-tab b { font-size: 10px; background: rgba(255,90,54,.18); color: var(--accent); border-radius: 8px; padding: 0 5px; line-height: 14px; }
     .rp-tab.on { color: #fff; border-color: var(--accent); background: rgba(255,90,54,.14); }
     .right-panel[data-pane] .panel-section:not(.pane-on) { display: none !important; }
     .right-panel[data-pane] .panel-section.pane-on { height: auto !important; flex: 1 1 auto; min-height: 0; }
     .right-panel[data-pane] #my-vehicle-section.pane-on { flex: 0 0 auto; }
     .panel-hdr { padding: 6px 10px; }
-    .panel-hdr-title { font-size: 10px; letter-spacing: 1.5px; }
+    .panel-hdr-title { font-size: 11px; letter-spacing: 0.5px; }
     .panel-body { padding: 6px; }
 
     /* Cards */
     .unit-card, .incident-item, .station-item { padding: 7px 9px; margin-bottom: 5px; }
-    .uc-id { font-size: 13px; }
+    .uc-id { font-size: 14px; }
     .my-vehicle-panel { padding: 9px; margin: 6px; }
     .mv-title { margin-bottom: 6px; }
-    .mv-row { margin-bottom: 3px; font-size: 10px; }
-    .mv-status-btn { padding: 5px 2px; font-size: 8px; }
+    .mv-row { margin-bottom: 3px; font-size: 11px; }
+    .mv-status-btn { padding: 5px 2px; font-size: 10px; letter-spacing: 0; }
     .log-tabs { padding: 5px 6px 0; }
-    .log-tab { padding: 4px 2px; font-size: 8px; letter-spacing: .5px; }
+    .log-tab { padding: 4px 2px; font-size: 10px; letter-spacing: 0; }
 
     /* Notifications: smaller and out of the header's way */
     .alert-container { top: 86px; left: 8px; max-height: calc(100vh - 100px); }
     .alert-pop { width: 220px; padding: 7px 26px 7px 9px; }
-    .alert-title { font-size: 11px; }
+    .alert-title { font-size: 12px; }
     .toast-container { top: 50px; right: 8px; }
     .toast { min-width: 0; width: 230px; padding: 8px 12px; }
-    .toast-title { font-size: 12px; }
+    .toast-title { font-size: 13px; }
 
     /* Popups */
     .leaflet-popup-content { margin: 10px 12px; font-size: 12px; }
+
+    /* Dispatch banner sits at the bottom of the map so it never covers alerts or the emergency marker */
+    html .resp-banner { top: auto; bottom: 34px; left: 8px; right: 310px; width: auto; margin: 0; padding: 8px 34px 8px 12px; }
+    html body.panel-collapsed .resp-banner { right: 50px; }
+    html body.gps-mobile .resp-banner { bottom: 84px; }
+    html .rb-addr { font-size: 12px; }
+    html .rb-nav { margin-top: 6px; min-height: 30px; }
+    /* emergency overlay fits the 480px-tall screen */
+    html .emg-box { padding: 14px 16px; }
+    html .emg-siren { font-size: 40px; }
+    html .emg-title { font-size: 24px; }
+    html .emg-sub { font-size: 16px; }
+    html .emg-unit { margin-top: 8px; }
+    html .emg-actions { margin-top: 10px; }
 }
 
 /* ── EMERGENCY DISPATCH ALERT (admin called this unit) ── */
@@ -569,10 +610,10 @@ body.gps-mobile .blynk-status { bottom: 84px; }
 .emg-overlay.show { display: flex; }
 @keyframes emgFlash { from { background: rgba(110,0,0,0.55); } to { background: rgba(255,30,30,0.6); } }
 .emg-box { width: 100%; max-width: 520px; text-align: center; background: #02101D; border: 3px solid #ff4d4d; border-radius: 14px; padding: 24px 22px; box-shadow: 0 0 60px rgba(255,60,60,0.7); }
-.emg-siren { font-size: 54px; animation: emgShake 0.4s infinite; display: inline-block; }
+.emg-siren { font-size: 54px; line-height: 1; color: #ff4d4d; animation: emgShake 0.4s infinite; display: inline-block; }
 @keyframes emgShake { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
-.emg-title { font-family: Georgia, serif; font-size: 30px; font-weight: 700; letter-spacing: 2px; color: #ff4d4d; line-height: 1.15; margin-top: 4px; }
-.emg-sub { font-family: Georgia, serif; font-size: 20px; font-weight: 700; letter-spacing: 3px; color: #fff; margin-top: 6px; }
+.emg-title { font-family: var(--font); font-size: 30px; font-weight: 700; letter-spacing: 2px; color: #ff4d4d; line-height: 1.15; margin-top: 4px; }
+.emg-sub { font-family: var(--font); font-size: 20px; font-weight: 700; letter-spacing: 3px; color: #fff; margin-top: 6px; }
 .emg-unit { font-size: 15px; font-weight: 700; color: #ffcc00; margin-top: 14px; }
 .emg-loc { font-size: 13px; line-height: 1.5; color: #c9d1d9; margin-top: 8px; }
 .emg-loc small { color: #8b96a3; display: block; margin-top: 2px; }
@@ -583,24 +624,47 @@ body.gps-mobile .blynk-status { bottom: 84px; }
 .emg-btn:hover { filter: brightness(1.15); }
 
 /* ── RESPONDING / DISPATCHED BANNER ── */
-.resp-banner { position: fixed; top: 126px; left: 50%; transform: translateX(-50%); z-index: 9500; width: min(560px, 92vw); display: none;
+.resp-banner { position: fixed; top: 126px; left: 0; right: 0; margin: 0 auto; z-index: 9500; width: min(560px, 92vw); display: none;
     background: rgba(2,16,29,0.96); border: 1px solid var(--amber); border-left: 5px solid var(--amber); border-radius: 8px; padding: 10px 38px 10px 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.6); }
-.resp-banner.show { display: block; animation: alertIn 0.3s ease; }
+.resp-banner.show { display: block; animation: bannerIn 0.3s ease; }
 .resp-banner.dispatched { border-color: #ff4d4d; border-left-color: #ff4d4d; }
 .resp-banner.arrived { border-color: var(--green); border-left-color: var(--green); }
-.rb-title { font-family: Georgia, serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
+.rb-title { font-family: var(--font); font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
 .rb-addr { font-size: 13px; color: #fff; margin-top: 3px; line-height: 1.35; font-weight: 600; }
-.rb-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
-.rb-nav { display: inline-block; margin-top: 6px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 4px; background: linear-gradient(45deg, #3d6fa8, #0a1f3d); }
+.rb-meta { font-size: 12px; color: var(--muted); margin-top: 3px; }
+.rb-nav { display: inline-flex; align-items: center; gap: 6px; margin-top: 8px; min-height: 34px; font-size: 11px; font-weight: 700; letter-spacing: 0.5px; text-transform: uppercase; color: #fff; text-decoration: none; padding: 0 12px; border: none; border-radius: 4px; cursor: pointer; background: linear-gradient(45deg, #3d6fa8, #0a1f3d); }
+.rb-nav:hover { filter: brightness(1.15); }
 .rb-close { position: absolute; top: 5px; right: 8px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; }
 .rb-close:hover { color: #ff4d4d; }
 
 /* ── ENABLE-SOUND CHIP (browsers block audio until the page is tapped once) ── */
-.sound-chip { position: fixed; left: 10px; bottom: 44px; z-index: 9400; display: none; border: 1px solid var(--amber); background: rgba(2,16,29,0.95); color: #ffcc99; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+.sound-chip { position: fixed; left: 10px; bottom: 44px; z-index: 9400; display: none; align-items: center; gap: 6px; border: 1px solid var(--amber); background: rgba(2,16,29,0.95); color: #ffcc99; font-size: 12px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
 body.gps-mobile .sound-chip { bottom: 130px; }
 </style>
 </head>
 <body>
+
+<!-- ICON SPRITE: crisp SVG icons that render the same on every device (no emoji font needed) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="9" width="12" height="7.5" rx="1"/><path d="M13.5 11.5h4l3 3.5v1.5h-7"/><circle cx="6" cy="17.5" r="2" fill="currentColor"/><circle cx="17" cy="17.5" r="2" fill="currentColor"/><path d="M2.5 6.5l10-2.5M5 6v2.5M9 5v3.5"/></symbol>
+  <symbol id="i-ambulance" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="7" width="12" height="9.5" rx="1"/><path d="M13.5 10h4l3 3.5v3h-7"/><circle cx="6" cy="17.5" r="2" fill="currentColor"/><circle cx="17" cy="17.5" r="2" fill="currentColor"/><path d="M7.5 9.3v4.9M5.05 11.75h4.9"/></symbol>
+  <symbol id="i-fire" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 1.5c.6 3.3 3.2 5.2 4.8 7.6 1.3 1.9 1.9 3.6 1.9 5.4A6.7 6.7 0 0 1 12 21.2a6.7 6.7 0 0 1-6.7-6.7c0-2.3 1-4.3 2.7-6 .2 1.9 1 3.2 2.3 3.8-.4-3.6.4-7 1.7-10.8zm.2 11.2c-1.6 1.4-2.6 2.9-2.6 4.5a2.4 2.4 0 0 0 4.8 0c0-1.5-.8-3-2.2-4.5z"/></symbol>
+  <symbol id="i-med" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M9 2.5h6v6.5h6.5v6H15v6.5H9V15H2.5V9H9z"/></symbol>
+  <symbol id="i-station" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9.5l9-5.5 9 5.5V21"/><path d="M2 21h20"/><path d="M9.5 21v-5.5h5V21"/><path d="M12 7.8v4.4M9.8 10h4.4"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.8-4.5h10.4L19 11"/><rect x="3" y="11" width="18" height="5.5" rx="1.5"/><circle cx="7.5" cy="18.5" r="1.5" fill="currentColor"/><circle cx="16.5" cy="18.5" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h3.5l1.5 5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 5 1.5V19a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-siren" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18v-6a6 6 0 0 1 12 0v6"/><rect x="3.5" y="18" width="17" height="3.5" rx="1"/><path d="M12 1.5v2.5M3.5 5l1.8 1.8M20.5 5l-1.8 1.8M12 10v5"/></symbol>
+  <symbol id="i-clipboard" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="3" rx="1"/><path d="M8.5 11h7M8.5 15h5"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8 5.7-5.8"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.5s-6.5-6-6.5-11.5a6.5 6.5 0 0 1 13 0c0 5.5-6.5 11.5-6.5 11.5z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-mute" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3.5 9.5H7L12 5.5v13l-5-4H3.5z"/><path d="M16 9.5l5 5M21 9.5l-5 5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M14 4h5a1 1 0 0 1 1 1v14a1 1 0 0 1-1 1h-5"/><path d="M9 8l-4 4 4 4M5 12h11"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 1.5V5M12 19v3.5M1.5 12H5M19 12h3.5"/></symbol>
+</svg>
 
 <!-- FIREBASE — Auth + Firestore (incidents shared live with admin-dashboard.html) -->
 <script type="module">
@@ -680,7 +744,7 @@ onAuthStateChanged(auth, async user => {
                 <div class="user-unit" id="user-unit">Unit: ---</div>
             </div>
         </div>
-        <button class="logout-btn" onclick="confirmLogout()">&#x2715; Logout</button>
+        <button class="logout-btn btn-ico" onclick="confirmLogout()"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg> Logout</button>
     </div>
 </header>
 
@@ -691,35 +755,35 @@ onAuthStateChanged(auth, async user => {
 <!-- STATUS RIBBON -->
 <div class="status-ribbon">
     <div class="stat-pill">
-        <div class="stat-icon">🚒</div>
+        <div class="stat-icon c-fire"><svg class="ico" aria-hidden="true"><use href="#i-truck"/></svg></div>
         <div class="stat-info">
             <div class="stat-num red" id="stat-trucks">0</div>
             <div class="stat-lbl">Firetrucks Online</div>
         </div>
     </div>
     <div class="stat-pill">
-        <div class="stat-icon">🚑</div>
+        <div class="stat-icon c-amb"><svg class="ico" aria-hidden="true"><use href="#i-ambulance"/></svg></div>
         <div class="stat-info">
             <div class="stat-num blue" id="stat-ambs">0</div>
             <div class="stat-lbl">Ambulances Online</div>
         </div>
     </div>
     <div class="stat-pill">
-        <div class="stat-icon">🔥</div>
+        <div class="stat-icon c-inc"><svg class="ico" aria-hidden="true"><use href="#i-fire"/></svg></div>
         <div class="stat-info">
             <div class="stat-num yellow" id="stat-fire">0</div>
             <div class="stat-lbl">Fire Incidents</div>
         </div>
     </div>
     <div class="stat-pill">
-        <div class="stat-icon">⚕️</div>
+        <div class="stat-icon c-med"><svg class="ico" aria-hidden="true"><use href="#i-med"/></svg></div>
         <div class="stat-info">
             <div class="stat-num yellow" id="stat-med">0</div>
             <div class="stat-lbl">Medical Incidents</div>
         </div>
     </div>
     <div class="stat-pill">
-        <div class="stat-icon">🏥</div>
+        <div class="stat-icon c-stn"><svg class="ico" aria-hidden="true"><use href="#i-station"/></svg></div>
         <div class="stat-info">
             <div class="stat-num green" id="stat-stations">0</div>
             <div class="stat-lbl">Nearby Stations</div>
@@ -732,7 +796,7 @@ onAuthStateChanged(auth, async user => {
     <!-- MAP -->
     <div style="position:relative;flex:1;height:100%;">
         <div id="map" style="width:100%;height:100%;"></div>
-        <button class="panel-toggle" id="panel-toggle" title="Hide / show side panel" onclick="togglePanel()">&#9654;</button>
+        <button class="panel-toggle" id="panel-toggle" title="Hide / show side panel" onclick="togglePanel()"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></button>
         <div class="blynk-status">
             <div class="b-dot" id="b-dot"></div>
             <span id="b-label">Connecting...</span>
@@ -745,11 +809,11 @@ onAuthStateChanged(auth, async user => {
         <!-- MY VEHICLE -->
         <div class="panel-section" id="my-vehicle-section" style="display:none;">
             <div class="panel-hdr">
-                <div class="panel-hdr-title">🚗 My Vehicle</div>
+                <div class="panel-hdr-title"><svg class="ico" aria-hidden="true"><use href="#i-car"/></svg> My Vehicle</div>
                 <div class="panel-hdr-count" id="my-unit-badge">---</div>
             </div>
             <div class="my-vehicle-panel" id="mv-panel">
-                <div class="mv-title">&#9632; UNIT STATUS</div>
+                <div class="mv-title"><span class="sq"></span>UNIT STATUS</div>
                 <div class="mv-row"><span class="mv-key">Unit ID</span><span class="mv-val" id="mv-id">---</span></div>
                 <div class="mv-row"><span class="mv-key">Type</span><span class="mv-val" id="mv-type">---</span></div>
                 <div class="mv-row"><span class="mv-key">Station</span><span class="mv-val" id="mv-station" style="font-size:10px;max-width:130px;text-align:right;">---</span></div>
@@ -787,14 +851,14 @@ onAuthStateChanged(auth, async user => {
                 <button class="log-tab"        data-filter="resolved" onclick="setLogFilter('resolved')">Resolved <span id="log-n-resolved">0</span></button>
             </div>
             <div class="panel-body" id="incident-list">
-                <div class="empty-state"><div class="empty-state-icon">📋</div>No events yet</div>
+                <div class="empty-state"><div class="empty-state-icon"><svg class="ico" aria-hidden="true"><use href="#i-clipboard"/></svg></div>No events yet</div>
             </div>
         </div>
 
         <!-- FIRE STATIONS -->
         <div class="panel-section grow">
             <div class="panel-hdr">
-                <div class="panel-hdr-title">🏥 Stations &amp; Rescue</div>
+                <div class="panel-hdr-title"><svg class="ico" aria-hidden="true"><use href="#i-station"/></svg> Stations &amp; Rescue</div>
                 <div class="panel-hdr-count" id="station-count-badge">0</div>
             </div>
             <div class="panel-body" id="station-list"></div>
@@ -811,7 +875,7 @@ onAuthStateChanged(auth, async user => {
 <!-- MOBILE GPS: consent prompt (shown before the browser's own location prompt) -->
 <div class="gps-modal-backdrop" id="gps-modal" role="dialog" aria-modal="true" aria-labelledby="gps-modal-title">
     <div class="gps-modal">
-        <h3 id="gps-modal-title">📍 Share your live location?</h3>
+        <h3 id="gps-modal-title"><svg class="ico c-fire" aria-hidden="true"><use href="#i-pin"/></svg> Share your live location?</h3>
         <p>T.U.L.O.N.G. can use this phone's GPS so the admin dashboard can see where you are on the map during response.</p>
         <ul>
             <li>Only shared while this page is open and sharing is on.</li>
@@ -839,31 +903,38 @@ onAuthStateChanged(auth, async user => {
 <!-- EMERGENCY DISPATCH ALERT -->
 <div class="emg-overlay" id="emg-overlay" role="alertdialog" aria-live="assertive" aria-labelledby="emg-title">
     <div class="emg-box">
-        <div class="emg-siren">&#128680;</div>
+        <div class="emg-siren"><svg class="ico" aria-hidden="true"><use href="#i-siren"/></svg></div>
         <div class="emg-title" id="emg-title">EMERGENCY! EMERGENCY!</div>
         <div class="emg-sub">NEED ASSISTANCE</div>
         <div class="emg-unit" id="emg-unit"></div>
         <div class="emg-loc" id="emg-loc"></div>
         <div class="emg-hint" id="emg-hint">Press RESPOND on your device to accept the call</div>
         <div class="emg-actions">
-            <button class="emg-btn" id="emg-silence" type="button">&#128263; Silence</button>
-            <button class="emg-btn primary" id="emg-view" type="button">&#128205; View location</button>
+            <button class="emg-btn btn-ico" id="emg-silence" type="button"><svg class="ico" aria-hidden="true"><use href="#i-mute"/></svg> Silence</button>
+            <button class="emg-btn primary btn-ico" id="emg-view" type="button"><svg class="ico" aria-hidden="true"><use href="#i-locate"/></svg> View location</button>
         </div>
     </div>
 </div>
 
 <!-- RESPONDING / DISPATCHED BANNER -->
 <div class="resp-banner" id="resp-banner">
-    <button class="rb-close" id="rb-close" title="Hide" type="button">&times;</button>
+    <button class="rb-close" id="rb-close" title="Hide" type="button"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
     <div class="rb-title" id="rb-title"></div>
     <div class="rb-addr" id="rb-addr"></div>
     <div class="rb-meta" id="rb-meta"></div>
-    <a class="rb-nav" id="rb-nav" target="_blank" rel="noopener" href="#">Open in Google Maps</a>
+    <button class="rb-nav" id="rb-nav" type="button"><svg class="ico" aria-hidden="true"><use href="#i-locate"/></svg> Show on map</button>
 </div>
 
-<button class="sound-chip" id="sound-chip" type="button">&#128263; Tap to enable emergency sound</button>
+<button class="sound-chip" id="sound-chip" type="button"><svg class="ico" aria-hidden="true"><use href="#i-mute"/></svg> Tap to enable emergency sound</button>
 
 <script>
+// ══════════════════════════════════════════════════════
+// ICONS — inline SVG from the sprite at the top of <body>
+// ══════════════════════════════════════════════════════
+function ico(name, cls) { return `<svg class="ico${cls ? ' ' + cls : ''}" aria-hidden="true"><use href="#i-${name}"/></svg>`; }
+const TYPE_ICON = t => t === 'firetruck' ? ico('truck', 'c-fire') : ico('ambulance', 'c-med');
+const TYPE_TEXT = t => t === 'firetruck' ? 'Firetruck' : 'Ambulance';
+
 // ══════════════════════════════════════════════════════
 // CLOCK
 // ══════════════════════════════════════════════════════
@@ -894,6 +965,33 @@ let prevStates   = {};
 const map = L.map('map', { zoomControl: false }).setView([10.3157, 123.8854], 13);
 L.control.zoom({ position: 'bottomright' }).addTo(map);
 
+// Slide the map to a location (used by every "View" / "Show on map" button — never leaves the dashboard).
+// If it's an incident, its popup opens once the slide finishes.
+function slideTo(lat, lng, incidentId, zoom) {
+    lat = parseFloat(lat); lng = parseFloat(lng);
+    if (!isFinite(lat) || !isFinite(lng)) return;
+    map.closePopup();
+    map.stop();
+    const z = zoom || Math.max(map.getZoom(), 17);
+    // keep the spot clear of the dispatch banner: centre it in the part of the map the banner doesn't cover
+    const H = map.getSize().y, mr = map.getContainer().getBoundingClientRect();
+    const b = document.getElementById('resp-banner');
+    let top = 0, bottom = 0;
+    if (b && b.classList.contains('show')) {
+        const br = b.getBoundingClientRect();
+        if (br.top - mr.top < H / 2) top = Math.max(0, br.bottom - mr.top);
+        else bottom = Math.max(0, mr.bottom - br.top);
+    }
+    const centre = map.unproject(map.project([lat, lng], z).subtract([0, (top - bottom) / 2]), z);
+    // open the incident popup only when there is room for it beside the banner
+    const roomForPopup = (H - top - bottom) >= 300;
+    const done = () => { if (incidentId && incidentMarkers[incidentId] && roomForPopup) window.updatePopup(incidentId); };
+    if (map.getCenter().distanceTo(centre) < 5 && map.getZoom() === z) { done(); return; }
+    map.once('moveend', done);
+    map.flyTo(centre, z, { duration: 1.2 });
+}
+window.slideTo = slideTo;
+
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
 }).addTo(map);
@@ -912,12 +1010,12 @@ mapOverlay.update = function(trucks=0, ambs=0, fire=0, med=0) {
         <div class="ov-head"><div class="ov-title">Live Tracking</div>
             <button class="ov-toggle" title="${overlayCollapsed?'Show':'Hide'}" onclick="toggleOverlay()">${overlayCollapsed?'+':'&minus;'}</button></div>
         <div class="ov-body" style="display:${overlayCollapsed?'none':'block'};">
-        <div class="ov-row"><span class="ov-label">🚒 Firetrucks</span><span class="ov-val" style="color:#ff4d4d;">${trucks}</span></div>
-        <div class="ov-row"><span class="ov-label">🚑 Ambulances</span><span class="ov-val" style="color:#3d6fa8;">${ambs}</span></div>
+        <div class="ov-row"><span class="ov-label">${ico('truck','c-fire')} Firetrucks</span><span class="ov-val" style="color:#ff4d4d;">${trucks}</span></div>
+        <div class="ov-row"><span class="ov-label">${ico('ambulance','c-med')} Ambulances</span><span class="ov-val" style="color:#3d6fa8;">${ambs}</span></div>
         <hr class="ov-divider"/>
         <div class="ov-title">Active Incidents</div>
-        <div class="ov-row"><span class="ov-label">🔥 Fire</span><span class="ov-val" style="color:#ffcc00;">${fire}</span></div>
-        <div class="ov-row"><span class="ov-label">⚕️ Medical</span><span class="ov-val" style="color:#ffcc00;">${med}</span></div>
+        <div class="ov-row"><span class="ov-label">${ico('fire','c-fire')} Fire</span><span class="ov-val" style="color:#ffcc00;">${fire}</span></div>
+        <div class="ov-row"><span class="ov-label">${ico('med','c-med')} Medical</span><span class="ov-val" style="color:#ffcc00;">${med}</span></div>
         </div>`;
 };
 window.toggleOverlay = function() {
@@ -995,9 +1093,9 @@ STATIONS.forEach(s => {
     const st  = ST_STYLE[s.type] || ST_STYLE.bfp;
     const num = s.number || 'N/A';
     const approxNote = s.approx ? '<br><small style="color:#ffcc00;">Approximate location — please verify</small>' : '';
-    L.marker([s.lat, s.lng], {icon: st.icon})
+    const stMarker = L.marker([s.lat, s.lng], {icon: st.icon})
      .addTo(map)
-     .bindPopup(`<div style="color:#c9d1d9"><b style="color:#fff;">${s.name}</b><br>📞 ${num}${approxNote}</div>`,
+     .bindPopup(`<div style="color:#c9d1d9"><b style="color:#fff;">${s.name}</b><br>${ico('phone')} ${num}${approxNote}</div>`,
                 {className: `st-${st.cls}-popup`});
 
     const el = document.createElement('div');
@@ -1005,8 +1103,8 @@ STATIONS.forEach(s => {
     el.innerHTML = `
         <div><span class="stn-type-badge stn-${st.cls}">${st.label}</span>${s.approx ? ' <span class="stn-approx" title="Approximate location">&asymp; approx.</span>' : ''}</div>
         <div class="stn-name">${s.name}</div>
-        <div class="stn-meta">📞 ${num}</div>`;
-    el.onclick = () => map.flyTo([s.lat, s.lng], 16);
+        <div class="stn-meta">${ico('phone')} ${num}</div>`;
+    el.onclick = () => { map.closePopup(); map.once('moveend', () => stMarker.openPopup()); map.flyTo([s.lat, s.lng], 16, { duration: 1.2 }); };
     stationListEl.appendChild(el);
 });
 document.getElementById('stat-stations').textContent = STATIONS.length;
@@ -1097,7 +1195,7 @@ function renderIncidentFromDoc(id, data) {
     const isNew = !entry;
     if (!entry) {
         entry = { marker: L.marker([data.lat, data.lng], { icon: L.divIcon({
-            html: `<div id="uicon-${id}" style="font-size:28px;text-align:center;">${data.type==='fire'?'🔥':'⚕️'}</div>`,
+            html: `<div id="uicon-${id}" class="inc-marker ${data.type==='fire'?'fire':'med'}">${ico(data.type==='fire'?'fire':'med')}</div>`,
             className: '', iconSize:[34,34], iconAnchor:[17,17]
         })}).addTo(map) };
         entry.marker.on('click', () => window.updatePopup(id));
@@ -1166,7 +1264,7 @@ function renderIncidentList() {
     const rows = all.filter(d => logFilter === 'all' || (logFilter === 'active' ? !d.isResolved : d.isResolved));
     if (rows.length === 0) {
         const msg = logFilter === 'active' ? 'No active incidents' : logFilter === 'resolved' ? 'No resolved incidents yet' : 'No events yet';
-        el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${logFilter === 'active' ? '✅' : '📋'}</div>${msg}</div>`;
+        el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${logFilter === 'active' ? ico('check', 'c-ok') : ico('clipboard')}</div>${msg}</div>`;
         return;
     }
     el.innerHTML = rows.map(d => {
@@ -1175,9 +1273,9 @@ function renderIncidentList() {
             ? `Reported ${fmtTime(d.startTime)} · Resolved ${fmtTime(d.resolvedTime)}${d.resolvedTime ? ` (${fmtDuration(d.startTime, d.resolvedTime)})` : ''}`
             : `Reported ${fmtTime(d.startTime)} · ${fmtDuration(d.startTime, new Date())} ago`;
         return `
-        <div class="incident-item ${res ? 'resolved' : 'active'}" onclick="map.flyTo([${d.lat},${d.lng}],17); window.updatePopup('${d.id}')">
+        <div class="incident-item ${res ? 'resolved' : 'active'}" onclick="slideTo(${d.lat},${d.lng},'${d.id}')">
             <div class="inc-top">
-                <div class="inc-type ${d.type}">${d.type==='fire'?'🔥 FIRE':'⚕️ MEDICAL'}</div>
+                <div class="inc-type ${d.type}">${d.type==='fire'?ico('fire')+' FIRE':ico('med')+' MEDICAL'}</div>
                 <span class="log-state ${res ? 'is-resolved' : 'is-active'}">${res ? 'Resolved' : 'Active'}</span>
             </div>
             <div class="inc-id">${escHtml(d.id)}</div>
@@ -1213,9 +1311,9 @@ window.addEventListener('firestoreReady', () => {
         const banner = document.getElementById('sync-banner');
         if (banner) {
             banner.style.display = 'block';
-            banner.textContent = err.code === 'permission-denied'
-                ? '⚠ Incident sync blocked — ask your admin to update Firestore security rules for the "incidents" collection.'
-                : `⚠ Incident sync error: ${err.message}`;
+            banner.innerHTML = ico('warn') + ' ' + escHtml(err.code === 'permission-denied'
+                ? 'Incident sync blocked — ask your admin to update Firestore security rules for the "incidents" collection.'
+                : `Incident sync error: ${err.message}`);
         }
     });
 });
@@ -1262,7 +1360,7 @@ async function fetchUnit(unit) {
 
         // Status change toast notifications
         const prev = prevStates[unit.id] || {};
-        if (prev.online === false && true) showToast('info', `${unit.id} Back Online`, `${unit.type === 'firetruck' ? '🚒' : '🚑'} Unit is now connected`);
+        if (prev.online === false && true) showToast('info', `${unit.id} Back Online`, `${TYPE_ICON(unit.type)} Unit is now connected`);
         if (responding && !prev.responding) showToast('warn', `${unit.id} Responding`, 'Unit is en route to an incident');
         if (arrived    && !prev.arrived)    showToast('fire', `${unit.id} Arrived`,    'Unit has arrived on scene');
         prevStates[unit.id] = {standby, responding, arrived, online: true};
@@ -1293,13 +1391,13 @@ function updateUnitMarker(id, s) {
                 <circle cx="22" cy="21" r="16" fill="white"/>
                 <image href="${img}" x="6" y="5" width="32" height="32"/>
             </svg>
-            <div style="background:${color};color:#fff;font-size:8px;font-weight:bold;padding:1px 5px;border-radius:3px;white-space:nowrap;margin-top:2px;display:inline-block;">${id}</div>
+            <div style="background:${color};color:#fff;font-size:10px;font-weight:bold;padding:1px 5px;border-radius:3px;white-space:nowrap;margin-top:2px;display:inline-block;">${id}</div>
         </div>`});
     const popup = `<div style="color:#c9d1d9;min-width:150px;">
         <b style="color:#fff;">${id}</b><br>
         <span style="background:${color};padding:2px 6px;border-radius:3px;font-size:11px;color:#fff;">${lbl}</span><br><br>
-        <span style="font-size:10px;color:#8b949e;">
-            ${s.type==='firetruck'?'🚒 Firetruck':'🚑 Ambulance'}<br>
+        <span style="font-size:11px;color:#8b949e;">
+            ${TYPE_ICON(s.type)} ${TYPE_TEXT(s.type)}<br>
             Lat: ${s.lat?s.lat.toFixed(6):'N/A'} &nbsp; Lon: ${s.lon?s.lon.toFixed(6):'N/A'}
         </span></div>`;
     if (unitMarkers[id]) { unitMarkers[id].setLatLng([s.lat,s.lon]); unitMarkers[id].setIcon(icon); unitMarkers[id].setPopupContent(popup); }
@@ -1310,7 +1408,7 @@ function renderUnitList() {
     const el = document.getElementById('unit-list');
     let online = 0;
     if (UNITS.length === 0) {
-        el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚑</div>No registered units yet</div>';
+        el.innerHTML = `<div class="empty-state"><div class="empty-state-icon">${ico('ambulance')}</div>No registered units yet</div>`;
         document.getElementById('unit-count-badge').textContent = 0;
         return 0;
     }
@@ -1326,7 +1424,7 @@ function renderUnitList() {
                 <span class="uc-id">${u.id}</span>
                 <span class="uc-badge ${badgeClass}">${status.toUpperCase()}</span>
             </div>
-            <div class="uc-type">${u.type==='firetruck'?'🚒 Firetruck':'🚑 Ambulance'}</div>
+            <div class="uc-type">${TYPE_ICON(u.type)} ${TYPE_TEXT(u.type)}</div>
             <div class="uc-gps">${coords}</div>
         </div>`;
     }).join('');
@@ -1354,7 +1452,7 @@ function updateMyVehiclePanel() {
     const sec = document.getElementById('my-vehicle-section');
     sec.style.display = '';
     document.getElementById('mv-id').textContent      = mv.unitId || '---';
-    document.getElementById('mv-type').textContent    = mv.type === 'firetruck' ? '🚒 Firetruck' : '🚑 Ambulance';
+    document.getElementById('mv-type').innerHTML      = `${TYPE_ICON(mv.type)} ${TYPE_TEXT(mv.type)}`;
     document.getElementById('mv-station').textContent = mv.station || '---';
     document.getElementById('my-unit-badge').textContent = mv.unitId || '---';
 
@@ -1421,18 +1519,18 @@ const notifier = (function () {
         el.dataset.inc = id;
         el.className = `alert-pop ${resolved ? 'resolved' : (isFire ? 'fire' : 'med')}`;
         const title = resolved
-            ? `✅ ${isFire ? 'FIRE' : 'MEDICAL'} INCIDENT RESOLVED`
-            : (isFire ? '🔥 FIRE EMERGENCY' : '⚕️ MEDICAL EMERGENCY');
+            ? `${ico('check')} ${isFire ? 'FIRE' : 'MEDICAL'} INCIDENT RESOLVED`
+            : (isFire ? `${ico('fire')} FIRE EMERGENCY` : `${ico('med')} MEDICAL EMERGENCY`);
         el.innerHTML = `
-            <button class="alert-close" title="Dismiss">&times;</button>
+            <button class="alert-close" title="Dismiss"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
             <div class="alert-title"><span class="a-dot"></span>${title}</div>
             <div class="alert-addr"></div>
             <div class="alert-time">${new Date().toLocaleTimeString('en-PH',{hour12:false})} · ${id}${resolved && data.status ? ' · ' + data.status : ''}</div>
-            <button class="alert-view">View on map</button>`;
+            <button class="alert-view btn-ico">${ico('locate')} View on map</button>`;
         el.querySelector('.alert-addr').textContent = data.address || 'Location pending...';
         const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 300); };
         el.querySelector('.alert-close').onclick = close;
-        el.querySelector('.alert-view').onclick = () => { map.flyTo([data.lat, data.lng], 17); close(); };
+        el.querySelector('.alert-view').onclick = () => { slideTo(data.lat, data.lng, id); close(); };
         box.prepend(el);
         while (box.children.length > 5) box.lastElementChild.remove();
         if (resolved) setTimeout(close, 15000);   // resolved notices clear themselves; new emergencies stay until dismissed
@@ -1441,7 +1539,7 @@ const notifier = (function () {
         card(id, kind, data);
         tone(kind);
         const isFire = data.type === 'fire';
-        system(kind === 'resolved' ? `Incident resolved — ${id}` : `${isFire ? '🔥 Fire' : '⚕️ Medical'} emergency — ${id}`,
+        system(kind === 'resolved' ? `Incident resolved — ${id}` : `${isFire ? 'Fire' : 'Medical'} emergency — ${id}`,
                data.address || '', `${id}-${kind}`);
     }
     function dismissFor(id, kind) {
@@ -1472,7 +1570,7 @@ window.addEventListener('userReady', () => {
     const initials = (u.name||'?').split(' ').map(w=>w[0]).join('').slice(0,2).toUpperCase();
     document.getElementById('user-avatar').textContent = initials;
     document.getElementById('user-name').textContent   = u.name || u.email || 'Operator';
-    document.getElementById('user-unit').textContent   = `Unit: ${u.unitId || '---'} | ${(u.vehicleType||'').replace('firetruck','🚒 Firetruck').replace('ambulance','🚑 Ambulance') || 'Operator'}`;
+    document.getElementById('user-unit').textContent   = `Unit: ${u.unitId || '---'} | ${(u.vehicleType||'').replace('firetruck','Firetruck').replace('ambulance','Ambulance') || 'Operator'}`;
     updateMyVehiclePanel();
     if (vehiclesFailed) useOwnVehicleOnly();
     listenDispatch();
@@ -1504,7 +1602,8 @@ window.confirmLogout = function() {
 window.togglePanel = function() {
     const panel = document.querySelector('.right-panel');
     const hidden = panel.classList.toggle('collapsed');
-    document.getElementById('panel-toggle').innerHTML = hidden ? '&#9664;' : '&#9654;';
+    document.getElementById('panel-toggle').innerHTML = hidden ? ico('chev-left') : ico('chev-right');
+    document.body.classList.toggle('panel-collapsed', hidden);
     setTimeout(() => map.invalidateSize(), 300);
 };
 
@@ -1838,7 +1937,7 @@ function targetFromIncident(id) { const i = incidentMarkers[id]; return i ? { id
 // ══════════════════════════════════════════════════════
 function myUnitId() { return (window.myVehicle && window.myVehicle.unitId) || (window.currentUser && window.currentUser.unitId) || null; }
 let myDispatch = null;        // {incidentId, lat, lng, address, type, ts}  — what the admin sent us to
-let overlayShown = false, lastAlertAt = 0, bannerMode = null, bannerTargetId = null;
+let overlayShown = false, lastAlertAt = 0, bannerMode = null, bannerTargetId = null, bannerTarget = null;
 const $ = id => document.getElementById(id);
 
 // who/where are we dispatched to? (admin dispatch first, otherwise the nearest active incident)
@@ -1862,15 +1961,16 @@ function fmtCoord(t) { return `${t.lat.toFixed(6)}, ${t.lng.toFixed(6)}`; }
 
 // ----- banner -----
 function showBanner(mode, target) {
-    bannerMode = mode; bannerTargetId = target ? target.id : null;
+    bannerMode = mode; bannerTargetId = target ? target.id : null; bannerTarget = target || null;
     const b = $('resp-banner');
     b.className = `resp-banner show ${mode}`;
-    $('rb-title').textContent = mode === 'responding' ? '🟠 Responding to' : mode === 'arrived' ? '🔴 Arrived at' : '🚨 Dispatched to — press RESPOND on your device';
+    $('rb-title').innerHTML = mode === 'responding' ? '<span class="dot amber"></span>Responding to'
+        : mode === 'arrived' ? '<span class="dot red"></span>Arrived at'
+        : `${ico('siren', 'c-fire')} Dispatched to — press RESPOND on your device`;
     $('rb-addr').textContent = target ? (target.address || 'Address unavailable') : 'No active incident found';
-    $('rb-meta').textContent = target ? `${target.type === 'fire' ? '🔥 Fire' : target.type === 'med' ? '⚕️ Medical' : 'Incident'} · ${fmtCoord(target)}` : '';
+    $('rb-meta').textContent = target ? `${target.type === 'fire' ? 'Fire' : target.type === 'med' ? 'Medical' : 'Incident'} · ${fmtCoord(target)}` : '';
     const nav = $('rb-nav');
-    if (target) { nav.style.display = ''; nav.href = `https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}&travelmode=driving`; }
-    else nav.style.display = 'none';
+    nav.style.display = target ? '' : 'none';
 }
 function setBannerMeta(extra) {
     const m = $('rb-meta'); if (!m || !bannerMode) return;
@@ -1879,6 +1979,11 @@ function setBannerMeta(extra) {
 }
 function hideBannerFor(incidentId) { if (!incidentId || bannerTargetId === incidentId) { $('resp-banner').classList.remove('show'); bannerMode = null; bannerTargetId = null; } }
 $('rb-close').onclick = () => { $('resp-banner').classList.remove('show'); bannerMode = null; };
+$('rb-nav').onclick = () => {
+    const t = bannerTarget; if (!t) return;
+    const live = t.id && incidentMarkers[t.id];      // use the incident's latest position if it moved
+    slideTo(live ? live.lat : t.lat, live ? live.lng : t.lng, live ? t.id : null);
+};
 
 // ----- emergency sound + voice (loops, max 30 s) -----
 const emg = (function () {
@@ -1890,7 +1995,7 @@ const emg = (function () {
         refreshChip(); return ctx;
     }
     function ready() { return !!ctx && ctx.state === 'running'; }
-    function refreshChip() { chip.style.display = (!ready() && myUnitId()) ? 'block' : 'none'; }
+    function refreshChip() { chip.style.display = (!ready() && myUnitId()) ? 'flex' : 'none'; }
     ['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { ensure(); setTimeout(refreshChip, 250); }, { passive: true }));
     setInterval(refreshChip, 2000);
     chip.addEventListener('click', () => { ensure(); setTimeout(() => { refreshChip(); cycle(); }, 200); });   // short test siren
@@ -1945,7 +2050,7 @@ $('emg-view').onclick = () => {
     emg.stop(); hideOverlay();
     const t = targetForMyUnit(currentOrigin());
     showBanner('dispatched', t);
-    if (t) map.flyTo([t.lat, t.lng], 17);
+    if (t) slideTo(t.lat, t.lng, incidentMarkers[t.id] ? t.id : null);
 };
 
 // An "A-001 Respond" call arrived for MY unit (from Firestore dispatch and/or the V3 terminal message)
