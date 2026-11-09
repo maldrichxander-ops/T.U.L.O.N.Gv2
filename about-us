@@ -135,7 +135,7 @@
         .story-side p:last-child { margin-bottom: 0; }
         .story-side strong { color: white; }
 
-        /* ═══════════ TEAM — photo gallery ═══════════ */
+        /* ═══════════ TEAM — framed portraits ═══════════ */
         .team-wrap { padding: 64px 0 90px; border-top: 1px solid rgba(61,111,168,.35); }
         .team-head { text-align: center; margin-bottom: 52px; }
         .eyebrow {
@@ -150,53 +150,44 @@
         }
         .team-sub { margin: 0 auto; max-width: 560px; font-size: 14px; line-height: 1.7; color: var(--grey); }
 
-        .gallery { perspective: 1200px; --cw: 200px; --gap: 22px; display: flex; flex-wrap: wrap; justify-content: center; gap: var(--gap); padding-bottom: 36px; }
-        .member { margin-block-end: 0; margin-inline: 0; position: relative; width: var(--cw); flex: none; border-radius: 14px; --mx: 50%; --my: 30%; }
-        .member:nth-child(even) { margin-top: 34px; }          /* gentle wave so it doesn't read as a rigid grid */
+        /* Each portrait is shown COMPLETE (never cropped) so the name plate in the photo is always fully readable,
+           in full colour, inside a gradient frame. */
+        .gallery { perspective: 1200px; --cw: 204px; --gap: 22px; display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: var(--gap); padding-bottom: 36px; }
+        .member { margin: 0; position: relative; width: var(--cw); flex: none; border-radius: 18px; --mx: 50%; --my: 30%; }
+        .member:nth-child(even) { margin-top: 30px; }          /* gentle wave so it doesn't read as a rigid grid */
         .photo {
-            position: relative; aspect-ratio: 3 / 4; border-radius: 14px; overflow: hidden; isolation: isolate;
-            border: 1px solid var(--line);
-            background: linear-gradient(160deg, #0b2a47, #04121f);
+            position: relative; border-radius: 18px; overflow: hidden; isolation: isolate; padding: 4px;
+            background: linear-gradient(145deg, #ff5a36 0%, #3d6fa8 55%, #1a3a5f 100%);
             box-shadow: 0 18px 40px rgba(0,0,0,.45);
             transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
-            transition: transform .7s cubic-bezier(.2,.8,.2,1), box-shadow .55s, border-color .4s, opacity .5s, filter .5s;
+            transition: transform .7s cubic-bezier(.2,.8,.2,1), box-shadow .55s, background-position .5s;
             will-change: transform;
         }
-        .photo.tilting { transition: transform .12s linear, box-shadow .55s, border-color .4s, opacity .5s, filter .5s; }
+        .photo.tilting { transition: transform .12s linear, box-shadow .55s; }
         .photo img {
-            position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; object-position: center top; display: block;
-            filter: grayscale(.3) contrast(1.05) brightness(.93);
-            transform: scale(1.02);
-            transition: transform .9s cubic-bezier(.2,.8,.2,1), filter .6s;
+            display: block; width: 100%; height: auto; border-radius: 14px;
+            background: #04121f;
         }
         /* placeholder shown only if a photo file is missing */
+        .photo.noimg { aspect-ratio: 3 / 4; }
         .photo.noimg::after {
-            content: ""; position: absolute; inset: 0;
-            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 160'%3E%3Ccircle cx='60' cy='62' r='24' fill='%23c7ced6' fill-opacity='.22'/%3E%3Cpath d='M16 150c0-30 20-48 44-48s44 18 44 48z' fill='%23c7ced6' fill-opacity='.22'/%3E%3C/svg%3E") center / 70% no-repeat;
+            content: ""; position: absolute; inset: 4px; border-radius: 14px; background-color: #0b2a47;
+            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 160'%3E%3Ccircle cx='60' cy='62' r='24' fill='%23c7ced6' fill-opacity='.25'/%3E%3Cpath d='M16 150c0-30 20-48 44-48s44 18 44 48z' fill='%23c7ced6' fill-opacity='.25'/%3E%3C/svg%3E");
+            background-position: center; background-size: 70%; background-repeat: no-repeat;
         }
-        /* soft vignette + cursor spotlight */
+        /* light that follows the cursor (hover only, never darkens the photo) */
         .photo::before {
-            content: ""; position: absolute; inset: 0; z-index: 1; pointer-events: none;
-            background:
-                radial-gradient(260px circle at var(--mx) var(--my), rgba(255,255,255,.16), transparent 60%),
-                linear-gradient(180deg, transparent 55%, rgba(2,16,29,.7) 100%);
+            content: ""; position: absolute; inset: 4px; border-radius: 14px; z-index: 1; pointer-events: none; opacity: 0;
+            background: radial-gradient(240px circle at var(--mx) var(--my), rgba(255,255,255,.18), transparent 60%);
             transition: opacity .4s;
         }
-        /* accent bar that sweeps in along the bottom on hover */
-        .photo .bar {
-            position: absolute; left: 0; right: 0; bottom: 0; height: 5px; z-index: 2;
-            background: linear-gradient(90deg, var(--primary-accent-deep), var(--primary-accent), var(--accent-blue));
-            transform: scaleX(0); transform-origin: left; transition: transform .7s cubic-bezier(.2,.8,.2,1);
-        }
+        .member:hover .photo::before { opacity: 1; }
         .member:hover .photo, .member:focus-visible .photo {
-            --lift: -10px; border-color: var(--primary-accent);
-            box-shadow: 0 28px 54px rgba(0,0,0,.55), 0 0 30px rgba(255,90,54,.22);
+            --lift: -10px;
+            box-shadow: 0 28px 54px rgba(0,0,0,.55), 0 0 34px rgba(255,90,54,.35);
         }
-        .member:hover .photo img, .member:focus-visible .photo img { transform: scale(1.08); filter: grayscale(0) contrast(1.05) brightness(1); }
-        .member:hover .bar, .member:focus-visible .bar { transform: scaleX(1); }
         .member:focus-visible { outline: none; }
         .member:focus-visible .photo { outline: 2px solid #fff; outline-offset: 3px; }
-
 
         /* ── Animation ── */
         /* entrance: each portrait rises out of blur with a 3D tilt, and its photo is unveiled from the bottom */
@@ -205,17 +196,16 @@
             transition: opacity .9s ease var(--d, 0s), transform 1.1s cubic-bezier(.16,1,.3,1) var(--d, 0s), filter .9s ease var(--d, 0s);
         }
         .member.reveal.in { opacity: 1; transform: none; filter: none; }
-        .member.reveal .photo img { clip-path: inset(100% 0 0 0); transform: scale(1.4); }
+        .member.reveal .photo img { clip-path: inset(100% 0 0 0 round 14px); transform: scale(1.15); }
         .member.reveal.in .photo img {
-            clip-path: inset(0 0 0 0); transform: scale(1.02);
-            transition: clip-path 1.2s cubic-bezier(.77,0,.18,1) calc(var(--d, 0s) + .25s), transform 1.7s cubic-bezier(.16,1,.3,1) calc(var(--d, 0s) + .25s), filter .6s;
+            clip-path: inset(0 0 0 0 round 14px); transform: none;
+            transition: clip-path 1.2s cubic-bezier(.77,0,.18,1) calc(var(--d, 0s) + .25s), transform 1.7s cubic-bezier(.16,1,.3,1) calc(var(--d, 0s) + .25s);
         }
-        .member.reveal.done .photo img { transition: transform .9s cubic-bezier(.2,.8,.2,1), filter .6s; }
-        .member.reveal.done.in .photo img { clip-path: none; }
+        .member.reveal.done .photo img { clip-path: none; transition: none; }
         /* one light sweep across the portrait right after it appears */
         .sheen {
-            position: absolute; inset: 0; z-index: 3; pointer-events: none; transform: translateX(-120%);
-            background: linear-gradient(105deg, transparent 36%, rgba(255,255,255,.26) 50%, transparent 64%);
+            position: absolute; inset: 4px; border-radius: 14px; z-index: 3; pointer-events: none; transform: translateX(-120%); overflow: hidden;
+            background: linear-gradient(105deg, transparent 36%, rgba(255,255,255,.28) 50%, transparent 64%);
         }
         .member.in .sheen { animation: sheen 1.4s ease calc(var(--d, 0s) + 1s) 1 forwards; }
         @keyframes sheen { to { transform: translateX(120%); } }
@@ -224,8 +214,6 @@
         .member.in .float { animation: float 5.5s ease-in-out infinite alternate; animation-delay: var(--fd, 0s); }
         .member:hover .float, .member:focus-visible .float { animation-play-state: paused; }
         @keyframes float { from { transform: translateY(-4px); } to { transform: translateY(7px); } }
-        /* focus effect: while one portrait is hovered, the others step back */
-        .gallery:has(.member:hover) .member:not(:hover) .photo { opacity: .5; filter: saturate(.55) blur(1px); }
 
         /* scroll reveal */
         .reveal { opacity: 0; transform: translateY(26px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.8,.2,1); transition-delay: var(--d, 0s); }
@@ -354,15 +342,15 @@
 
             <!-- Photos: member1.jpg ... member9.jpg in the same folder as this page -->
             <div class="gallery">
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member1.jpg" alt="TULONG team member 1" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member2.jpg" alt="TULONG team member 2" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member3.jpg" alt="TULONG team member 3" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member4.jpg" alt="TULONG team member 4" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member5.jpg" alt="TULONG team member 5" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member6.jpg" alt="TULONG team member 6" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member7.jpg" alt="TULONG team member 7" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member8.jpg" alt="TULONG team member 8" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
-                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member9.jpg" alt="TULONG team member 9" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="bar"></span><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member1.jpg" alt="TULONG team member 1" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member2.jpg" alt="TULONG team member 2" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member3.jpg" alt="TULONG team member 3" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member4.jpg" alt="TULONG team member 4" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member5.jpg" alt="TULONG team member 5" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member6.jpg" alt="TULONG team member 6" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member7.jpg" alt="TULONG team member 7" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member8.jpg" alt="TULONG team member 8" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+                <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="member9.jpg" alt="TULONG team member 9" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
             </div>
         </section>
     </main>
