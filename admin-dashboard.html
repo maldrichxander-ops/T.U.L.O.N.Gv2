@@ -199,7 +199,7 @@ h2 {
 </head>
 <body>
 
-<!-- FIREBASE — Auth + Firestore (incidents are now shared/real-time) -->
+<!-- FIREBASE — Auth + Firestore (incidents + registered vehicles are shared/real-time) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -223,14 +223,22 @@ const auth = getAuth(app);
 const db   = getFirestore(app);
 
 window.firebaseSignOut = () => signOut(auth);
-// Not signed in -> index page. Skipped while an intentional logout is in progress
-// so the logout button can send the user to index.html instead.
-onAuthStateChanged(auth, user => { if (!user && !window.isLoggingOut) window.location.href = 'index.html'; });
+// Admin-only page:
+//  - not signed in            -> index.html
+//  - signed in, not the admin -> operator-dashboard
+// Skipped while an intentional logout is in progress so the logout button can send the user to index.html.
+const ADMIN_EMAIL = 'admin@tulong.com';
+onAuthStateChanged(auth, user => {
+    if (window.isLoggingOut) return;
+    if (!user) window.location.href = 'index.html';
+    else if ((user.email || '').toLowerCase() !== ADMIN_EMAIL) window.location.href = 'operator-dashboard';
+});
 
 // Expose Firestore primitives to the classic (non-module) script below,
 // so the existing incident functions can read/write shared data.
 window.db = db;
 window.fsIncidents      = collection(db, 'incidents');
+window.fsVehicles       = collection(db, 'vehicles');   // units registered through "Register Emergency Vehicle"
 window.fsDoc            = (id) => doc(db, 'incidents', id);
 window.fsSetDoc         = setDoc;
 window.fsUpdateDoc      = updateDoc;
@@ -297,6 +305,28 @@ window.dispatchEvent(new Event('firestoreReady'));
             <span id="blynk-label">Connecting to Blynk...</span>
         </div>
 
+        <!-- NEARBY UNITS PANEL -->
+        <div class="near-panel" id="near-panel">
+            <div class="near-head">
+                <div class="near-title" id="near-title">Nearby Units</div>
+                <div class="near-addr" id="near-addr"></div>
+                <button class="near-close" onclick="closeNearPanel()">&times;</button>
+            </div>
+            <div class="near-tools">
+                <span>Radius:</span>
+                <select id="near-radius" onchange="setNearRadius(this.value)">
+                    <option value="3">3 km</option>
+                    <option value="5">5 km</option>
+                    <option value="10" selected>10 km</option>
+                    <option value="20">20 km</option>
+                    <option value="50">50 km</option>
+                </select>
+                <span id="near-count" style="margin-left:auto;"></span>
+            </div>
+            <div class="near-list" id="near-list"></div>
+            <div class="near-foot"><button class="near-btn" onclick="respondNearest()">&#9889; Respond Nearest Unit</button></div>
+        </div>
+
         <!-- TERMINAL PANEL -->
         <div class="terminal-panel" id="terminal-panel">
             <div class="terminal-header" onclick="toggleTerminal()">
@@ -323,11 +353,12 @@ window.dispatchEvent(new Event('firestoreReady'));
 // BLYNK CONFIG
 // ============================================================
 const BLYNK_BASE = "https://blynk.cloud/external/api";
-const UNITS = [
-    { id: "A-001", token: "HKEGX3vYVEzqoEv5plTw5tU-7ITdnmlJ", type: "ambulance" },
-    { id: "F-001", token: "DQ8eqlsc7wjL4A7M540oteHKRw-HWBYS", type: "firetruck" },
-    { id: "A-003", token: "TOKEN_A003_HERE",                   type: "ambulance" },
-];
+
+// UNITS is no longer hardcoded. It is filled live from the "vehicles" collection in Firestore,
+// i.e. every unit registered through "Register Emergency Vehicle" (with its Blynk token).
+// Each entry looks like { id: "A-004", token: "<blynk token>", type: "ambulance" | "firetruck" }.
+let UNITS = [];
+
 // GPS now uses two basic Double datastreams instead of the Location (map pin) datastream:
 // V7 = latitude, V8 = longitude
 const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LOC=7;
@@ -339,6 +370,9 @@ const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImVkZDU
 const ORS_PROFILE = 'driving-car';
 let unitRouteLines  = {}; // unitId -> Leaflet route layer currently on the map
 let unitRouteTarget = {}; // unitId -> incidentId that unit is currently routed to
+let unitRouteFrom   = {}; // unitId -> [lat, lon] the current route was drawn from
+let unitRouting     = {}; // unitId -> true while a route request is in flight
+let unitDispatch    = {}; // unitId -> incidentId the dispatcher sent it to (Respond button)
 
 // ============================================================
 // MAP INIT — Light tile (no dark mode)
@@ -487,6 +521,7 @@ window.updatePopup = function(id) {
         ["For Verification","Suspected Heart Attack / Cardiac Arrest","Suspected Stroke","Vehicular Accident","Drowning","Possible Suicide","Falling Incident","Fire Incident","Electrocution","Other"].forEach(o=>c+=`<option value="${o}" ${d.status.startsWith(o)?'selected':''}>${o}</option>`);
         c += `</select><div id="other-input-div-${id}" style="display:${d.status.startsWith('Other')?'block':'none'};margin-top:10px;"><input type="text" id="other-text-${id}" placeholder="Type specific emergency..." style="width:100%;padding:5px;color:black;" oninput="updateOtherMedicalText('${id}')"></div>`;
     }
+    c += `<button class="near-open-btn" onclick="showNearUnits('${id}')">&#128663; NEARBY UNITS &amp; DISPATCH</button>`;
     c += `<br><br><button onclick="resolveIncident('${id}')" style="background:#217346;color:white;border:none;padding:8px;width:100%;cursor:pointer;font-weight:bold;">RESOLVE &amp; SAVE</button>
           <button onclick="deleteIncident('${id}')" style="background:#c73e1d;color:white;border:none;padding:8px;width:100%;margin-top:5px;cursor:pointer;">DELETE</button></div>`;
     d.marker.bindPopup(c).openPopup();
@@ -552,37 +587,76 @@ function buildReportRows(incidentsArr) {
         };
     });
 }
+function downloadBlob(blob, filename) {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = filename; a.style.display = 'none';
+    document.body.appendChild(a); a.click();
+    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+}
 function writeReportWorkbook(rows, tag) {
-    if (rows.length===0) { alert("No resolved incidents to export."); return false; }
-    const wb=XLSX.utils.book_new();
-    const fire=rows.filter(i=>i["Initial Type"]==="FIRE").map(i=>({
-        "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Barangay":i["Specific Location"],
-        "Reported":i["Reported"],"Resolved":i["Resolved"],"Duration":i["Duration"],
-        "Classification":i["Classification"],"Final Alarm":i["Final Alarm"],"Progression Timeline":i["Progression Timeline"]}));
-    const med=rows.filter(i=>i["Initial Type"]==="MED").map(i=>({
-        "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Specific Location":i["Specific Location"],
-        "Medical Emergency Type":i["Classification"],"Reported":i["Reported"],"Resolved":i["Resolved"],"Duration":i["Duration"]}));
-    if(fire.length>0) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fire),"Fire Incidents");
-    if(med.length>0)  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(med),"Medical Incidents");
-    XLSX.writeFile(wb,`TULONG_Report_${tag}_${new Date().toLocaleDateString('en-CA')}.xlsx`);
-    return true;
+    if (rows.length===0) { alert("No incidents to export."); return false; }
+    const stamp = new Date().toLocaleDateString('en-CA');
+    try {
+        if (typeof XLSX === 'undefined') throw new Error('Excel library (SheetJS) did not load - check your internet connection');
+        const wb=XLSX.utils.book_new();
+        const fire=rows.filter(i=>i["Initial Type"]==="FIRE").map(i=>({
+            "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Barangay":i["Specific Location"],
+            "Reported":i["Reported"],"Resolved":i["Resolved"],"Duration":i["Duration"],
+            "Classification":i["Classification"],"Final Alarm":i["Final Alarm"],"Progression Timeline":i["Progression Timeline"]}));
+        const med=rows.filter(i=>i["Initial Type"]==="MED").map(i=>({
+            "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Specific Location":i["Specific Location"],
+            "Medical Emergency Type":i["Classification"],"Reported":i["Reported"],"Resolved":i["Resolved"],"Duration":i["Duration"]}));
+        if(fire.length>0) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fire),"Fire Incidents");
+        if(med.length>0)  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(med),"Medical Incidents");
+        // Write the file ourselves (more reliable than XLSX.writeFile across browsers/iframes)
+        const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+        downloadBlob(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `TULONG_Report_${tag}_${stamp}.xlsx`);
+        return true;
+    } catch (err) {
+        console.error('Excel export failed:', err);
+        // Fallback: plain CSV so the report is never lost
+        try {
+            const cols = Object.keys(rows[0]);
+            const esc = v => `"${String(v == null ? '' : v).replace(/"/g, '""')}"`;
+            const csv = [cols.map(esc).join(',')].concat(rows.map(r => cols.map(c => esc(r[c])).join(','))).join('\r\n');
+            downloadBlob(new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8' }), `TULONG_Report_${tag}_${stamp}.csv`);
+            alert('Excel export failed (' + err.message + '). A CSV copy was downloaded instead.');
+            return true;
+        } catch (e2) {
+            alert('Export failed: ' + err.message + '. Nothing was deleted.');
+            return false;
+        }
+    }
+}
+
+// delete a list of incidents, report any that could not be deleted (e.g. Firestore rules)
+async function deleteIncidentsReport(ids) {
+    let failed = 0, lastErr = '';
+    for (const id of ids) {
+        try { await window.fsDeleteDoc(window.fsDoc(id)); }
+        catch (e) { failed++; lastErr = e.message; console.error('Delete failed', id, e); }
+    }
+    if (failed) alert(`Report was downloaded, but ${failed} incident(s) could not be cleared from the map: ${lastErr}\nCheck the Firestore rules for the "incidents" collection (delete must be allowed).`);
 }
 
 // "Export EOD Report" — exports, then clears ONLY the resolved/solved incidents
 window.exportToExcel = async function() {
     const resolved = Object.entries(activeIncidentMarkers).filter(([,d])=>d.isResolved).map(([id,d])=>({id,...d}));
+    if (resolved.length === 0) { alert("No resolved incidents to export yet. Press 'RESOLVE & SAVE' on an incident first."); return; }
     const ok = writeReportWorkbook(buildReportRows(resolved), 'EOD');
     if (!ok) return;
-    for (const inc of resolved) await window.fsDeleteDoc(window.fsDoc(inc.id)).catch(()=>{});
+    await deleteIncidentsReport(resolved.map(i=>i.id));
 };
 
-// "Wipe Map & Export" — exports resolved incidents, then clears EVERYTHING (active + resolved)
+// "Wipe Map & Export" — exports ALL incidents (active + resolved), then clears EVERYTHING
 window.wipeMapAndExport = async function() {
-    if (!confirm("⚠️ ARE YOU SURE TO WIPE MAP? This clears ALL incidents, including active ones.")) return;
-    const resolved = Object.entries(activeIncidentMarkers).filter(([,d])=>d.isResolved).map(([id,d])=>({id,...d}));
-    if (resolved.length>0) writeReportWorkbook(buildReportRows(resolved), 'EOD');
-    const allIds = Object.keys(activeIncidentMarkers);
-    for (const id of allIds) await window.fsDeleteDoc(window.fsDoc(id)).catch(()=>{});
+    const all = Object.entries(activeIncidentMarkers).map(([id,d])=>({id,...d}));
+    if (all.length === 0) { alert("The map has no incidents to wipe."); return; }
+    if (!confirm("⚠️ ARE YOU SURE TO WIPE MAP? This clears ALL incidents, including active ones. A report of everything will be downloaded first.")) return;
+    const ok = writeReportWorkbook(buildReportRows(all), 'WIPE');
+    if (!ok) return;   // export failed -> keep the data
+    await deleteIncidentsReport(all.map(i=>i.id));
 };
 
 function updateGlobalStats() {
@@ -627,7 +701,8 @@ function renderIncidentFromDoc(id, data) {
     if (inn) inn.style.filter = data.isResolved ? "grayscale(100%) opacity(0.6)" : "";
     renderIncidentLabel(id, data);
     if (data.isResolved && !wasResolved) clearRoutesToIncident(id);
-    if (pendingOpenId === id) { pendingOpenId = null; updatePopup(id); }
+    if (pendingOpenId === id) { pendingOpenId = null; updatePopup(id); showNearUnits(id); }
+    if (data.isResolved && nearIncidentId === id) closeNearPanel();
     if (initialSyncDone) {
         if (isNewEntry && !data.isResolved && !createdHere.has(id)) notifier.incident(id, 'new', entry);
         if (!isNewEntry && data.isResolved && !wasResolved) { notifier.dismissFor(id, 'new'); notifier.incident(id, 'resolved', entry); }
@@ -638,6 +713,7 @@ function removeIncidentLocally(id) {
     if (!entry) return;
     map.removeLayer(entry.marker);
     clearRoutesToIncident(id);
+    if (nearIncidentId === id) closeNearPanel();
     delete activeIncidentMarkers[id];
     notifier.dismissFor(id);
 }
@@ -773,6 +849,7 @@ function clearRoute(unitId) {
         delete unitRouteLines[unitId];
     }
     delete unitRouteTarget[unitId];
+    delete unitRouteFrom[unitId];
 }
 
 function clearRoutesToIncident(incidentId) {
@@ -781,36 +858,129 @@ function clearRoutesToIncident(incidentId) {
     }
 }
 
+// Free routing: OpenRouteService first, then the free public OSRM server (no API key) as a fallback
+async function fetchRoute(fromLat, fromLon, toLat, toLon) {
+    try {
+        const url = `https://api.openrouteservice.org/v2/directions/${ORS_PROFILE}` +
+                    `?api_key=${ORS_API_KEY}&start=${fromLon},${fromLat}&end=${toLon},${toLat}`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const g = await res.json();
+            const f = g.features && g.features[0];
+            if (f && f.geometry) return { geometry: f.geometry, distance: f.properties.summary.distance, duration: f.properties.summary.duration, src: 'ORS' };
+        }
+    } catch (e) { /* fall through to OSRM */ }
+    try {
+        const url = `https://router.project-osrm.org/route/v1/driving/${fromLon},${fromLat};${toLon},${toLat}?overview=full&geometries=geojson`;
+        const res = await fetch(url);
+        if (res.ok) {
+            const g = await res.json();
+            const r = g.routes && g.routes[0];
+            if (r && r.geometry) return { geometry: r.geometry, distance: r.distance, duration: r.duration, src: 'OSRM' };
+        }
+    } catch (e) {}
+    return null;
+}
+
 async function drawRouteToIncident(unitId, fromLat, fromLon, incidentId) {
     const inc = activeIncidentMarkers[incidentId];
-    if (!inc) return;
-    const url = `https://api.openrouteservice.org/v2/directions/${ORS_PROFILE}` +
-                `?api_key=${ORS_API_KEY}&start=${fromLon},${fromLat}&end=${inc.lng},${inc.lat}`;
+    if (!inc || unitRouting[unitId]) return;
+    unitRouting[unitId] = true;
     try {
-        const res = await fetch(url);
-        if (!res.ok) {
-            const body = await res.text().catch(()=> '');
-            termLog('err', `[${unitId}] Routing failed: HTTP ${res.status} ${body.slice(0,120)}`);
-            return;
+        const r = await fetchRoute(fromLat, fromLon, inc.lat, inc.lng);
+        const firstTime = !unitRouteLines[unitId];
+        let layer, label;
+        if (r) {
+            layer = L.geoJSON(r.geometry, { style: { color: '#f0883e', weight: 5, opacity: 0.85, dashArray: '6,4' } });
+            const mins = Math.max(1, Math.round(r.duration / 60)), km = (r.distance / 1000).toFixed(1);
+            label = `${km} km, ~${mins} min ETA (${r.src})`;
+        } else {
+            // Both routing services failed: draw a straight line so the dispatcher still sees the direction
+            layer = L.polyline([[fromLat, fromLon], [inc.lat, inc.lng]], { color: '#f0883e', weight: 4, opacity: 0.8, dashArray: '2,8' });
+            label = `${haversineKm(fromLat, fromLon, inc.lat, inc.lng).toFixed(1)} km straight-line (routing service unavailable)`;
         }
-        const geojson = await res.json();
-        clearRoute(unitId);
-        const layer = L.geoJSON(geojson, {
-            style: { color: '#f0883e', weight: 5, opacity: 0.85, dashArray: '6,4' }
-        }).addTo(map);
+        if (unitRouteLines[unitId]) map.removeLayer(unitRouteLines[unitId]);
+        layer.addTo(map);
         unitRouteLines[unitId]  = layer;
         unitRouteTarget[unitId] = incidentId;
-        const summary = geojson.features && geojson.features[0] && geojson.features[0].properties &&
-                         geojson.features[0].properties.summary;
-        if (summary) {
-            const mins = Math.round(summary.duration / 60);
-            const km   = (summary.distance / 1000).toFixed(1);
-            termLog('ok', `[${unitId}] Auto-route to ${incidentId}: ${km} km, ~${mins} min ETA`);
-        }
-    } catch(e) {
+        unitRouteFrom[unitId]   = [fromLat, fromLon];
+        if (firstTime) { termLog('ok', `[${unitId}] Auto-route to ${incidentId}: ${label}`); try { map.fitBounds(layer.getBounds(), { padding: [60, 60] }); } catch (e) {} }
+    } catch (e) {
         termLog('err', `[${unitId}] Routing error: ${e.message}`);
+    } finally {
+        unitRouting[unitId] = false;
     }
 }
+
+// ============================================================
+// NEARBY UNITS & DISPATCH — pick an incident, see online units near it, press RESPOND
+// (sends "<UNIT-ID> Respond" to that unit's ESP32 on V3 — same text as typing it in the terminal)
+// ============================================================
+let nearIncidentId = null, nearRadiusKm = 10;
+const escHtml = t => String(t == null ? '' : t).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function nearUnitsFor(inc) {
+    return UNITS.map(u => {
+        const s = unitStates[u.id];
+        if (!s || !s.online || !s.lat || !s.lon) return null;
+        return { u, s, km: haversineKm(s.lat, s.lon, inc.lat, inc.lng) };
+    }).filter(x => x && x.km <= nearRadiusKm).sort((a, b) => a.km - b.km);
+}
+window.showNearUnits = function(id) {
+    if (!activeIncidentMarkers[id]) return;
+    nearIncidentId = id;
+    document.getElementById('near-panel').style.display = 'flex';
+    renderNearPanel();
+};
+window.closeNearPanel = function() {
+    nearIncidentId = null;
+    document.getElementById('near-panel').style.display = 'none';
+};
+window.setNearRadius = function(v) { nearRadiusKm = parseFloat(v) || 10; renderNearPanel(); };
+function renderNearPanel() {
+    if (!nearIncidentId) return;
+    const inc = activeIncidentMarkers[nearIncidentId];
+    if (!inc) { closeNearPanel(); return; }
+    document.getElementById('near-title').textContent = `${inc.type === 'fire' ? '🔥 FIRE' : '⚕️ MEDICAL'} · ${nearIncidentId}`;
+    document.getElementById('near-addr').textContent = inc.address || '';
+    const list = nearUnitsFor(inc);
+    document.getElementById('near-count').textContent = `${list.length} unit${list.length === 1 ? '' : 's'} nearby`;
+    const box = document.getElementById('near-list');
+    if (list.length === 0) {
+        const online = Object.values(unitStates).filter(s => s.online).length;
+        box.innerHTML = `<div class="near-empty">No online unit with a GPS fix within ${nearRadiusKm} km.<br>${online} unit(s) online in total. Try a larger radius.</div>`;
+        return;
+    }
+    box.innerHTML = list.map(({u, s, km}) => {
+        const status = s.responding ? 'RESPONDING' : s.arrived ? 'ARRIVED' : 'STANDBY';
+        const eta = Math.max(1, Math.round(km / 40 * 60));   // rough ETA at ~40 km/h
+        const sent = unitDispatch[u.id] === nearIncidentId;
+        return `<div class="near-row">
+            <div class="near-info">
+                <div class="near-id">${u.type === 'firetruck' ? '🚒' : '🚑'} ${escHtml(u.id)}</div>
+                <div class="near-sub">${km.toFixed(1)} km · ~${eta} min · ${status}</div>
+            </div>
+            <button class="near-btn ${sent ? 'sent' : ''}" onclick="respondUnit('${escHtml(u.id)}')">${sent ? '✓ Sent' : 'Respond'}</button>
+        </div>`;
+    }).join('');
+}
+window.respondUnit = async function(unitId) {
+    const unit = UNITS.find(u => u.id === unitId);
+    if (!unit || !nearIncidentId) return;
+    unitDispatch[unitId] = nearIncidentId;
+    if (!terminalOpen) toggleTerminal();
+    const msg = `${unit.id} Respond`;
+    termLog('send', `To <b>${escHtml(unit.id)}</b>: "${msg}" (dispatch &rarr; ${nearIncidentId})`);
+    await sendToUnit(unit, msg);
+    renderNearPanel();
+};
+window.respondNearest = function() {
+    const inc = activeIncidentMarkers[nearIncidentId];
+    if (!inc) return;
+    const list = nearUnitsFor(inc).filter(x => !x.s.responding);
+    if (list.length === 0) { alert('No available unit within the selected radius.'); return; }
+    respondUnit(list[0].u.id);
+};
 
 // ============================================================
 // FIRE STATIONS
@@ -890,7 +1060,7 @@ let unitStates={}, unitMarkers={};
 const prevButtonStates={}; // track previous button states to detect changes
 
 async function fetchUnit(unit) {
-    // Skip placeholder tokens entirely — treat as offline without hitting API
+    // Skip placeholder / missing tokens entirely — treat as offline without hitting API
     if (!unit.token || unit.token.includes('TOKEN_') || unit.token.length < 20) {
         const prev = prevButtonStates[unit.id] || {online: null};
         if (prev.online !== false) {
@@ -898,7 +1068,7 @@ async function fetchUnit(unit) {
             termLog('err', `${unitLabel} &mdash; No valid token configured`);
         }
         prevButtonStates[unit.id] = {...(prevButtonStates[unit.id]||{}), online: false};
-        unitStates[unit.id] = {...(unitStates[unit.id]||{}), online: false};
+        unitStates[unit.id] = {...(unitStates[unit.id]||{}), online: false, type: unit.type};
         return false;
     }
     const unitLabel = `<b>${unit.id}</b> (${unit.type === 'firetruck' ? '🚒 Firetruck' : '🚑 Ambulance'})`;
@@ -911,7 +1081,7 @@ async function fetchUnit(unit) {
             if (!terminalOpen) toggleTerminal();
         }
         prevButtonStates[unit.id] = {...prev, online: false};
-        unitStates[unit.id] = {...(unitStates[unit.id]||{}), online: false};
+        unitStates[unit.id] = {...(unitStates[unit.id]||{}), online: false, type: unit.type};
         if (unitMarkers[unit.id]) {
             map.removeLayer(unitMarkers[unit.id]);
             delete unitMarkers[unit.id];
@@ -975,7 +1145,10 @@ async function fetchUnit(unit) {
         if (responding && prev.responding !== responding) {
             termLog('recv', `[${unit.id}] 🟠 &mdash; <b>RESPONDING</b>`);
             if (lat && lon) {
-                const nearest = findNearestActiveIncident(lat, lon);
+                // Prefer the incident this unit was dispatched to (Respond button); otherwise the nearest active one
+                const dispatched = unitDispatch[unit.id];
+                const nearest = (dispatched && activeIncidentMarkers[dispatched] && !activeIncidentMarkers[dispatched].isResolved)
+                    ? dispatched : findNearestActiveIncident(lat, lon);
                 if (nearest) {
                     drawRouteToIncident(unit.id, lat, lon, nearest);
                 } else {
@@ -986,6 +1159,17 @@ async function fetchUnit(unit) {
             }
         }
         if (!responding && prev.responding === true) clearRoute(unit.id);
+        // While RESPONDING: keep the route alive (start it if an incident appeared later, refresh as the unit moves)
+        if (responding && prev.responding === true && lat && lon && !unitRouting[unit.id]) {
+            const tgt = unitRouteTarget[unit.id], from = unitRouteFrom[unit.id];
+            if (tgt && activeIncidentMarkers[tgt] && !activeIncidentMarkers[tgt].isResolved) {
+                if (from && haversineKm(from[0], from[1], lat, lon) > 0.05) drawRouteToIncident(unit.id, lat, lon, tgt);
+            } else if (!tgt) {
+                const d2 = unitDispatch[unit.id];
+                const n2 = (d2 && activeIncidentMarkers[d2] && !activeIncidentMarkers[d2].isResolved) ? d2 : findNearestActiveIncident(lat, lon);
+                if (n2) drawRouteToIncident(unit.id, lat, lon, n2);
+            }
+        }
         if (arrived    && prev.arrived    !== arrived) {
             termLog('recv', `[${unit.id}] 🔴 &mdash; <b>ARRIVED</b>`);
             clearRoute(unit.id);
@@ -1025,7 +1209,12 @@ function updateUnitMarker(id, s) {
 }
 
 function renderUnitList() {
-    document.getElementById('unit-list').innerHTML = UNITS.map(u => {
+    const box = document.getElementById('unit-list');
+    if (UNITS.length === 0) {
+        box.innerHTML = '<div class="uc-sub" style="padding:6px 2px;">No registered units yet. Use &ldquo;Register Emergency Vehicle&rdquo; to add one.</div>';
+        return;
+    }
+    box.innerHTML = UNITS.map(u => {
         const s=unitStates[u.id];
         const status=!s||!s.online?'offline':s.responding?'responding':s.arrived?'arrived':s.standby?'standby':'offline';
         const coords=s&&s.lat&&s.lon?`${s.lat.toFixed(5)}, ${s.lon.toFixed(5)}`:'No GPS fix';
@@ -1050,14 +1239,14 @@ function updateOverlayCounts() {
 async function pollAll() {
     let ok=false;
     for (const u of UNITS) { if(await fetchUnit(u)) ok=true; }
-    renderUnitList(); updateOverlayCounts(); updateGlobalStats();
+    renderUnitList(); updateOverlayCounts(); updateGlobalStats(); renderNearPanel();
     document.getElementById('blynk-dot').className='blynk-dot '+(ok?'online':'offline');
     document.getElementById('blynk-label').textContent='Blynk sync: '+new Date().toLocaleTimeString('en-PH',{hour12:false});
 }
 
 // ============================================================
 // LOGOUT — signs out, then goes to index.html
-// (window.isLoggingOut stops the auth listener from redirecting to login.html first)
+// (window.isLoggingOut stops the auth listener from redirecting first)
 // ============================================================
 document.getElementById('logout-trigger').addEventListener('click', function() {
     if (confirm("CONFIRM SYSTEM LOGOUT?\nPLEASE DOWNLOAD EOD REPORT FIRST")) {
@@ -1137,16 +1326,44 @@ async function terminalSend() {
     }
 }
 
-// populate target dropdown whenever UNITS is defined
-(function populateTargetSelect() {
+// Rebuild the terminal target dropdown from the current list of registered units
+function populateTargetSelect() {
     const sel = document.getElementById('t-target');
+    const cur = sel.value;
+    sel.innerHTML = '<option value="ALL">ALL UNITS</option>';
     UNITS.forEach(u => {
         const opt = document.createElement('option');
         opt.value = u.id;
         opt.textContent = `${u.id} (${u.type})`;
         sel.appendChild(opt);
     });
-})();
+    if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+}
+populateTargetSelect();
+
+// ============================================================
+// REGISTERED VEHICLES — live from Firestore "vehicles" collection.
+// This replaces the old hardcoded UNITS list and the hardcoded Blynk tokens.
+// Registering a vehicle (with its Blynk token) makes it show up here automatically.
+// ============================================================
+window.addEventListener('firestoreReady', () => {
+    window.fsOnSnapshot(window.fsVehicles, (snap) => {
+        UNITS = snap.docs.map(d => d.data()).filter(v => v && v.unitId)
+                   .map(v => ({ id: v.unitId, token: v.blynkToken || '', type: v.type === 'firetruck' ? 'firetruck' : 'ambulance' }));
+        const ids = UNITS.map(u => u.id);
+        // clean up units that are no longer registered
+        Object.keys(unitStates).filter(id => !ids.includes(id)).forEach(id => {
+            if (unitMarkers[id]) { map.removeLayer(unitMarkers[id]); delete unitMarkers[id]; }
+            clearRoute(id);
+            delete unitStates[id]; delete prevButtonStates[id]; delete lastSeenTs[id];
+        });
+        populateTargetSelect();
+        pollAll();
+    }, (err) => {
+        console.error('Vehicles listener error:', err);
+        termLog('err', `Vehicle list error: ${err.message}`);
+    });
+});
 
 // Enter key support
 document.getElementById('t-input').addEventListener('keydown', function(e) {
@@ -1161,6 +1378,7 @@ const lastSeenTs = {};
 
 async function pollTerminalRx() {
     for (const unit of UNITS) {
+        if (!unit.token || unit.token.length < 20) continue;   // no token registered -> nothing to poll
         try {
             // Fetch last 10 datapoints from V3 history for this unit
             const url = `${BLYNK_BASE}/data/get?token=${unit.token}&pin=v${V_TERMINAL}&limit=10&order=DESC`;
@@ -1443,6 +1661,39 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
 
 </style>
 
+<style>
+/* ── NEARBY UNITS / DISPATCH PANEL ── */
+.near-panel {
+    display: none; flex-direction: column; position: absolute; top: 250px; right: 10px;
+    width: 290px; max-height: calc(100% - 330px); z-index: 700;
+    background: rgba(2,16,29,0.96); border: 1px solid #3d6fa8; border-radius: 8px;
+    box-shadow: 0 8px 28px rgba(0,0,0,0.6); overflow: hidden; color: #c9d1d9;
+}
+.near-head { padding: 9px 12px; background: #04182b; border-bottom: 1px solid rgba(61,111,168,.4); position: relative; }
+.near-title { font-family: Georgia, serif; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: .5px; padding-right: 20px; }
+.near-addr { font-size: 10px; color: #8b96a3; margin-top: 2px; line-height: 1.3; }
+.near-close { position: absolute; top: 6px; right: 8px; background: none; border: none; color: #8b96a3; font-size: 16px; cursor: pointer; }
+.near-close:hover { color: #ff4d4d; }
+.near-tools { display: flex; gap: 6px; align-items: center; padding: 7px 12px; font-size: 10px; border-bottom: 1px solid rgba(61,111,168,.25); }
+.near-tools select { background: #020e1c; color: #fff; border: 1px solid #3a4451; border-radius: 3px; font-size: 10px; padding: 2px 4px; }
+.near-list { overflow-y: auto; padding: 6px 8px; flex: 1; }
+.near-row { display: flex; align-items: center; gap: 8px; padding: 7px 6px; border-bottom: 1px solid rgba(61,111,168,.2); }
+.near-info { flex: 1; min-width: 0; }
+.near-id { font-family: Georgia, serif; font-size: 12px; font-weight: bold; color: #fff; }
+.near-sub { font-size: 9px; color: #8b96a3; margin-top: 2px; }
+.near-btn {
+    border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; color: #fff;
+    font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase;
+    background: linear-gradient(45deg,#ff5a36,#c73e1d);
+}
+.near-btn:hover { filter: brightness(1.15); }
+.near-btn.sent { background: linear-gradient(45deg,#2e9e6b,#217346); }
+.near-empty { font-size: 11px; color: #8b96a3; padding: 12px 6px; text-align: center; line-height: 1.5; }
+.near-foot { padding: 7px 12px; border-top: 1px solid rgba(61,111,168,.3); }
+.near-foot .near-btn { width: 100%; background: linear-gradient(45deg,#3d6fa8,#0a1f3d); }
+.near-open-btn { background: linear-gradient(45deg,#3d6fa8,#0a1f3d)!important; color:#fff; border:none; padding:8px; width:100%; margin-top:8px; cursor:pointer; font-weight:bold; border-radius:4px; }
+</style>
+
 <!-- Modal HTML -->
 <div class="reg-overlay" id="reg-overlay" onclick="if(event.target===this)closeRegisterModal()">
     <div class="reg-modal">
@@ -1520,7 +1771,7 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
 // Firebase imports for registration
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, createUserWithEmailAndPassword, updateProfile, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
-import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
 const regFirebaseConfig = {
     apiKey:            "AIzaSyCQAXA3njpQhRLWwhwJMmB538dcn5Q78tU",
@@ -1532,9 +1783,8 @@ const regFirebaseConfig = {
     measurementId:     "G-725VM27SEM"
 };
 
-// FIX: create the operator's login on a SEPARATE (secondary) Firebase app.
-// Previously the main app was reused, so creating the account signed the admin out
-// and the Firestore writes then ran as the new operator (which caused the error).
+// The operator's login is created on a SEPARATE (secondary) Firebase app, so creating the
+// account does not sign the admin out, and the Firestore writes below run as the admin.
 const regApp  = getApps().find(a => a.name === 'tulong-register') || initializeApp(regFirebaseConfig, 'tulong-register');
 const regAuth = getAuth(regApp);         // only used to create the operator account
 const regDb   = getFirestore(getApp());  // main app => Firestore writes happen as the signed-in admin
@@ -1580,17 +1830,44 @@ window.submitRegistration = async function() {
     }
     if (password.length < 6) { regStatus('err','⚠ Password must be at least 6 characters.'); return; }
 
+    if (!token) { regStatus('err','⚠ Blynk token is required so the unit can connect to the dashboard.'); return; }
+
     const btn = document.getElementById('reg-submit-btn');
     btn.disabled = true;
-    regStatus('', '');
+    regStatus('ok', '⏳ Checking Blynk token...');
+
+    // Validate the Blynk token against the Blynk cloud BEFORE creating anything
+    let blynkOnline = false;
+    try {
+        const r = await fetch(`https://blynk.cloud/external/api/isHardwareConnected?token=${encodeURIComponent(token)}`);
+        const t = (await r.text()).trim();
+        if (!r.ok || t.toLowerCase().includes('invalid')) {
+            btn.disabled = false;
+            regStatus('err', '⚠ Invalid Blynk token. Copy the device token from Blynk Console > Device > Device Info.');
+            return;
+        }
+        blynkOnline = (t === 'true');
+    } catch (e) {
+        btn.disabled = false;
+        regStatus('err', '⚠ Could not reach Blynk to verify the token. Check your internet connection and try again.');
+        return;
+    }
 
     try {
+        // Block duplicate Unit IDs (would overwrite an existing vehicle)
+        const existing = await getDoc(doc(regDb, 'vehicles', unitId));
+        if (existing.exists()) {
+            btn.disabled = false;
+            regStatus('err', `⚠ Unit ${unitId} is already registered. Use a different Unit ID.`);
+            return;
+        }
         // Create Firebase Auth account (on the secondary app, admin session is untouched)
         const cred = await createUserWithEmailAndPassword(regAuth, email, password);
         await updateProfile(cred.user, { displayName: name });
         await signOut(regAuth); // drop the secondary session; admin stays logged in
 
-        // Save vehicle + user metadata in Firestore (as the admin)
+        // Save vehicle + user metadata in Firestore (as the admin).
+        // The dashboard reads the "vehicles" collection to build its live unit list (incl. the Blynk token).
         await setDoc(doc(regDb, 'vehicles', unitId), {
             unitId, type: vtype, plate, station,
             blynkToken: token || '',
@@ -1608,7 +1885,7 @@ window.submitRegistration = async function() {
         });
 
         // Show success
-        regStatus('ok', `✓ Unit ${unitId} registered! Account created for ${email}`);
+        regStatus('ok', `✓ Unit ${unitId} registered! Account created for ${email}. Blynk token valid — device is ${blynkOnline ? 'ONLINE' : 'offline right now (it will appear once the ESP32 connects)'}.`);
 
         // Show login credentials summary
         const td = document.getElementById('reg-token-display');
@@ -1640,7 +1917,7 @@ window.submitRegistration = async function() {
 
 <!-- ═══════ T.U.L.O.N.G. PATCH: small-screen (800x480) menu drawer + icons ═══════
      Everything below only activates when the viewport is max 900px wide AND max 600px tall.
-     Desktop / laptop layouts are NOT affected. Paste right before </body>. -->
+     Desktop / laptop layouts are NOT affected. -->
 <style>
 /* Hidden everywhere except the small-screen view */
 .menu-toggle,.sidebar-backdrop{display:none;}
