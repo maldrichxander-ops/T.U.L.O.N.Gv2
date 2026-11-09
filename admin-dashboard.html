@@ -34,7 +34,7 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <link rel="preconnect" href="https://fonts.googleapis.com"/>
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700;800&display=swap"/>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap"/>
 <style>
 body {
     background-color: #022649; color: white; margin: 0; padding: 0;
@@ -260,10 +260,12 @@ window.firebaseSignOut = () => signOut(auth);
 //  - signed in, not the admin -> operator-dashboard
 // Skipped while an intentional logout is in progress so the logout button can send the user to index.html.
 const ADMIN_EMAIL = 'admin@tulong.com';
+let dataStarted = false;
 onAuthStateChanged(auth, user => {
     if (window.isLoggingOut) return;
     if (!user) window.location.href = 'index.html';
     else if ((user.email || '').toLowerCase() !== ADMIN_EMAIL) window.location.href = 'operator-dashboard';
+    else if (!dataStarted) { dataStarted = true; window.dispatchEvent(new Event('firestoreReady')); }   // load data only once signed in
 });
 
 // Expose Firestore primitives to the classic (non-module) script below,
@@ -279,7 +281,10 @@ window.fsDeleteDoc      = deleteDoc;
 window.fsOnSnapshot     = onSnapshot;
 window.fsGetDocs        = getDocs;
 window.fsArrayUnion     = arrayUnion;
-window.dispatchEvent(new Event('firestoreReady'));
+// Exported incidents are copied here before they are cleared from the live map (Report History)
+window.fsArchive        = collection(db, 'incidentArchive');
+window.fsArchiveDoc     = (id) => doc(db, 'incidentArchive', id);
+// 'firestoreReady' is fired by onAuthStateChanged above, once the admin is signed in
 </script>
 
 <!-- HEADER -->
@@ -323,6 +328,7 @@ window.dispatchEvent(new Event('firestoreReady'));
 
         <button class="excel-btn" onclick="exportToExcel()"><svg class="ico" aria-hidden="true"><use href="#i-report"/></svg> Export EOD Report</button>
         <button class="wipe-btn"  onclick="wipeMapAndExport()"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg> Wipe Map &amp; Export</button>
+        <button class="history-btn" onclick="openHistory()"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg> Report History</button>
          <button class="register-btn" onclick="openRegisterModal()"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg> Register Emergency Vehicle</button>
         <button class="logout-btn" id="logout-trigger"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg> Terminate Session</button>
 
@@ -535,8 +541,8 @@ map.on('click', async function(e) {
     pendingReport = { lat: e.latlng.lat, lng: e.latlng.lng, address };
     const safeAddr = address.replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
     L.popup().setLatLng(e.latlng).setContent(`
-        <div style="text-align:center;color:black;max-width:240px;">
-            <b>NEW EMERGENCY</b><br><small>${safeAddr}</small><br>
+        <div style="text-align:center;color:#c9d1d9;max-width:240px;">
+            <b style="color:#fff;">NEW EMERGENCY</b><br><small>${safeAddr}</small><br>
             <button onclick="placePendingIncident('fire')" style="background:#ff4d4d;color:white;border:none;padding:8px;margin:5px;cursor:pointer;font-weight:bold;">${ico('fire')} FIRE</button>
             <button onclick="placePendingIncident('med')" style="background:#4da3ff;color:white;border:none;padding:8px;margin:5px;cursor:pointer;font-weight:bold;">${ico('med')} MEDICAL</button>
         </div>`).openOn(map);
@@ -570,11 +576,20 @@ window.placeIncident = async function(type,lat,lng,address) {
     }
 };
 
+
+// One shared, stand-alone incident popup. (Binding popups to markers made Leaflet "toggle" them:
+// after a re-login the markers had no popup at all, and a second click closed what the first opened.)
+let incidentPopup = null;
+function openIncidentPopup(id, html) {
+    const d = activeIncidentMarkers[id]; if (!d) return;
+    if (!incidentPopup) incidentPopup = L.popup({ offset: [0, -16], maxWidth: 320, autoPanPadding: [24, 24] });
+    incidentPopup.setLatLng([d.lat, d.lng]).setContent(html).openOn(map);
+}
 window.updatePopup = function(id) {
     const d = activeIncidentMarkers[id];
     if (!d) return;
-    if (d.isResolved) { d.marker.bindPopup(`<div style="color:white;"><b>RESOLVED ${d.type.toUpperCase()}</b><br><small>${d.address}</small><hr>${d.status}</div>`).openPopup(); return; }
-    let c = `<div style="color:white;min-width:220px;"><b>${d.type.toUpperCase()} INCIDENT</b><hr>`;
+    if (d.isResolved) { openIncidentPopup(id, `<div style="color:white;"><b>RESOLVED ${(d.type||'').toUpperCase()}</b><br><small>${d.address}</small><hr>${d.status}</div>`); return; }
+    let c = `<div style="color:white;min-width:220px;"><b>${(d.type||'').toUpperCase()} INCIDENT</b><hr>`;
     if (d.type==='fire') {
         c = `<div style="color:white;min-width:220px;"><b>FIRE INCIDENT</b><hr><label style="font-size:12px;font-weight:600;">Classification:</label><select id="status-${id}" class="status-select" onchange="handleStatusChange('${id}')">`;
         ["For Verification","False Alarm","Rubbish Fire","Post Fire","Vehicle fire","Grass fire","Residential","Commercial"].forEach(o=>c+=`<option value="${o}" ${d.status===o?'selected':''}>${o}</option>`);
@@ -583,25 +598,25 @@ window.updatePopup = function(id) {
         c += `</select></div>`;
     } else {
         c = `<div style="color:white;min-width:220px;"><b>MEDICAL INCIDENT</b><hr><label style="font-size:12px;font-weight:600;">Medical Emergency Type:</label><select id="status-${id}" class="status-select" onchange="handleMedicalStatusChange('${id}')">`;
-        ["For Verification","Suspected Heart Attack / Cardiac Arrest","Suspected Stroke","Vehicular Accident","Drowning","Possible Suicide","Falling Incident","Fire Incident","Electrocution","Other"].forEach(o=>c+=`<option value="${o}" ${d.status.startsWith(o)?'selected':''}>${o}</option>`);
-        c += `</select><div id="other-input-div-${id}" style="display:${d.status.startsWith('Other')?'block':'none'};margin-top:10px;"><input type="text" id="other-text-${id}" placeholder="Type specific emergency..." style="width:100%;padding:5px;color:black;" oninput="updateOtherMedicalText('${id}')"></div>`;
+        ["For Verification","Suspected Heart Attack / Cardiac Arrest","Suspected Stroke","Vehicular Accident","Drowning","Possible Suicide","Falling Incident","Fire Incident","Electrocution","Other"].forEach(o=>c+=`<option value="${o}" ${(d.status||'').startsWith(o)?'selected':''}>${o}</option>`);
+        c += `</select><div id="other-input-div-${id}" style="display:${(d.status||'').startsWith('Other')?'block':'none'};margin-top:10px;"><input type="text" id="other-text-${id}" placeholder="Type specific emergency..." style="width:100%;padding:5px;color:black;" oninput="updateOtherMedicalText('${id}')"></div>`;
     }
     c += `<button class="near-open-btn" onclick="showNearUnits('${id}')">${ico('radio')} NEARBY UNITS &amp; DISPATCH</button>`;
     c += `<br><br><button onclick="resolveIncident('${id}')" style="background:#217346;color:white;border:none;padding:8px;width:100%;cursor:pointer;font-weight:bold;">RESOLVE &amp; SAVE</button>
           <button onclick="deleteIncident('${id}')" style="background:#c73e1d;color:white;border:none;padding:8px;width:100%;margin-top:5px;cursor:pointer;">DELETE</button></div>`;
-    d.marker.bindPopup(c).openPopup();
+    openIncidentPopup(id, c);
 };
 
 window.handleStatusChange = async function(id) {
     const v = document.getElementById(`status-${id}`).value;
     const d = activeIncidentMarkers[id]; if (!d || d.status===v) return;
-    const timeline = [...(d.timeline||[]), `[${new Date().toLocaleTimeString()}] Status: ${v}`];
+    const timeline = window.fsArrayUnion(`[${new Date().toLocaleTimeString()}] Status: ${v}`);
     await window.fsUpdateDoc(window.fsDoc(id), { status: v, timeline });
 };
 window.handleMedicalStatusChange = async function(id) {
     const v = document.getElementById(`status-${id}`).value;
     const d = activeIncidentMarkers[id]; if (!d) return;
-    const timeline = [...(d.timeline||[]), `[${new Date().toLocaleTimeString()}] Type: ${v}`];
+    const timeline = window.fsArrayUnion(`[${new Date().toLocaleTimeString()}] Type: ${v}`);
     await window.fsUpdateDoc(window.fsDoc(id), { status: v, timeline });
 };
 window.updateOtherMedicalText = async function(id) {
@@ -615,7 +630,7 @@ window.logAlarm = async function(id) {
     const d = activeIncidentMarkers[id]; if (!d || d.alarm===v) return;
     const tact=["Fire on Progress","1st Alarm","2nd Alarm","3rd Alarm","4th Alarm","5th Alarm","Task Force Alpha","Task Force Bravo","Task Force Charlie","Task Force Delta","Task Force Echo","Task Force Hotel","Task Force India","General Alarm"];
     const lastTacticalLevel = tact.includes(d.alarm) ? d.alarm : (d.lastTacticalLevel || null);
-    const timeline = [...(d.timeline||[]), `${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${v}`];
+    const timeline = window.fsArrayUnion(`${new Date().toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})} - ${v}`);
     await window.fsUpdateDoc(window.fsDoc(id), { alarm: v, timeline, lastTacticalLevel });
     if (v === "Fire Out") setTimeout(() => resolveIncident(id), 500);
 };
@@ -633,22 +648,26 @@ window.deleteIncident = async function(id) {
 
 // ---- Excel export helpers ----
 function buildReportRows(incidentsArr) {
-    return incidentsArr.map(d => {
-        const start = new Date(d.startTime);
+    return incidentsArr
+      .slice().sort((a, b) => new Date(a.startTime || 0) - new Date(b.startTime || 0))
+      .map(d => {
+        const start = d.startTime ? new Date(d.startTime) : null;
         const end   = d.resolvedTime ? new Date(d.resolvedTime) : new Date();
-        const ms    = end - start;
+        const ms    = start ? Math.max(0, end - start) : 0;
         const hrs   = Math.floor(ms / 3600000);
         const mins  = Math.floor((ms % 3600000) / 60000);
         return {
-            "Incident ID": d.id,
-            "Initial Type": d.type.toUpperCase()==="FIRE" ? "FIRE" : "MED",
+            "Incident ID": d.id || "",
+            "Initial Type": String(d.type || '').toUpperCase()==="FIRE" ? "FIRE" : "MED",
             "Specific Location": d.address || "Unknown",
-            "Reported": start.toLocaleString('en-PH'),
-            "Resolved": d.resolvedTime ? end.toLocaleString('en-PH') : "N/A",
-            "Duration": `${hrs}h ${mins}m`,
-            "Classification": d.status,
+            "Coordinates": (isFinite(d.lat) && isFinite(d.lng)) ? `${Number(d.lat).toFixed(6)}, ${Number(d.lng).toFixed(6)}` : "",
+            "Reported": start ? start.toLocaleString('en-PH') : "Unknown",
+            "Resolved": d.resolvedTime ? end.toLocaleString('en-PH') : "Not resolved",
+            "Duration": start ? `${hrs}h ${mins}m` : "",
+            "Classification": d.status || "For Verification",
             "Final Alarm": d.alarm || "N/A",
-            "Progression Timeline": (d.timeline||[]).join(" \n ")
+            // one line, so it is visible in the cell without needing "wrap text" in Excel
+            "Progression Timeline": (d.timeline||[]).join("  |  ")
         };
     });
 }
@@ -657,7 +676,8 @@ function downloadBlob(blob, filename) {
     const a = document.createElement('a');
     a.href = url; a.download = filename; a.style.display = 'none';
     document.body.appendChild(a); a.click();
-    setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 1500);
+    // keep the file available long enough for slow devices / the browser's save prompt
+    setTimeout(() => { a.remove(); URL.revokeObjectURL(url); }, 60000);
 }
 function writeReportWorkbook(rows, tag) {
     if (rows.length===0) { alert("No incidents to export."); return false; }
@@ -666,14 +686,25 @@ function writeReportWorkbook(rows, tag) {
         if (typeof XLSX === 'undefined') throw new Error('Excel library (SheetJS) did not load - check your internet connection');
         const wb=XLSX.utils.book_new();
         const fire=rows.filter(i=>i["Initial Type"]==="FIRE").map(i=>({
-            "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Barangay":i["Specific Location"],
+            "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Location":i["Specific Location"],"Coordinates":i["Coordinates"],
             "Reported":i["Reported"],"Resolved":i["Resolved"],"Duration":i["Duration"],
             "Classification":i["Classification"],"Final Alarm":i["Final Alarm"],"Progression Timeline":i["Progression Timeline"]}));
         const med=rows.filter(i=>i["Initial Type"]==="MED").map(i=>({
-            "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Specific Location":i["Specific Location"],
-            "Medical Emergency Type":i["Classification"],"Reported":i["Reported"],"Resolved":i["Resolved"],"Duration":i["Duration"]}));
-        if(fire.length>0) XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(fire),"Fire Incidents");
-        if(med.length>0)  XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(med),"Medical Incidents");
+            "Incident ID":i["Incident ID"],"Type":i["Initial Type"],"Location":i["Specific Location"],"Coordinates":i["Coordinates"],
+            "Medical Emergency Type":i["Classification"],"Reported":i["Reported"],"Resolved":i["Resolved"],"Duration":i["Duration"],
+            "Progression Timeline":i["Progression Timeline"]}));
+        // column widths so nothing is hidden behind "####" or cut off
+        const sheet = (data) => {
+            const ws = XLSX.utils.json_to_sheet(data);
+            const keys = Object.keys(data[0] || {});
+            ws['!cols'] = keys.map(k => ({ wch: Math.min(80, Math.max(k.length, ...data.map(r => String(r[k] ?? '').length)) + 2) }));
+            ws['!autofilter'] = { ref: ws['!ref'] };
+            return ws;
+        };
+        // "All Incidents" first, so the report is never an empty-looking workbook
+        XLSX.utils.book_append_sheet(wb, sheet(rows), "All Incidents");
+        if(fire.length>0) XLSX.utils.book_append_sheet(wb,sheet(fire),"Fire Incidents");
+        if(med.length>0)  XLSX.utils.book_append_sheet(wb,sheet(med),"Medical Incidents");
         // Write the file ourselves (more reliable than XLSX.writeFile across browsers/iframes)
         const out = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
         downloadBlob(new Blob([out], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' }), `TULONG_Report_${tag}_${stamp}.xlsx`);
@@ -705,13 +736,32 @@ async function deleteIncidentsReport(ids) {
     if (failed) alert(`Report was downloaded, but ${failed} incident(s) could not be cleared from the map: ${lastErr}\nCheck the Firestore rules for the "incidents" collection (delete must be allowed).`);
 }
 
+
+// Copy incidents to "incidentArchive" first; only the ones that were safely copied are cleared from the map.
+// Nothing is ever lost if the download didn't save: it stays in Report History.
+const ARCHIVE_FIELDS = ['type','lat','lng','address','startTime','resolvedTime','timeline','status','alarm','isResolved','lastTacticalLevel'];
+async function archiveAndClear(list, tag) {
+    if (!window.fsArchiveDoc) { alert('Still connecting to the database. Nothing was cleared.'); return; }
+    const now = new Date();
+    const batch = `${tag}-${now.toISOString()}`;
+    const saved = []; let failed = 0, lastErr = '';
+    for (const d of list) {
+        const rec = { id: d.id, exportBatch: batch, exportTag: tag, exportedAt: now.toISOString() };
+        ARCHIVE_FIELDS.forEach(k => { rec[k] = d[k] === undefined ? null : d[k]; });
+        try { await window.fsSetDoc(window.fsArchiveDoc(d.id), rec); saved.push(d.id); }
+        catch (e) { failed++; lastErr = e.code || e.message; console.error('Archive failed', d.id, e); }
+    }
+    if (failed) alert(`The report was downloaded, but ${failed} incident(s) could not be saved to Report History (${lastErr}), so they were kept on the map.\n\nAsk your Firebase admin to allow the admin to read/write the "incidentArchive" collection.`);
+    if (saved.length) await deleteIncidentsReport(saved);
+}
+
 // "Export EOD Report" — exports, then clears ONLY the resolved/solved incidents
 window.exportToExcel = async function() {
     const resolved = Object.entries(activeIncidentMarkers).filter(([,d])=>d.isResolved).map(([id,d])=>({id,...d}));
     if (resolved.length === 0) { alert("No resolved incidents to export yet. Press 'RESOLVE & SAVE' on an incident first."); return; }
     const ok = writeReportWorkbook(buildReportRows(resolved), 'EOD');
     if (!ok) return;
-    await deleteIncidentsReport(resolved.map(i=>i.id));
+    await archiveAndClear(resolved, 'EOD');
 };
 
 // "Wipe Map & Export" — exports ALL incidents (active + resolved), then clears EVERYTHING
@@ -721,7 +771,7 @@ window.wipeMapAndExport = async function() {
     if (!confirm("ARE YOU SURE TO WIPE MAP? This clears ALL incidents, including active ones. A report of everything will be downloaded first.")) return;
     const ok = writeReportWorkbook(buildReportRows(all), 'WIPE');
     if (!ok) return;   // export failed -> keep the data
-    await deleteIncidentsReport(all.map(i=>i.id));
+    await archiveAndClear(all, 'WIPE');
 };
 
 function updateGlobalStats() {
@@ -755,6 +805,7 @@ function renderIncidentFromDoc(id, data) {
             html:`<div id="icon-inner-${id}" style="text-align:center;display:flex;flex-direction:column;align-items:center;"><div class="inc-marker ${data.type==='fire'?'fire':'med'}">${ico(data.type==='fire'?'fire':'med')}</div><div id="label-${id}" style="background:rgba(0,0,0,0.8);color:white;font-size:11px;font-weight:bold;padding:2px 5px;border-radius:3px;white-space:nowrap;display:none;border:1px solid #4da3ff;margin-top:2px;"></div></div>`,
             className:'incident-marker', iconSize:[40,50], iconAnchor:[20,25]
         })}).addTo(map);
+        marker.on('click', () => window.updatePopup(id));   // clickable for everyone, every session
         entry = { marker };
         activeIncidentMarkers[id] = entry;
     }
@@ -791,10 +842,23 @@ function recomputeIncidentCounts() {
     }
     updateGlobalStats();
 }
-window.addEventListener('firestoreReady', () => {
-    window.fsOnSnapshot(window.fsIncidents, (snapshot) => {
+window.addEventListener('firestoreReady', () => subscribeIncidents());
+// Live incident feed. Re-subscribes by itself if the connection or permission check fails
+// (for example right after logging in), so incidents never silently stop showing.
+let incUnsub = null, incRetry = null;
+function subscribeIncidents() {
+    if (incUnsub) { try { incUnsub(); } catch (e) {} incUnsub = null; }
+    clearTimeout(incRetry);
+    let first = true;
+    incUnsub = window.fsOnSnapshot(window.fsIncidents, (snapshot) => {
         const banner = document.getElementById('sync-banner');
         if (banner) banner.style.display = 'none';
+        if (first) {
+            // drop anything on the map that no longer exists in the database
+            first = false;
+            const ids = new Set(snapshot.docs.map(d => d.id));
+            Object.keys(activeIncidentMarkers).forEach(id => { if (!ids.has(id)) removeIncidentLocally(id); });
+        }
         snapshot.docChanges().forEach(change => {
             if (change.type === 'removed') removeIncidentLocally(change.doc.id);
             else renderIncidentFromDoc(change.doc.id, change.doc.data());
@@ -803,16 +867,17 @@ window.addEventListener('firestoreReady', () => {
         initialSyncDone = true;
     }, (err) => {
         console.error('Incidents listener error:', err);
-        termLog('err', `Incident sync error: ${err.message}`);
+        incUnsub = null;
         const banner = document.getElementById('sync-banner');
         if (banner) {
             banner.style.display = 'block';
-            banner.innerHTML = ico('warn') + ' ' + escHtml(err.code === 'permission-denied'
-                ? 'Incident sync blocked — Firestore security rules need to allow read/write on the "incidents" collection. See setup instructions.'
-                : `Incident sync error: ${err.message}`);
+            banner.innerHTML = ico('warn') + ' ' + escHtml((err.code === 'permission-denied'
+                ? 'Incident sync blocked — Firestore security rules need to allow read/write on the "incidents" collection.'
+                : `Incident sync error: ${err.message}`) + ' Retrying automatically…');
         }
+        incRetry = setTimeout(subscribeIncidents, 8000);
     });
-});
+}
 
 // ══════════════════════════════════════════════════════
 // NOTIFICATIONS — everyone with a dashboard open is told about new and resolved incidents
@@ -1301,7 +1366,7 @@ function updateUnitMarker(id, s) {
     // Vehicle type pin: FIRETRUCK = red pin, AMBULANCE = blue pin
     const pinColor = s.type==='firetruck' ? '#ff4d4d' : '#3d6fa8';
     const icon  = L.divIcon({className:'', iconSize:[44,70], iconAnchor:[22,70],
-        html:`<div style="text-align:center;width:44px;"><svg width="44" height="56" viewBox="0 0 44 56" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));"><path d="M22 0 C10 0 0 10 0 22 C0 36 22 56 22 56 C22 56 44 36 44 22 C44 10 34 0 22 0 Z" fill="${pinColor}"/><circle cx="22" cy="21" r="16" fill="white"/><image href="${img}" x="6" y="5" width="32" height="32"/></svg><div style="background:${color};color:#fff;font-size:10px;font-weight:bold;padding:1px 5px;border-radius:3px;white-space:nowrap;margin-top:2px;display:inline-block;box-shadow:0 1px 4px rgba(0,0,0,0.4);">${id}</div></div>`});
+        html:`<div style="text-align:center;width:44px;"><svg width="44" height="56" viewBox="0 0 44 56" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));"><path d="M22 0 C10 0 0 10 0 22 C0 36 22 56 22 56 C22 56 44 36 44 22 C44 10 34 0 22 0 Z" fill="${pinColor}"/><circle cx="22" cy="21" r="16" fill="white"/><image href="${img}" x="6" y="5" width="32" height="32"/></svg><div style="background:${color};color:#fff;font-size:11px;font-weight:bold;padding:1px 6px;border-radius:3px;white-space:nowrap;margin-top:2px;display:inline-block;box-shadow:0 1px 4px rgba(0,0,0,0.4);">${id}</div></div>`});
     const popup = `<div style="color:white;min-width:150px;">
         <b>${id}</b><br>
         <span style="background:${color};padding:2px 6px;border-radius:3px;font-size:11px;">${lbl}</span><br><br>
@@ -2215,6 +2280,170 @@ window.submitRegistration = async function() {
 })();
 </script>
 
+<!-- REPORT HISTORY — every exported incident stays here and can be downloaded again or shown on the map -->
+<div class="hist-overlay" id="hist-overlay" onclick="if(event.target===this)closeHistory()">
+    <div class="hist-modal" role="dialog" aria-modal="true" aria-labelledby="hist-title">
+        <div class="hist-head">
+            <div class="hist-ico"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg></div>
+            <div style="flex:1;min-width:0;">
+                <div class="hist-title" id="hist-title">Report History</div>
+                <div class="hist-sub">Exported incidents are kept here. Download a report again or show it on the map.</div>
+            </div>
+            <button class="hist-close" type="button" onclick="closeHistory()" title="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+        </div>
+        <div class="hist-body" id="hist-body"></div>
+    </div>
+</div>
+<div class="arch-chip" id="arch-chip">
+    <span id="arch-chip-text"></span>
+    <button type="button" onclick="hideArchiveOnMap()">Hide</button>
+</div>
+
+<script>
+// ══════════════════════════════════════════════════════
+// REPORT HISTORY
+// ══════════════════════════════════════════════════════
+let historyBatches = [];
+let archiveLayer = null;
+function fmtWhen(iso) { const d = new Date(iso); return isNaN(d) ? 'Unknown date' : d.toLocaleString('en-PH', { dateStyle: 'medium', timeStyle: 'short' }); }
+
+window.openHistory = async function() {
+    document.getElementById('hist-overlay').classList.add('active');
+    const body = document.getElementById('hist-body');
+    body.innerHTML = `<div class="hist-empty">${ico('clock')}<br>Loading report history…</div>`;
+    if (!window.fsGetDocs || !window.fsArchive) { body.innerHTML = `<div class="hist-empty">${ico('warn')}<br>Still connecting to the database. Try again in a moment.</div>`; return; }
+    try {
+        const snap = await window.fsGetDocs(window.fsArchive);
+        const groups = {};
+        snap.docs.forEach(doc => {
+            const d = { id: doc.id, ...doc.data() };
+            const key = d.exportBatch || 'Unknown';
+            (groups[key] = groups[key] || { key, tag: d.exportTag || 'EXPORT', at: d.exportedAt, items: [] }).items.push(d);
+        });
+        historyBatches = Object.values(groups).sort((a, b) => new Date(b.at || 0) - new Date(a.at || 0));
+        renderHistory();
+    } catch (e) {
+        console.error('History load failed', e);
+        body.innerHTML = `<div class="hist-empty">${ico('warn')}<br><b>Could not load Report History</b><br>${escHtml(e.code === 'permission-denied'
+            ? 'Firestore rules must allow the admin to read the "incidentArchive" collection.' : e.message)}</div>`;
+    }
+};
+window.closeHistory = () => document.getElementById('hist-overlay').classList.remove('active');
+
+function renderHistory() {
+    const body = document.getElementById('hist-body');
+    if (!historyBatches.length) {
+        body.innerHTML = `<div class="hist-empty">${ico('report')}<br><b>No exported reports yet</b><br>Use “Export EOD Report” or “Wipe Map &amp; Export”. Exported incidents will appear here.</div>`;
+        return;
+    }
+    const total = historyBatches.reduce((n, b) => n + b.items.length, 0);
+    body.innerHTML = `<div class="hist-top"><span>${historyBatches.length} report(s) · ${total} incident(s)</span>
+            <button class="hist-btn" type="button" onclick="downloadHistory(-1)">${ico('report')} Download all</button></div>` +
+        historyBatches.map((b, i) => {
+            const fire = b.items.filter(x => x.type === 'fire').length, med = b.items.length - fire;
+            return `<div class="hist-row">
+                <div class="hist-info">
+                    <div class="hist-when">${escHtml(fmtWhen(b.at))} <span class="hist-tag ${b.tag === 'WIPE' ? 'wipe' : ''}">${escHtml(b.tag)}</span></div>
+                    <div class="hist-meta">${b.items.length} incident(s) · ${ico('fire', 'c-fire')} ${fire} fire · ${ico('med', 'c-med')} ${med} medical</div>
+                </div>
+                <div class="hist-actions">
+                    <button class="hist-btn" type="button" onclick="downloadHistory(${i})">${ico('report')} Download</button>
+                    <button class="hist-btn ghost" type="button" onclick="showArchiveOnMap(${i})">${ico('pin')} Show on map</button>
+                </div>
+            </div>`;
+        }).join('');
+}
+
+window.downloadHistory = function(i) {
+    const items = i < 0 ? historyBatches.flatMap(b => b.items) : historyBatches[i].items;
+    const tag = i < 0 ? 'HISTORY-ALL' : `COPY-${historyBatches[i].tag}`;
+    writeReportWorkbook(buildReportRows(items), tag);
+};
+
+window.showArchiveOnMap = function(i) {
+    const b = historyBatches[i]; if (!b) return;
+    if (!archiveLayer) archiveLayer = L.featureGroup().addTo(map);
+    archiveLayer.clearLayers();
+    b.items.filter(d => isFinite(d.lat) && isFinite(d.lng)).forEach(d => {
+        const isFire = d.type === 'fire';
+        const m = L.marker([d.lat, d.lng], { icon: L.divIcon({
+            html: `<div class="inc-marker arch ${isFire ? 'fire' : 'med'}">${ico(isFire ? 'fire' : 'med')}</div>`,
+            className: '', iconSize: [34, 34], iconAnchor: [17, 17] }) });
+        const tl = (d.timeline || []).map(x => `<li>${escHtml(x)}</li>`).join('');
+        m.bindPopup(`<div style="color:#c9d1d9;min-width:220px;">
+            <b style="color:#fff;">ARCHIVED ${isFire ? 'FIRE' : 'MEDICAL'} INCIDENT</b><br><small>${escHtml(d.id)}</small><br>
+            <small>${escHtml(d.address || '')}</small><hr>
+            <div style="font-size:12px;">Status: <b>${escHtml(d.status || '—')}</b>${isFire ? `<br>Alarm: <b>${escHtml(d.alarm || 'N/A')}</b>` : ''}<br>
+            Reported: ${escHtml(d.startTime ? fmtWhen(d.startTime) : '—')}<br>Resolved: ${escHtml(d.resolvedTime ? fmtWhen(d.resolvedTime) : 'Not resolved')}</div>
+            ${tl ? `<ul style="margin:8px 0 0 16px;padding:0;font-size:11px;line-height:1.5;">${tl}</ul>` : ''}</div>`);
+        archiveLayer.addLayer(m);
+    });
+    closeHistory();
+    const chip = document.getElementById('arch-chip');
+    document.getElementById('arch-chip-text').innerHTML = `${ico('clock')} Showing archived report · ${escHtml(fmtWhen(b.at))} · ${b.items.length} incident(s)`;
+    chip.classList.add('show');
+    if (archiveLayer.getLayers().length) map.flyToBounds(archiveLayer.getBounds(), { padding: [60, 60], maxZoom: 16, duration: 1.2 });
+};
+window.hideArchiveOnMap = function() {
+    if (archiveLayer) archiveLayer.clearLayers();
+    document.getElementById('arch-chip').classList.remove('show');
+};
+</script>
+
+<style>
+.history-btn{width:100%;padding:10px;margin-top:5px;border:none;border-radius:4px;cursor:pointer;color:#fff;font-weight:bold;
+  text-transform:uppercase;font-size:12px;letter-spacing:.5px;background:linear-gradient(45deg,#5b6673,#2c3540);font-family:var(--font);}
+.history-btn:hover{background:linear-gradient(45deg,#6f7b89,#3a4451);box-shadow:0 0 15px rgba(139,150,163,.35);}
+.history-btn .ico{margin-right:4px;}
+.hist-overlay{display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:12px;box-sizing:border-box;}
+.hist-overlay.active{display:flex;}
+.hist-modal{width:620px;max-width:96vw;max-height:92vh;display:flex;flex-direction:column;background:#02101D;border:1px solid #3d6fa8;
+  border-radius:12px;box-shadow:0 24px 48px rgba(0,0,0,.6);color:#c9d1d9;overflow:hidden;}
+.hist-head{display:flex;align-items:center;gap:12px;padding:18px 20px;border-bottom:1px solid #1a3a5c;background:#04182b;}
+.hist-ico{width:44px;height:44px;border-radius:8px;border:1px solid #3d6fa8;display:flex;align-items:center;justify-content:center;font-size:22px;color:#6ea3e0;flex:none;}
+.hist-title{font-size:19px;font-weight:800;color:#fff;}
+.hist-sub{font-size:12px;color:#9aa5b1;margin-top:3px;line-height:1.4;}
+.hist-close{width:36px;height:36px;border-radius:6px;border:1px solid #3a4451;background:none;color:#c9d1d9;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;flex:none;}
+.hist-close:hover{color:#ff4d4d;border-color:#ff4d4d;}
+.hist-body{overflow-y:auto;padding:14px 16px;}
+.hist-top{display:flex;align-items:center;justify-content:space-between;gap:10px;font-size:13px;color:#9aa5b1;margin-bottom:10px;}
+.hist-row{display:flex;align-items:center;gap:12px;padding:12px;margin-bottom:8px;border:1px solid rgba(61,111,168,.35);border-radius:8px;background:rgba(4,24,43,.85);}
+.hist-info{flex:1;min-width:0;}
+.hist-when{font-size:15px;font-weight:700;color:#fff;display:flex;align-items:center;gap:8px;flex-wrap:wrap;}
+.hist-tag{font-size:10px;font-weight:800;letter-spacing:.5px;padding:2px 8px;border-radius:10px;background:#0f2d1a;color:#3bd07a;}
+.hist-tag.wipe{background:#2d0f0f;color:#ff6b6b;}
+.hist-meta{font-size:13px;color:#b5bfca;margin-top:4px;display:flex;align-items:center;gap:5px;flex-wrap:wrap;}
+.hist-actions{display:flex;flex-direction:column;gap:6px;flex:none;}
+.hist-btn{min-height:34px;padding:0 12px;border:none;border-radius:6px;cursor:pointer;color:#fff;font-size:12px;font-weight:800;letter-spacing:.3px;
+  text-transform:uppercase;display:inline-flex;align-items:center;justify-content:center;gap:6px;background:linear-gradient(45deg,#2e9e6b,#217346);font-family:var(--font);}
+.hist-btn.ghost{background:transparent;border:1px solid #3d6fa8;color:#c9d1d9;}
+.hist-btn:hover{filter:brightness(1.12);}
+.hist-empty{text-align:center;padding:30px 12px;font-size:13px;color:#9aa5b1;line-height:1.6;}
+.hist-empty .ico{font-size:30px;color:#3d6fa8;margin-bottom:6px;}
+.hist-empty b{color:#fff;font-size:15px;}
+.inc-marker.arch{filter:grayscale(.55) brightness(.85);border-style:dashed;}
+.arch-chip{position:fixed;top:84px;left:50%;margin-left:-220px;width:440px;max-width:calc(100vw - 24px);box-sizing:border-box;z-index:950;display:none;
+  align-items:center;gap:10px;padding:8px 8px 8px 14px;border-radius:8px;background:rgba(2,16,29,.96);border:1px solid #8b96a3;color:#fff;
+  font-size:12px;font-weight:600;box-shadow:0 8px 24px rgba(0,0,0,.5);}
+.arch-chip.show{display:flex;}
+.arch-chip span{flex:1;min-width:0;}
+.arch-chip button{min-height:30px;padding:0 12px;border-radius:5px;border:none;cursor:pointer;color:#fff;font-weight:800;font-size:11px;
+  background:linear-gradient(45deg,#5b6673,#3a4451);}
+@media (max-width:900px) and (max-height:600px){
+  .sidebar .history-btn{display:flex;align-items:center;justify-content:center;gap:8px;padding:8px !important;font-size:11px !important;}
+  .hist-modal{max-height:94vh;}
+  .hist-head{padding:10px 14px;}
+  .hist-ico{width:34px;height:34px;font-size:18px;}
+  .hist-title{font-size:16px;}
+  .hist-sub{font-size:11px;}
+  .hist-body{padding:10px 12px;}
+  .hist-row{padding:9px;}
+  .hist-when{font-size:13px;}
+  .hist-meta{font-size:12px;}
+  .arch-chip{top:52px;left:8px;right:8px;margin-left:0;width:auto;}
+}
+</style>
+
 <!-- ══════ READABILITY + ICONS + DOCKED DISPATCH PANEL — kept last so it overrides earlier styles ══════ -->
 <style>
 :root{ --near-w: 380px; }
@@ -2239,7 +2468,7 @@ body{
 .stat-label{font-size:12px;font-weight:600;letter-spacing:.3px;}
 .section-lbl{font-size:12px;letter-spacing:.8px;font-weight:700;}
 .uc-id{font-size:14px;}
-.uc-badge{font-size:10px;}
+.uc-badge{font-size:11px;}
 .uc-sub{font-size:11px;}
 .station-list{font-size:13px;}
 .report-btn{font-size:14px;}
@@ -2299,7 +2528,7 @@ body{
   border-radius:8px;background:rgba(4,24,43,.85);}
 .near-info{flex:1;min-width:0;}
 .near-id{font-family:var(--font);font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
-.near-status{font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:10px;}
+.near-status{font-size:11px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:10px;}
 .near-status.st-standby{background:#0f2d1a;color:#3bd07a;} .near-status.st-responding{background:#3d2008;color:#f0883e;}
 .near-status.st-arrived{background:#2d0f0f;color:#ff6b6b;}
 .near-sub{font-size:13px;color:#b5bfca;margin-top:4px;}
@@ -2314,6 +2543,14 @@ body{
 .near-foot .near-btn-big{width:100%;min-height:48px;font-size:15px;background:linear-gradient(45deg,#ff5a36,#c73e1d);}
 .near-foot .near-btn-ghost{width:100%;min-height:38px;font-size:12px;background:transparent;border:1px solid #3d6fa8;color:#c9d1d9;}
 .near-foot .near-btn-ghost:hover{background:rgba(61,111,168,.25);color:#fff;}
+/* Dark map popups: the incident popup used white text on Leaflet's white box, so it was unreadable */
+.leaflet-popup-content-wrapper{background:#02101D;color:#c9d1d9;border:1px solid #3d6fa8;border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.55);}
+.leaflet-popup-tip{background:#02101D;border:1px solid #3d6fa8;}
+.leaflet-popup-content b{color:#fff;}
+.leaflet-popup-content hr{border:0;border-top:1px solid rgba(61,111,168,.45);margin:8px 0;}
+.leaflet-popup-content label{color:#aab4bf;}
+.leaflet-container a.leaflet-popup-close-button{color:#9aa5b1;font-size:20px;width:26px;height:26px;}
+.leaflet-container a.leaflet-popup-close-button:hover{color:#ff4d4d;}
 .near-open-btn{display:flex !important;align-items:center;justify-content:center;gap:6px;font-size:13px;}
 /* while the panel is shown, keep map controls and the terminal clear of it */
 .leaflet-right{transition:right .28s ease;}
@@ -2404,6 +2641,136 @@ body.near-open .terminal-panel{right:var(--near-w);}
   .reg-submit{font-size:14px;padding:10px;}
   .reg-status{font-size:13px;}
   .reg-token-display{font-size:12px;}
+}
+</style>
+
+<!-- ══════ TYPOGRAPHY: Barlow (text) · Barlow Condensed (headings, labels, numbers) · JetBrains Mono (data) ══════ -->
+<style>
+:root{
+  --font: 'Barlow', 'DejaVu Sans', 'Liberation Sans', Arial, sans-serif;
+  --font-display: 'Barlow Condensed', 'Barlow', 'DejaVu Sans Condensed', 'DejaVu Sans', Arial, sans-serif;
+  --mono: 'JetBrains Mono', 'DejaVu Sans Mono', 'Liberation Mono', 'Courier New', monospace;
+}
+body{ font-family: var(--font); font-feature-settings: "tnum" 1; }
+button, input, select, textarea{ font-family: inherit; }
+.leaflet-container, .leaflet-popup-content{ font-family: var(--font); }
+
+/* headings, labels, buttons, numbers */
+.brand-badge, h2, .header-container > div:last-child > div:first-child, .menu-toggle,
+.stat-number, .stat-label, .report-btn, .excel-btn, .wipe-btn, .register-btn, .logout-btn, .history-btn,
+.section-lbl, .uc-id, .uc-badge, .station-item b, .terminal-header-left, .terminal-header-right, .t-send-btn,
+.map-counter-overlay, .map-counter-item, .alert-title, .alert-view,
+.near-kicker, .near-title, .near-id, .near-status, .near-btn, .near-count, .near-handle-lbl, .near-handle b, .near-tools label,
+.reg-modal-title, .reg-section-lbl, .reg-label, .reg-submit, .reg-modal-sub,
+.hist-title, .hist-when, .hist-tag, .hist-btn, .arch-chip, .cred-title, .reg-token-display .k,
+.leaflet-popup-content b, .near-open-btn, .leaflet-popup-content button, .leaflet-popup-content label{
+  font-family: var(--font-display);
+}
+/* data */
+.terminal-log, .t-input, .t-target-select, .reg-token-display .v, .near-incid, .uc-sub, #blynk-label, .alert-time{
+  font-family: var(--mono);
+}
+.reg-token-display{ font-family: var(--font); }
+
+.brand-badge{ font-size:15px; font-weight:700; letter-spacing:2.5px; }
+.header-container h2{ font-size:24px !important; font-weight:700; letter-spacing:1.2px !important; text-transform:uppercase; }
+.header-container > div:last-child > div:first-child{ font-size:28px !important; letter-spacing:5px !important; font-weight:700; }
+.header-container > div:last-child > div:last-child{ font-size:12px !important; }
+.stat-number{ font-size:34px; font-weight:700; }
+.stat-label{ font-size:13px; font-weight:600; letter-spacing:1.2px; }
+.report-btn{ font-size:16px; font-weight:700; letter-spacing:1.2px; }
+.excel-btn, .wipe-btn, .register-btn, .logout-btn, .history-btn{ font-size:14px; font-weight:700; letter-spacing:1px; }
+.section-lbl{ font-size:13px; font-weight:700; letter-spacing:1.5px; }
+.uc-id{ font-size:16px; font-weight:700; letter-spacing:.5px; }
+.uc-badge{ font-size:11px; font-weight:700; letter-spacing:1px; }
+.uc-sub{ font-size:11px; }
+.station-list{ font-size:13px; }
+.station-item b{ font-size:13px; letter-spacing:.8px; }
+.map-counter-overlay > div[style]{ font-size:12px !important; letter-spacing:1.5px !important; }
+.map-counter-item{ font-size:16px; font-weight:600; letter-spacing:.5px; }
+.count-val-red, .count-val-blue, .count-val-yellow{ font-size:22px; font-weight:700; }
+.terminal-header-left{ font-size:15px; font-weight:700; letter-spacing:1.5px; }
+.terminal-header-right{ font-size:13px; font-weight:600; letter-spacing:1px; }
+.terminal-log{ font-size:12px; line-height:1.65; }
+.t-input, .t-target-select{ font-size:12px; }
+.t-send-btn{ font-size:14px; font-weight:700; letter-spacing:1.5px; }
+.blynk-bar{ font-size:12px; }
+.alert-title{ font-size:15px; letter-spacing:.8px; }
+.alert-addr{ font-size:12px; }
+.alert-view{ font-size:12px; letter-spacing:1px; }
+.leaflet-popup-content{ font-size:14px; }
+.leaflet-popup-content b{ font-size:16px; letter-spacing:.8px; }
+.leaflet-popup-content label{ font-size:13px !important; letter-spacing:.5px; }
+.leaflet-popup-content button{ font-size:14px !important; letter-spacing:1px; }
+
+.near-kicker{ font-size:13px; letter-spacing:1.5px; }
+.near-title{ font-size:22px; font-weight:700; letter-spacing:.8px; }
+.near-incid{ font-size:12px; }
+.near-addr{ font-size:14px; }
+.near-tools{ font-size:14px; }
+.near-tools label{ font-size:14px; font-weight:600; letter-spacing:.5px; }
+.near-count{ font-size:14px; letter-spacing:.5px; }
+.near-id{ font-size:19px; font-weight:700; letter-spacing:.5px; }
+.near-status{ font-size:12px; letter-spacing:1px; }
+.near-sub{ font-size:13px; }
+.near-btn{ font-size:14px; font-weight:700; letter-spacing:1px; }
+.near-foot .near-btn-big{ font-size:18px; letter-spacing:1.5px; }
+.near-foot .near-btn-ghost{ font-size:13px; }
+.near-handle-lbl{ font-size:13px; letter-spacing:2px; }
+
+.reg-modal-title{ font-size:24px; font-weight:700; letter-spacing:.8px; }
+.reg-modal-sub{ font-size:13px; letter-spacing:2px; }
+.reg-section-lbl{ font-size:15px; font-weight:700; letter-spacing:1.5px; }
+.reg-label{ font-size:13px; font-weight:600; letter-spacing:1px; }
+.reg-input, .reg-select{ font-size:15px; }
+.reg-submit{ font-size:17px; font-weight:700; letter-spacing:1.5px; }
+.cred-title{ font-size:14px !important; letter-spacing:1.2px !important; }
+.reg-token-display .k{ font-size:14px; font-weight:600; }
+.reg-token-display .v{ font-size:12px; }
+
+.hist-title{ font-size:23px; font-weight:700; letter-spacing:.8px; }
+.hist-when{ font-size:18px; font-weight:700; letter-spacing:.3px; }
+.hist-tag{ font-size:12px; letter-spacing:1px; }
+.hist-btn{ font-size:14px; font-weight:700; letter-spacing:1px; }
+.arch-chip{ font-size:14px; letter-spacing:.3px; }
+
+@media (max-width:900px) and (max-height:600px){
+  .menu-toggle{ font-size:14px; letter-spacing:1.5px; }
+  .brand-badge{ font-size:13px; letter-spacing:1.5px; }
+  .header-container h2{ font-size:16px !important; letter-spacing:.6px !important; }
+  .stat-number{ font-size:24px; }
+  .stat-label{ font-size:11px; letter-spacing:.8px; }
+  .sidebar .report-btn{ font-size:14px !important; }
+  .sidebar .excel-btn, .sidebar .wipe-btn, .sidebar .register-btn, .sidebar .logout-btn, .sidebar .history-btn{ font-size:13px !important; }
+  .section-lbl{ font-size:12px; }
+  .uc-id{ font-size:15px; }
+  .map-counter-overlay > div[style]{ font-size:11px !important; letter-spacing:1px !important; }
+  .map-counter-item{ font-size:14px; }
+  .count-val-red, .count-val-blue, .count-val-yellow{ font-size:18px; }
+  .terminal-header-left{ font-size:14px; }
+  .terminal-header-right{ font-size:12px; }
+  .terminal-log{ font-size:11px; }
+  .t-input, .t-target-select{ font-size:11px; }
+  .t-send-btn{ font-size:13px; }
+  .near-kicker{ font-size:12px; }
+  .near-title{ font-size:18px; }
+  .near-addr{ font-size:13px; }
+  .near-tools, .near-tools label, .near-count{ font-size:13px; }
+  .near-id{ font-size:17px; }
+  .near-sub{ font-size:12px; }
+  .near-btn{ font-size:13px; }
+  .near-foot .near-btn-big{ font-size:16px; }
+  .near-foot .near-btn-ghost{ font-size:12px; }
+  .near-handle-lbl{ font-size:12px; }
+  .reg-modal-title{ font-size:20px; }
+  .reg-modal-sub{ font-size:12px; }
+  .reg-section-lbl{ font-size:14px; }
+  .reg-label{ font-size:12px; }
+  .reg-input, .reg-select{ font-size:14px; }
+  .reg-submit{ font-size:16px; }
+  .hist-title{ font-size:19px; }
+  .hist-when{ font-size:16px; }
+  .alert-title{ font-size:14px; }
 }
 </style>
 
