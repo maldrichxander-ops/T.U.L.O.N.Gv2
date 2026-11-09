@@ -923,19 +923,33 @@ onAuthStateChanged(auth, async user => {
     <button class="gps-bar-btn" id="gps-bar-btn" type="button">Turn on</button>
 </div>
 
-<!-- EMERGENCY DISPATCH ALERT -->
-<div class="emg-overlay" id="emg-overlay" role="alertdialog" aria-live="assertive" aria-labelledby="emg-title">
-    <div class="emg-box">
-        <div class="emg-siren"><svg class="ico" aria-hidden="true"><use href="#i-siren"/></svg></div>
-        <div class="emg-title" id="emg-title">EMERGENCY! EMERGENCY!</div>
-        <div class="emg-sub">NEED ASSISTANCE</div>
-        <div class="emg-unit" id="emg-unit"></div>
-        <div class="emg-loc" id="emg-loc"></div>
-        <div class="emg-hint" id="emg-hint">Press RESPOND on your device to accept the call</div>
-        <div class="emg-actions">
-            <button class="emg-btn btn-ico" id="emg-silence" type="button"><svg class="ico" aria-hidden="true"><use href="#i-mute"/></svg> Silence</button>
-            <button class="emg-btn primary btn-ico" id="emg-view" type="button"><svg class="ico" aria-hidden="true"><use href="#i-locate"/></svg> View location</button>
+<!-- EMERGENCY DISPATCH ALERT (admin called this unit) -->
+<div class="dsp-overlay" id="emg-overlay" role="alertdialog" aria-live="assertive" aria-labelledby="dsp-type">
+    <div class="dsp-card" id="dsp-card">
+        <div class="dsp-strip">
+            <span class="dsp-live"><i></i>INCOMING DISPATCH</span>
+            <span class="dsp-timer" id="dsp-timer" title="Time since the call came in">00:00</span>
         </div>
+        <div class="dsp-main">
+            <div class="dsp-icon" id="dsp-icon"><span class="dsp-ring"></span><span class="dsp-ring r2"></span><span class="dsp-glyph" id="dsp-glyph"></span></div>
+            <div class="dsp-head">
+                <div class="dsp-kicker">Emergency &middot; Need assistance</div>
+                <div class="dsp-type" id="dsp-type">INCIDENT</div>
+                <div class="dsp-chips" id="dsp-chips"></div>
+            </div>
+        </div>
+        <div class="dsp-rows">
+            <div class="dsp-row">
+                <div class="dsp-k"><svg class="ico" aria-hidden="true"><use href="#i-pin"/></svg> Location</div>
+                <div class="dsp-v"><div class="dsp-addr" id="dsp-addr">Locating incident…</div><div class="dsp-meta" id="dsp-meta"></div></div>
+            </div>
+            <div class="dsp-row">
+                <div class="dsp-k" id="dsp-unit-k"><svg class="ico" aria-hidden="true"><use href="#i-truck"/></svg> Unit</div>
+                <div class="dsp-v"><div class="dsp-unit" id="dsp-unit">---</div><div class="dsp-meta" id="dsp-unit-meta">Called to respond</div></div>
+            </div>
+        </div>
+        <div class="dsp-hint" id="emg-hint"><span class="dsp-key">RESPOND</span><span id="dsp-hint-text">Press RESPOND on your device to accept this call</span></div>
+        <button class="dsp-go" id="emg-view" type="button"><svg class="ico" aria-hidden="true"><use href="#i-locate"/></svg> View location &amp; route</button>
     </div>
 </div>
 
@@ -2044,7 +2058,7 @@ $('rb-nav').onclick = () => {
 // ----- emergency sound + voice (loops, max 30 s) -----
 const emg = (function () {
     const MAX_MS = 30000;
-    let ctx = null, sirenT = null, speechT = null, stopT = null, unitLabel = '';
+    let ctx = null, sirenT = null, speechT = null, stopT = null, remindT = null, unitLabel = '', spokenLine = '';
     const chip = $('sound-chip');
     function ensure() {
         try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
@@ -2067,43 +2081,104 @@ const emg = (function () {
         try {
             if (!('speechSynthesis' in window)) return;
             speechSynthesis.cancel();
-            const u = new SpeechSynthesisUtterance(`Emergency. Emergency. Need assistance. ${unitLabel ? unitLabel.replace('-', ' ') + ', respond.' : ''}`);
+            const u = new SpeechSynthesisUtterance(`Emergency. Need assistance. ${spokenLine || ''} ${unitLabel ? 'Unit ' + unitLabel.replace('-', ' ') + ', respond.' : ''}`);
             u.rate = 0.95; u.volume = 1; speechSynthesis.speak(u);
         } catch (e) {}
         try { navigator.vibrate && navigator.vibrate([400, 200, 400, 200, 400]); } catch (e) {}
     }
+    function beep() {
+        if (!ready()) return;
+        [0, 0.22].forEach(d => {
+            const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime + d;
+            o.type = 'square'; o.frequency.value = 940;
+            g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.25, t + 0.02); g.gain.exponentialRampToValueAtTime(0.0001, t + 0.16);
+            o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 0.18);
+        });
+        try { navigator.vibrate && navigator.vibrate([200, 120, 200]); } catch (e) {}
+    }
     function stop() {
-        clearInterval(sirenT); clearInterval(speechT); clearTimeout(stopT); sirenT = speechT = stopT = null;
+        clearInterval(sirenT); clearInterval(speechT); clearTimeout(stopT); clearInterval(remindT); sirenT = speechT = stopT = remindT = null;
         try { speechSynthesis.cancel(); } catch (e) {}
         try { navigator.vibrate && navigator.vibrate(0); } catch (e) {}
     }
-    function start(label) {
-        stop(); unitLabel = label || ''; ensure();
+    // Responders can't mute a dispatch: full siren for 30 s, then a short reminder beep every 10 s until RESPOND is pressed
+    function start(label, line) {
+        stop(); unitLabel = label || ''; spokenLine = line || ''; ensure();
         cycle(); sirenT = setInterval(cycle, 1200);
         speak(); speechT = setInterval(speak, 9000);
-        stopT = setTimeout(() => { stop(); const h = $('emg-hint'); if (h) h.textContent = 'Alarm sound ended — press RESPOND on your device to accept the call'; }, MAX_MS);   // not noisy: stops after 30 s
+        stopT = setTimeout(() => {
+            clearInterval(sirenT); clearInterval(speechT); sirenT = speechT = null;
+            try { speechSynthesis.cancel(); } catch (e) {}
+            beep(); remindT = setInterval(beep, 10000);
+            const h = $('dsp-hint-text'); if (h) h.textContent = 'Still waiting: press RESPOND on your device to accept this call';
+        }, MAX_MS);
     }
-    return { start, stop };
+    function setLine(line) { spokenLine = line || ''; }
+    return { start, stop, setLine };
 })();
 
 // ----- overlay -----
-function describeDispatchTarget() {
+// Fills the dispatch screen: incident type + its current classification/alarm, location, distance, unit
+let dspTimerT = null, dspStartedAt = 0;
+function dispatchInfo() {
     const t = targetForMyUnit(currentOrigin());
-    if (!t) return '<b>Location not assigned yet</b><small>Check the Event Log for the active incident</small>';
-    const via = (myDispatch && myDispatch.lat != null) ? '' : '<small>Nearest active incident</small>';
-    return `<b>${escHtml(t.address || 'Address unavailable')}</b><small>${escHtml(fmtCoord(t))}</small>${via}`;
+    const inc = t && t.id && incidentMarkers[t.id];
+    const type = (inc && inc.type) || (t && t.type) || null;
+    const isFire = type === 'fire', isMed = type === 'med';
+    const status = (inc && inc.status) || 'For Verification';
+    const alarm = inc && inc.alarm && inc.alarm !== 'N/A' ? inc.alarm : '';
+    return { t, inc, type, isFire, isMed, status, alarm,
+        label: isFire ? 'Fire incident' : isMed ? 'Medical emergency' : 'Emergency call' };
 }
+function renderDispatch() {
+    const d = dispatchInfo(), t = d.t;
+    const card = $('dsp-card');
+    card.classList.toggle('fire', d.isFire); card.classList.toggle('med', d.isMed);
+    $('dsp-glyph').innerHTML = ico(d.isFire ? 'fire' : d.isMed ? 'med' : 'siren');
+    $('dsp-type').textContent = d.label;
+    const chips = [`<span class="dsp-chip status">${escHtml(d.status.replace(/^Other: /, ''))}</span>`];
+    if (d.alarm) chips.push(`<span class="dsp-chip alarm">${escHtml(d.alarm)}</span>`);
+    if (t && t.id && t.id !== 'DISPATCH') chips.push(`<span class="dsp-chip id">${escHtml(t.id)}</span>`);
+    $('dsp-chips').innerHTML = chips.join('');
+    if (t) {
+        $('dsp-addr').textContent = t.address || 'Address unavailable';
+        const o = currentOrigin();
+        const dist = o ? haversineKm(o.lat, o.lon, t.lat, t.lng) : null;
+        const parts = [];
+        if (dist != null) parts.push(`${dist.toFixed(1)} km away · ~${Math.max(1, Math.round(dist / 40 * 60))} min`);
+        parts.push(fmtCoord(t));
+        if (!(myDispatch && myDispatch.lat != null)) parts.push('nearest active incident');
+        $('dsp-meta').textContent = parts.join('  ·  ');
+    } else {
+        $('dsp-addr').textContent = 'Location not assigned yet';
+        $('dsp-meta').textContent = 'Check the Event Log for the active incident';
+    }
+    const vt = (window.myVehicle && window.myVehicle.type) || (window.currentUser && window.currentUser.vehicleType) || '';
+    $('dsp-unit-k').innerHTML = `${ico(vt === 'ambulance' ? 'ambulance' : 'truck')} Unit`;
+    $('dsp-unit').textContent = [myUnitId(), vt ? TYPE_TEXT(vt) : ''].filter(Boolean).join(' · ');
+    const st = (window.myVehicle && window.myVehicle.station) || (window.currentUser && window.currentUser.station) || '';
+    $('dsp-unit-meta').textContent = st ? `${st} — called to respond` : 'Called to respond';
+    // what the voice reads out, once per cycle (no repeats)
+    emg.setLine(`${d.label}. ${d.status.replace(/^Other: /, '')}${d.alarm ? ', ' + d.alarm : ''}.`);
+}
+function tickDispatchTimer() {
+    const s = Math.floor((Date.now() - dspStartedAt) / 1000);
+    $('dsp-timer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+}
+function describeDispatchTarget() { renderDispatch(); return ''; }   // kept for older callers
 function showOverlay() {
     overlayShown = true;
-    $('emg-unit').textContent = `Unit ${myUnitId()} — RESPOND`;
-    $('emg-loc').innerHTML = describeDispatchTarget();
-    $('emg-hint').textContent = 'Press RESPOND on your device to accept the call';
+    dspStartedAt = Date.now(); tickDispatchTimer();
+    clearInterval(dspTimerT); dspTimerT = setInterval(tickDispatchTimer, 1000);
+    $('dsp-hint-text').textContent = 'Press RESPOND on your device to accept this call';
+    renderDispatch();
     $('emg-overlay').classList.add('show');
 }
-function hideOverlay() { overlayShown = false; $('emg-overlay').classList.remove('show'); }
-$('emg-silence').onclick = () => emg.stop();
+function hideOverlay() { overlayShown = false; clearInterval(dspTimerT); $('emg-overlay').classList.remove('show'); }
+// keep chips current while the call is ringing (admin may update classification / alarm)
+setInterval(() => { if (overlayShown) renderDispatch(); }, 3000);
 $('emg-view').onclick = () => {
-    emg.stop(); hideOverlay();
+    hideOverlay();   // the reminder keeps sounding until RESPOND is pressed on the device
     const t = targetForMyUnit(currentOrigin());
     showBanner('dispatched', t);
     if (t) slideTo(t.lat, t.lng, incidentMarkers[t.id] ? t.id : null);
@@ -2114,12 +2189,13 @@ function triggerDispatch(source, info) {
     const me = myUnitId(); if (!me) return;
     const now = Date.now();
     if (info && info.lat != null) myDispatch = { incidentId: info.incidentId || null, lat: info.lat, lng: info.lng, address: info.address || '', type: info.type || null, ts: now };
-    if (overlayShown) { $('emg-loc').innerHTML = describeDispatchTarget(); return; }   // already ringing: just upgrade the location
+    if (overlayShown) { renderDispatch(); return; }   // already ringing: just upgrade the location
     if (now - lastAlertAt < 20000) return;                                              // same call arriving through the other channel
     lastAlertAt = now;
     showOverlay();
-    emg.start(me);
-    showToast('fire', `${me} — EMERGENCY`, 'Need assistance. Press RESPOND on your device.');
+    const di = dispatchInfo();
+    emg.start(me, `${di.label}. ${di.status.replace(/^Other: /, '')}${di.alarm ? ', ' + di.alarm : ''}.`);
+    showToast('fire', `${me} — DISPATCHED`, `${di.label} · ${di.status}. Press RESPOND on your device.`);
 }
 function stopAlert() { emg.stop(); hideOverlay(); }
 
@@ -2605,6 +2681,94 @@ button, input, select, textarea{ font-family: inherit; }
   .emg-title{ font-size:28px; }
   .emg-sub{ font-size:19px; letter-spacing:3px; }
   .emg-unit{ font-size:17px; }
+}
+</style>
+
+<!-- ══════ DISPATCH ALERT SCREEN ══════ -->
+<style>
+.dsp-overlay{ position:fixed; inset:0; z-index:20000; display:none; align-items:center; justify-content:center; padding:16px; box-sizing:border-box;
+  background:rgba(2,6,12,.82); animation:dspVignette 1.1s ease-in-out infinite alternate; }
+.dsp-overlay.show{ display:flex; }
+@keyframes dspVignette{ from{ box-shadow:inset 0 0 80px 10px rgba(255,40,40,.35); } to{ box-shadow:inset 0 0 180px 40px rgba(255,40,40,.75); } }
+
+.dsp-card{ --c:#ff4d4d; --c2:#c73e1d; width:100%; max-width:600px; background:#02101D; border:2px solid var(--c); border-radius:14px; overflow:hidden;
+  box-shadow:0 0 0 1px rgba(255,255,255,.04), 0 0 50px rgba(255,60,60,.45), 0 30px 60px rgba(0,0,0,.6); color:#c9d1d9; }
+.dsp-card.fire{ --c:#ff5a36; --c2:#c73e1d; }
+.dsp-card.med{ --c:#4da3ff; --c2:#1f5fa8; box-shadow:0 0 0 1px rgba(255,255,255,.04), 0 0 50px rgba(77,163,255,.4), 0 30px 60px rgba(0,0,0,.6); }
+
+/* top strip with moving hazard stripes */
+.dsp-strip{ display:flex; align-items:center; justify-content:space-between; padding:9px 16px; color:#fff;
+  background:repeating-linear-gradient(-45deg, var(--c) 0 14px, var(--c2) 14px 28px); background-size:40px 40px; animation:dspStripe 1s linear infinite; }
+@keyframes dspStripe{ to{ background-position:40px 0; } }
+.dsp-live{ display:inline-flex; align-items:center; gap:8px; font-family:var(--font-display); font-size:15px; font-weight:700; letter-spacing:3px;
+  background:rgba(2,16,29,.78); padding:4px 10px; border-radius:4px; }
+.dsp-live i{ width:9px; height:9px; border-radius:50%; background:#fff; animation:dspBlink .8s steps(2) infinite; }
+@keyframes dspBlink{ 50%{ opacity:0; } }
+.dsp-timer{ font-family:var(--mono); font-size:16px; font-weight:600; background:rgba(2,16,29,.78); padding:3px 9px; border-radius:4px; letter-spacing:1px; }
+
+.dsp-main{ display:flex; align-items:center; gap:20px; padding:20px 22px 10px; }
+.dsp-icon{ position:relative; width:84px; height:84px; flex:none; display:flex; align-items:center; justify-content:center; }
+.dsp-glyph{ position:relative; z-index:1; width:68px; height:68px; border-radius:50%; display:flex; align-items:center; justify-content:center;
+  font-size:36px; color:#fff; background:radial-gradient(circle at 35% 30%, var(--c), var(--c2)); box-shadow:0 0 24px var(--c); }
+.dsp-ring{ position:absolute; inset:8px; border-radius:50%; border:2px solid var(--c); animation:dspPing 1.8s ease-out infinite; }
+.dsp-ring.r2{ animation-delay:.9s; }
+@keyframes dspPing{ from{ transform:scale(.85); opacity:.9; } to{ transform:scale(1.55); opacity:0; } }
+.dsp-head{ min-width:0; }
+.dsp-kicker{ font-family:var(--font-display); font-size:15px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--c); }
+.dsp-type{ font-family:var(--font-display); font-size:42px; font-weight:700; line-height:1.02; letter-spacing:1px; text-transform:uppercase; color:#fff; margin-top:2px; }
+.dsp-chips{ display:flex; flex-wrap:wrap; gap:6px; margin-top:8px; }
+.dsp-chip{ font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:.8px; text-transform:uppercase; padding:3px 10px; border-radius:4px; }
+.dsp-chip.status{ background:#ffcc00; color:#1a1300; }
+.dsp-chip.alarm{ background:var(--c); color:#fff; }
+.dsp-chip.id{ font-family:var(--mono); font-size:12px; font-weight:500; letter-spacing:0; text-transform:none; background:rgba(255,255,255,.08); color:#9aa5b1; }
+
+.dsp-rows{ margin:6px 22px 0; border-top:1px solid rgba(61,111,168,.35); }
+.dsp-row{ display:flex; gap:14px; padding:11px 0; border-bottom:1px solid rgba(61,111,168,.35); }
+.dsp-k{ width:96px; flex:none; display:flex; align-items:center; gap:6px; align-self:flex-start; padding-top:3px;
+  font-family:var(--font-display); font-size:14px; font-weight:700; letter-spacing:1.5px; text-transform:uppercase; color:#8b96a3; }
+.dsp-k .ico{ color:var(--c); font-size:16px; }
+.dsp-v{ flex:1; min-width:0; }
+.dsp-addr, .dsp-unit{ font-size:18px; font-weight:600; color:#fff; line-height:1.3; }
+.dsp-unit{ font-family:var(--font-display); font-size:21px; letter-spacing:.5px; }
+.dsp-meta{ font-family:var(--mono); font-size:12px; color:#9aa5b1; margin-top:3px; line-height:1.45; }
+
+.dsp-hint{ display:flex; align-items:center; gap:10px; margin:14px 22px 0; font-size:14px; font-weight:600; color:#ffd2c7; }
+.dsp-card.med .dsp-hint{ color:#cfe5ff; }
+.dsp-key{ flex:none; font-family:var(--font-display); font-size:13px; font-weight:700; letter-spacing:1.5px; color:#fff; padding:5px 10px; border-radius:6px;
+  background:linear-gradient(180deg, var(--c), var(--c2)); box-shadow:0 3px 0 rgba(0,0,0,.45), 0 0 14px var(--c); animation:dspPress 1.2s ease-in-out infinite; }
+@keyframes dspPress{ 0%,60%,100%{ transform:translateY(0); box-shadow:0 3px 0 rgba(0,0,0,.45), 0 0 14px var(--c); } 75%{ transform:translateY(3px); box-shadow:0 0 0 rgba(0,0,0,.45), 0 0 22px var(--c); } }
+
+.dsp-go{ display:flex; align-items:center; justify-content:center; gap:10px; width:calc(100% - 44px); margin:16px 22px 20px; min-height:56px; border:none; border-radius:10px;
+  cursor:pointer; color:#fff; font-family:var(--font-display); font-size:20px; font-weight:700; letter-spacing:2px; text-transform:uppercase;
+  background:linear-gradient(45deg, var(--c), var(--c2)); box-shadow:0 8px 24px rgba(0,0,0,.45); transition:filter .2s; }
+.dsp-go:hover{ filter:brightness(1.12); }
+.dsp-go .ico{ font-size:22px; }
+
+@media (max-width:900px) and (max-height:600px){
+  .dsp-overlay{ padding:8px; }
+  .dsp-card{ max-width:560px; }
+  .dsp-strip{ padding:6px 12px; }
+  .dsp-live{ font-size:13px; letter-spacing:2px; padding:3px 8px; }
+  .dsp-timer{ font-size:14px; }
+  .dsp-main{ gap:14px; padding:12px 16px 6px; }
+  .dsp-icon{ width:64px; height:64px; }
+  .dsp-glyph{ width:52px; height:52px; font-size:27px; }
+  .dsp-kicker{ font-size:13px; letter-spacing:2px; }
+  .dsp-type{ font-size:31px; }
+  .dsp-chips{ margin-top:5px; }
+  .dsp-chip{ font-size:12px; padding:2px 8px; }
+  .dsp-rows{ margin:4px 16px 0; }
+  .dsp-row{ padding:7px 0; gap:10px; }
+  .dsp-k{ width:82px; font-size:12px; }
+  .dsp-addr{ font-size:15px; }
+  .dsp-unit{ font-size:17px; }
+  .dsp-meta{ font-size:11px; }
+  .dsp-hint{ margin:9px 16px 0; font-size:12px; }
+  .dsp-key{ font-size:11px; padding:4px 8px; }
+  .dsp-go{ width:calc(100% - 32px); margin:10px 16px 12px; min-height:46px; font-size:17px; }
+}
+@media (prefers-reduced-motion: reduce){
+  .dsp-overlay, .dsp-strip, .dsp-ring, .dsp-key, .dsp-live i{ animation:none; }
 }
 </style>
 
