@@ -563,6 +563,41 @@ body.gps-mobile .blynk-status { bottom: 84px; }
     /* Popups */
     .leaflet-popup-content { margin: 10px 12px; font-size: 12px; }
 }
+
+/* ── EMERGENCY DISPATCH ALERT (admin called this unit) ── */
+.emg-overlay { position: fixed; inset: 0; z-index: 20000; display: none; align-items: center; justify-content: center; padding: 16px; animation: emgFlash 0.7s infinite alternate; }
+.emg-overlay.show { display: flex; }
+@keyframes emgFlash { from { background: rgba(110,0,0,0.55); } to { background: rgba(255,30,30,0.6); } }
+.emg-box { width: 100%; max-width: 520px; text-align: center; background: #02101D; border: 3px solid #ff4d4d; border-radius: 14px; padding: 24px 22px; box-shadow: 0 0 60px rgba(255,60,60,0.7); }
+.emg-siren { font-size: 54px; animation: emgShake 0.4s infinite; display: inline-block; }
+@keyframes emgShake { 0%,100% { transform: rotate(-12deg); } 50% { transform: rotate(12deg); } }
+.emg-title { font-family: Georgia, serif; font-size: 30px; font-weight: 700; letter-spacing: 2px; color: #ff4d4d; line-height: 1.15; margin-top: 4px; }
+.emg-sub { font-family: Georgia, serif; font-size: 20px; font-weight: 700; letter-spacing: 3px; color: #fff; margin-top: 6px; }
+.emg-unit { font-size: 15px; font-weight: 700; color: #ffcc00; margin-top: 14px; }
+.emg-loc { font-size: 13px; line-height: 1.5; color: #c9d1d9; margin-top: 8px; }
+.emg-loc small { color: #8b96a3; display: block; margin-top: 2px; }
+.emg-hint { font-size: 12px; color: #ff9a85; margin-top: 12px; font-weight: 600; }
+.emg-actions { display: flex; gap: 10px; margin-top: 16px; }
+.emg-btn { flex: 1; min-height: 46px; border: none; border-radius: 8px; cursor: pointer; color: #fff; font-weight: 700; font-size: 12px; letter-spacing: 1px; text-transform: uppercase; background: linear-gradient(45deg, #5b6673, #3a4451); }
+.emg-btn.primary { background: linear-gradient(45deg, #ff5a36, #c73e1d); }
+.emg-btn:hover { filter: brightness(1.15); }
+
+/* ── RESPONDING / DISPATCHED BANNER ── */
+.resp-banner { position: fixed; top: 126px; left: 50%; transform: translateX(-50%); z-index: 9500; width: min(560px, 92vw); display: none;
+    background: rgba(2,16,29,0.96); border: 1px solid var(--amber); border-left: 5px solid var(--amber); border-radius: 8px; padding: 10px 38px 10px 14px; box-shadow: 0 8px 28px rgba(0,0,0,0.6); }
+.resp-banner.show { display: block; animation: alertIn 0.3s ease; }
+.resp-banner.dispatched { border-color: #ff4d4d; border-left-color: #ff4d4d; }
+.resp-banner.arrived { border-color: var(--green); border-left-color: var(--green); }
+.rb-title { font-family: Georgia, serif; font-size: 13px; font-weight: 700; letter-spacing: 1px; color: #fff; text-transform: uppercase; }
+.rb-addr { font-size: 13px; color: #fff; margin-top: 3px; line-height: 1.35; font-weight: 600; }
+.rb-meta { font-size: 11px; color: var(--muted); margin-top: 3px; }
+.rb-nav { display: inline-block; margin-top: 6px; font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: #fff; text-decoration: none; padding: 5px 10px; border-radius: 4px; background: linear-gradient(45deg, #3d6fa8, #0a1f3d); }
+.rb-close { position: absolute; top: 5px; right: 8px; background: none; border: none; color: var(--muted); font-size: 18px; cursor: pointer; }
+.rb-close:hover { color: #ff4d4d; }
+
+/* ── ENABLE-SOUND CHIP (browsers block audio until the page is tapped once) ── */
+.sound-chip { position: fixed; left: 10px; bottom: 44px; z-index: 9400; display: none; border: 1px solid var(--amber); background: rgba(2,16,29,0.95); color: #ffcc99; font-size: 11px; font-weight: 700; padding: 6px 12px; border-radius: 6px; cursor: pointer; }
+body.gps-mobile .sound-chip { bottom: 130px; }
 </style>
 </head>
 <body>
@@ -592,6 +627,8 @@ window._fbSignOut = () => signOut(auth);
 // Expose Firestore primitives to the classic script below
 window.db = db;
 window.fsIncidents  = collection(db, 'incidents');
+window.fsVehicles   = collection(db, 'vehicles');                 // units registered by the admin
+window.fsDispatchDoc = (unitId) => doc(db, 'dispatches', unitId);   // admin "A-001 Respond" calls
 window.fsDoc        = (id) => doc(db, 'incidents', id);
 window.fsUpdateDoc  = updateDoc;
 window.fsOnSnapshot = onSnapshot;
@@ -799,6 +836,33 @@ onAuthStateChanged(auth, async user => {
     <button class="gps-bar-btn" id="gps-bar-btn" type="button">Turn on</button>
 </div>
 
+<!-- EMERGENCY DISPATCH ALERT -->
+<div class="emg-overlay" id="emg-overlay" role="alertdialog" aria-live="assertive" aria-labelledby="emg-title">
+    <div class="emg-box">
+        <div class="emg-siren">&#128680;</div>
+        <div class="emg-title" id="emg-title">EMERGENCY! EMERGENCY!</div>
+        <div class="emg-sub">NEED ASSISTANCE</div>
+        <div class="emg-unit" id="emg-unit"></div>
+        <div class="emg-loc" id="emg-loc"></div>
+        <div class="emg-hint" id="emg-hint">Press RESPOND on your device to accept the call</div>
+        <div class="emg-actions">
+            <button class="emg-btn" id="emg-silence" type="button">&#128263; Silence</button>
+            <button class="emg-btn primary" id="emg-view" type="button">&#128205; View location</button>
+        </div>
+    </div>
+</div>
+
+<!-- RESPONDING / DISPATCHED BANNER -->
+<div class="resp-banner" id="resp-banner">
+    <button class="rb-close" id="rb-close" title="Hide" type="button">&times;</button>
+    <div class="rb-title" id="rb-title"></div>
+    <div class="rb-addr" id="rb-addr"></div>
+    <div class="rb-meta" id="rb-meta"></div>
+    <a class="rb-nav" id="rb-nav" target="_blank" rel="noopener" href="#">Open in Google Maps</a>
+</div>
+
+<button class="sound-chip" id="sound-chip" type="button">&#128263; Tap to enable emergency sound</button>
+
 <script>
 // ══════════════════════════════════════════════════════
 // CLOCK
@@ -814,11 +878,8 @@ updateClock(); setInterval(updateClock, 1000);
 // BLYNK CONFIG — same as main dashboard
 // ══════════════════════════════════════════════════════
 const BLYNK_BASE = "https://blynk.cloud/external/api";
-const UNITS = [
-    { id: "A-001", token: "HKEGX3vYVEzqoEv5plTw5tU-7ITdnmlJ", type: "ambulance" },
-    { id: "F-001", token: "DQ8eqlsc7wjL4A7M540oteHKRw-HWBYS", type: "firetruck" },
-    { id: "A-003", token: "TOKEN_A003_HERE",                   type: "ambulance" },
-];
+// Units are NOT hardcoded any more: only vehicles registered by the admin (Firestore "vehicles") appear here.
+let UNITS = [];
 // GPS now uses two basic Double datastreams instead of the Location (map pin) datastream:
 // V7 = latitude, V8 = longitude
 const V_STANDBY=4, V_RESPONDING=5, V_ARRIVED=6, V_LAT=7, V_LON=8;
@@ -1045,6 +1106,7 @@ function renderIncidentFromDoc(id, data) {
     const wasResolved = !!entry.isResolved;
     Object.assign(entry, data, { id });
     entry.marker.setLatLng([data.lat, data.lng]);
+    if (data.isResolved) clearRoutesToIncident(id);
     const iconEl = document.getElementById(`uicon-${id}`);
     if (iconEl) iconEl.style.filter = data.isResolved ? "grayscale(100%) opacity(0.5)" : "";
 
@@ -1061,6 +1123,7 @@ function removeIncidentLocally(id) {
     const entry = incidentMarkers[id];
     if (!entry) return;
     map.removeLayer(entry.marker);
+    clearRoutesToIncident(id);
     delete incidentMarkers[id];
     knownIncidentIds.delete(id);
     notifier.dismissFor(id);
@@ -1181,8 +1244,16 @@ async function fetchUnit(unit) {
         const standby    = parseFloat(data[`v${V_STANDBY}`])    > 0;
         const responding = parseFloat(data[`v${V_RESPONDING}`]) > 0;
         const arrived    = parseFloat(data[`v${V_ARRIVED}`])    > 0;
-        let lat = parseFloat(data[`v${V_LAT}`]);
-        let lon = parseFloat(data[`v${V_LON}`]);
+        let lat = null, lon = null;
+        const rLat = data[`v${V_LAT}`], rLon = data[`v${V_LON}`];
+        if (rLon !== undefined && rLon !== null && String(rLon).trim() !== '') {
+            lat = parseFloat(Array.isArray(rLat) ? rLat[0] : rLat);      // V7 = latitude, V8 = longitude (two Double datastreams)
+            lon = parseFloat(Array.isArray(rLon) ? rLon[0] : rLon);
+        } else {
+            const parts = Array.isArray(rLat) ? rLat : String(rLat ?? '').split(',');   // V7 = Location datastream ("lon,lat")
+            const a = parseFloat(parts[0]), b = parseFloat(parts[1]);
+            if (isFinite(a) && isFinite(b)) { lon = a; lat = b; }
+        }
         // No GPS fix yet (empty or 0,0) -> treat as no location
         if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) { lat = null; lon = null; }
         if (lat&&lon) {
@@ -1198,6 +1269,7 @@ async function fetchUnit(unit) {
 
         unitStates[unit.id] = {standby, responding, arrived, lat, lon, type: unit.type, online: true};
         if (lat && lon) updateUnitMarker(unit.id, unitStates[unit.id]);
+        try { unitStateHook(unit, prev, unitStates[unit.id]); } catch (e) { console.error('unitStateHook', e); }
         return true;
     } catch(e) { setOffline(unit); return false; }
 }
@@ -1206,6 +1278,7 @@ function setOffline(unit) {
     if (unitStates[unit.id]?.online !== false) prevStates[unit.id] = {...(prevStates[unit.id]||{}), online: false};
     unitStates[unit.id] = { online: false, type: unit.type };
     if (unitMarkers[unit.id]) { map.removeLayer(unitMarkers[unit.id]); delete unitMarkers[unit.id]; }
+    clearRoute(unit.id);
 }
 
 function updateUnitMarker(id, s) {
@@ -1236,6 +1309,11 @@ function updateUnitMarker(id, s) {
 function renderUnitList() {
     const el = document.getElementById('unit-list');
     let online = 0;
+    if (UNITS.length === 0) {
+        el.innerHTML = '<div class="empty-state"><div class="empty-state-icon">🚑</div>No registered units yet</div>';
+        document.getElementById('unit-count-badge').textContent = 0;
+        return 0;
+    }
     el.innerHTML = UNITS.map(u => {
         const s = unitStates[u.id];
         const status = !s||!s.online ? 'offline' : s.responding?'responding':s.arrived?'arrived':s.standby?'standby':'offline';
@@ -1396,6 +1474,8 @@ window.addEventListener('userReady', () => {
     document.getElementById('user-name').textContent   = u.name || u.email || 'Operator';
     document.getElementById('user-unit').textContent   = `Unit: ${u.unitId || '---'} | ${(u.vehicleType||'').replace('firetruck','🚒 Firetruck').replace('ambulance','🚑 Ambulance') || 'Operator'}`;
     updateMyVehiclePanel();
+    if (vehiclesFailed) useOwnVehicleOnly();
+    listenDispatch();
 });
 
 // ══════════════════════════════════════════════════════
@@ -1523,6 +1603,7 @@ const gps = (function () {
 
     function showMe(pos) {
         const { latitude: lat, longitude: lng, accuracy } = pos.coords;
+        window.phonePos = { lat, lng };
         if (!meMarker) {
             meCircle = L.circle([lat, lng], { radius: accuracy, color: '#4da3ff', weight: 1, fillColor: '#4da3ff', fillOpacity: 0.12 }).addTo(map);
             meMarker = L.circleMarker([lat, lng], { radius: 8, color: '#fff', weight: 3, fillColor: '#1a73e8', fillOpacity: 1 })
@@ -1647,11 +1728,325 @@ window.addEventListener('userReady', () => gps.init(), { once: true });
 })();
 
 // ══════════════════════════════════════════════════════
+// REGISTERED UNITS — live from Firestore "vehicles" (only units registered by the admin)
+// ══════════════════════════════════════════════════════
+let vehiclesLoaded = false, vehiclesFailed = false;
+function unitFromVehicle(v) { return { id: v.unitId, token: v.blynkToken || '', type: v.type === 'firetruck' ? 'firetruck' : 'ambulance' }; }
+function setUnits(list) {
+    UNITS = list;
+    const ids = UNITS.map(u => u.id);
+    // drop everything belonging to units that are not registered (any more)
+    Object.keys(unitStates).filter(id => !ids.includes(id)).forEach(id => {
+        if (unitMarkers[id]) { map.removeLayer(unitMarkers[id]); delete unitMarkers[id]; }
+        clearRoute(id);
+        delete unitStates[id]; delete prevStates[id];
+    });
+    renderUnitList(); updateStats(); pollAll();
+}
+function useOwnVehicleOnly() {
+    const mv = window.myVehicle;
+    setUnits(mv && mv.unitId ? [unitFromVehicle(mv)] : []);
+}
+window.addEventListener('firestoreReady', () => {
+    window.fsOnSnapshot(window.fsVehicles, snap => {
+        vehiclesLoaded = true; vehiclesFailed = false;
+        setUnits(snap.docs.map(d => d.data()).filter(v => v && v.unitId).map(unitFromVehicle));
+    }, err => {
+        console.error('Vehicles listener error:', err);
+        vehiclesFailed = true;
+        showToast('warn', 'Unit list unavailable', 'Firestore rules do not allow reading "vehicles". Showing only your own unit.');
+        useOwnVehicleOnly();
+    });
+});
+
+// ══════════════════════════════════════════════════════
+// FREE AUTO-ROUTING — OSRM (no key) first, OpenRouteService second, straight line last
+// ══════════════════════════════════════════════════════
+const ORS_API_KEY = 'eyJvcmciOiI1YjNjZTM1OTc4NTExMTAwMDFjZjYyNDgiLCJpZCI6ImVkZDU4ZDhhZGMxMjQwMjU4ZjQzYTE5MjU1Mzk2OTUzIiwiaCI6Im11cm11cjY0In0=';
+let unitRouteLines = {}, unitRouteTarget = {}, unitRouteFrom = {}, unitRouting = {};
+
+function haversineKm(lat1, lon1, lat2, lon2) {
+    const R = 6371, r = Math.PI / 180;
+    const dLat = (lat2 - lat1) * r, dLon = (lon2 - lon1) * r;
+    const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * r) * Math.cos(lat2 * r) * Math.sin(dLon / 2) ** 2;
+    return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
+}
+function clearRoute(unitId) {
+    if (unitRouteLines[unitId]) { map.removeLayer(unitRouteLines[unitId]); delete unitRouteLines[unitId]; }
+    delete unitRouteTarget[unitId]; delete unitRouteFrom[unitId];
+}
+function clearRoutesToIncident(incidentId) {
+    for (const uid in unitRouteTarget) {
+        if (unitRouteTarget[uid] && unitRouteTarget[uid].id === incidentId) {
+            clearRoute(uid);
+            if (uid === myUnitId()) hideBannerFor(incidentId);
+        }
+    }
+}
+async function fetchRoute(fLat, fLon, tLat, tLon) {
+    try {
+        const res = await fetch(`https://router.project-osrm.org/route/v1/driving/${fLon},${fLat};${tLon},${tLat}?overview=full&geometries=geojson`);
+        if (res.ok) {
+            const g = await res.json(); const r = g.routes && g.routes[0];
+            if (r && r.geometry) return { geometry: r.geometry, distance: r.distance, duration: r.duration };
+        }
+    } catch (e) {}
+    try {
+        const res = await fetch(`https://api.openrouteservice.org/v2/directions/driving-car?api_key=${ORS_API_KEY}&start=${fLon},${fLat}&end=${tLon},${tLat}`);
+        if (res.ok) {
+            const g = await res.json(); const f = g.features && g.features[0];
+            if (f && f.geometry) return { geometry: f.geometry, distance: f.properties.summary.distance, duration: f.properties.summary.duration };
+        }
+    } catch (e) {}
+    return null;
+}
+async function drawRoute(unitId, from, target) {
+    if (unitRouting[unitId]) return null;
+    unitRouting[unitId] = true;
+    const mine = unitId === myUnitId();
+    try {
+        const r = await fetchRoute(from.lat, from.lon, target.lat, target.lng);
+        const first = !unitRouteLines[unitId];
+        const style = { color: '#f0883e', weight: mine ? 6 : 4, opacity: 0.85, dashArray: mine ? null : '6,4' };
+        let layer, km, mins, approx = false;
+        if (r) { layer = L.geoJSON(r.geometry, { style }); km = r.distance / 1000; mins = Math.max(1, Math.round(r.duration / 60)); }
+        else { layer = L.polyline([[from.lat, from.lon], [target.lat, target.lng]], { ...style, dashArray: '2,8' }); km = haversineKm(from.lat, from.lon, target.lat, target.lng); mins = Math.max(1, Math.round(km / 40 * 60)); approx = true; }
+        if (unitRouteLines[unitId]) map.removeLayer(unitRouteLines[unitId]);
+        layer.addTo(map);
+        unitRouteLines[unitId] = layer; unitRouteTarget[unitId] = target; unitRouteFrom[unitId] = [from.lat, from.lon];
+        if (mine) {
+            setBannerMeta(`${km.toFixed(1)} km · ~${mins} min ETA${approx ? ' (straight line - routing unavailable)' : ''}`);
+            if (first) { try { map.fitBounds(layer.getBounds(), { padding: [70, 70] }); } catch (e) {} }
+        }
+        return { km, mins };
+    } catch (e) { console.error('Routing error', e); return null; }
+    finally { unitRouting[unitId] = false; }
+}
+function findNearestActiveIncident(lat, lon) {
+    let best = null, bd = Infinity;
+    for (const id in incidentMarkers) {
+        const i = incidentMarkers[id]; if (i.isResolved) continue;
+        const d = haversineKm(lat, lon, i.lat, i.lng);
+        if (d < bd) { bd = d; best = id; }
+    }
+    return best;
+}
+function targetFromIncident(id) { const i = incidentMarkers[id]; return i ? { id, lat: i.lat, lng: i.lng, address: i.address || '', type: i.type } : null; }
+
+// ══════════════════════════════════════════════════════
+// MY UNIT — dispatch alert, RESPONDING banner + auto-route
+// ══════════════════════════════════════════════════════
+function myUnitId() { return (window.myVehicle && window.myVehicle.unitId) || (window.currentUser && window.currentUser.unitId) || null; }
+let myDispatch = null;        // {incidentId, lat, lng, address, type, ts}  — what the admin sent us to
+let overlayShown = false, lastAlertAt = 0, bannerMode = null, bannerTargetId = null;
+const $ = id => document.getElementById(id);
+
+// who/where are we dispatched to? (admin dispatch first, otherwise the nearest active incident)
+function currentOrigin() {
+    const me = myUnitId(), s = me && unitStates[me];
+    if (s && s.lat && s.lon) return { lat: s.lat, lon: s.lon };
+    if (window.phonePos) return { lat: window.phonePos.lat, lon: window.phonePos.lng };
+    return null;
+}
+function targetForMyUnit(origin) {
+    const d = myDispatch;
+    if (d && d.lat != null && Date.now() - d.ts < 30 * 60000) {
+        const inc = d.incidentId && incidentMarkers[d.incidentId];
+        if (!inc || !inc.isResolved) return { id: d.incidentId || 'DISPATCH', lat: inc ? inc.lat : d.lat, lng: inc ? inc.lng : d.lng, address: (inc && inc.address) || d.address || '', type: (inc && inc.type) || d.type };
+    }
+    if (origin) { const id = findNearestActiveIncident(origin.lat, origin.lon); if (id) return targetFromIncident(id); }
+    const act = Object.values(incidentMarkers).filter(i => !i.isResolved).sort((a, b) => new Date(b.startTime || 0) - new Date(a.startTime || 0))[0];
+    return act ? targetFromIncident(act.id) : null;
+}
+function fmtCoord(t) { return `${t.lat.toFixed(6)}, ${t.lng.toFixed(6)}`; }
+
+// ----- banner -----
+function showBanner(mode, target) {
+    bannerMode = mode; bannerTargetId = target ? target.id : null;
+    const b = $('resp-banner');
+    b.className = `resp-banner show ${mode}`;
+    $('rb-title').textContent = mode === 'responding' ? '🟠 Responding to' : mode === 'arrived' ? '🔴 Arrived at' : '🚨 Dispatched to — press RESPOND on your device';
+    $('rb-addr').textContent = target ? (target.address || 'Address unavailable') : 'No active incident found';
+    $('rb-meta').textContent = target ? `${target.type === 'fire' ? '🔥 Fire' : target.type === 'med' ? '⚕️ Medical' : 'Incident'} · ${fmtCoord(target)}` : '';
+    const nav = $('rb-nav');
+    if (target) { nav.style.display = ''; nav.href = `https://www.google.com/maps/dir/?api=1&destination=${target.lat},${target.lng}&travelmode=driving`; }
+    else nav.style.display = 'none';
+}
+function setBannerMeta(extra) {
+    const m = $('rb-meta'); if (!m || !bannerMode) return;
+    const base = m.textContent.split(' | ')[0];
+    m.textContent = `${base} | ${extra}`;
+}
+function hideBannerFor(incidentId) { if (!incidentId || bannerTargetId === incidentId) { $('resp-banner').classList.remove('show'); bannerMode = null; bannerTargetId = null; } }
+$('rb-close').onclick = () => { $('resp-banner').classList.remove('show'); bannerMode = null; };
+
+// ----- emergency sound + voice (loops, max 30 s) -----
+const emg = (function () {
+    const MAX_MS = 30000;
+    let ctx = null, sirenT = null, speechT = null, stopT = null, unitLabel = '';
+    const chip = $('sound-chip');
+    function ensure() {
+        try { ctx = ctx || new (window.AudioContext || window.webkitAudioContext)(); if (ctx.state === 'suspended') ctx.resume(); } catch (e) {}
+        refreshChip(); return ctx;
+    }
+    function ready() { return !!ctx && ctx.state === 'running'; }
+    function refreshChip() { chip.style.display = (!ready() && myUnitId()) ? 'block' : 'none'; }
+    ['click', 'keydown', 'touchstart'].forEach(ev => document.addEventListener(ev, () => { ensure(); setTimeout(refreshChip, 250); }, { passive: true }));
+    setInterval(refreshChip, 2000);
+    chip.addEventListener('click', () => { ensure(); setTimeout(() => { refreshChip(); cycle(); }, 200); });   // short test siren
+    function cycle() {
+        if (!ready()) return;
+        const o = ctx.createOscillator(), g = ctx.createGain(), t = ctx.currentTime;
+        o.type = 'sawtooth';
+        o.frequency.setValueAtTime(650, t); o.frequency.linearRampToValueAtTime(1000, t + 0.6); o.frequency.linearRampToValueAtTime(650, t + 1.2);
+        g.gain.setValueAtTime(0.0001, t); g.gain.exponentialRampToValueAtTime(0.35, t + 0.05); g.gain.setValueAtTime(0.35, t + 1.1); g.gain.exponentialRampToValueAtTime(0.0001, t + 1.2);
+        o.connect(g).connect(ctx.destination); o.start(t); o.stop(t + 1.25);
+    }
+    function speak() {
+        try {
+            if (!('speechSynthesis' in window)) return;
+            speechSynthesis.cancel();
+            const u = new SpeechSynthesisUtterance(`Emergency. Emergency. Need assistance. ${unitLabel ? unitLabel.replace('-', ' ') + ', respond.' : ''}`);
+            u.rate = 0.95; u.volume = 1; speechSynthesis.speak(u);
+        } catch (e) {}
+        try { navigator.vibrate && navigator.vibrate([400, 200, 400, 200, 400]); } catch (e) {}
+    }
+    function stop() {
+        clearInterval(sirenT); clearInterval(speechT); clearTimeout(stopT); sirenT = speechT = stopT = null;
+        try { speechSynthesis.cancel(); } catch (e) {}
+        try { navigator.vibrate && navigator.vibrate(0); } catch (e) {}
+    }
+    function start(label) {
+        stop(); unitLabel = label || ''; ensure();
+        cycle(); sirenT = setInterval(cycle, 1200);
+        speak(); speechT = setInterval(speak, 9000);
+        stopT = setTimeout(() => { stop(); const h = $('emg-hint'); if (h) h.textContent = 'Alarm sound ended — press RESPOND on your device to accept the call'; }, MAX_MS);   // not noisy: stops after 30 s
+    }
+    return { start, stop };
+})();
+
+// ----- overlay -----
+function describeDispatchTarget() {
+    const t = targetForMyUnit(currentOrigin());
+    if (!t) return '<b>Location not assigned yet</b><small>Check the Event Log for the active incident</small>';
+    const via = (myDispatch && myDispatch.lat != null) ? '' : '<small>Nearest active incident</small>';
+    return `<b>${escHtml(t.address || 'Address unavailable')}</b><small>${escHtml(fmtCoord(t))}</small>${via}`;
+}
+function showOverlay() {
+    overlayShown = true;
+    $('emg-unit').textContent = `Unit ${myUnitId()} — RESPOND`;
+    $('emg-loc').innerHTML = describeDispatchTarget();
+    $('emg-hint').textContent = 'Press RESPOND on your device to accept the call';
+    $('emg-overlay').classList.add('show');
+}
+function hideOverlay() { overlayShown = false; $('emg-overlay').classList.remove('show'); }
+$('emg-silence').onclick = () => emg.stop();
+$('emg-view').onclick = () => {
+    emg.stop(); hideOverlay();
+    const t = targetForMyUnit(currentOrigin());
+    showBanner('dispatched', t);
+    if (t) map.flyTo([t.lat, t.lng], 17);
+};
+
+// An "A-001 Respond" call arrived for MY unit (from Firestore dispatch and/or the V3 terminal message)
+function triggerDispatch(source, info) {
+    const me = myUnitId(); if (!me) return;
+    const now = Date.now();
+    if (info && info.lat != null) myDispatch = { incidentId: info.incidentId || null, lat: info.lat, lng: info.lng, address: info.address || '', type: info.type || null, ts: now };
+    if (overlayShown) { $('emg-loc').innerHTML = describeDispatchTarget(); return; }   // already ringing: just upgrade the location
+    if (now - lastAlertAt < 20000) return;                                              // same call arriving through the other channel
+    lastAlertAt = now;
+    showOverlay();
+    emg.start(me);
+    showToast('fire', `${me} — EMERGENCY`, 'Need assistance. Press RESPOND on your device.');
+}
+function stopAlert() { emg.stop(); hideOverlay(); }
+
+// Admin dispatch (Firestore "dispatches/{unitId}") — carries the exact incident location
+let dispatchUnsub = null, lastDispatchTs = 0;
+function listenDispatch() {
+    const me = myUnitId();
+    if (!me || dispatchUnsub || !window.fsDispatchDoc) return;
+    try {
+        dispatchUnsub = window.fsOnSnapshot(window.fsDispatchDoc(me), snap => {
+            if (!snap.exists()) return;
+            const d = snap.data();
+            if (!d || !d.ts || d.ts <= lastDispatchTs) return;
+            lastDispatchTs = d.ts;
+            if (Date.now() - d.ts > 120000) return;       // stale call from before this page was opened
+            triggerDispatch('firestore', d);
+        }, err => console.warn('Dispatch listener error:', err.code || err.message));
+    } catch (e) { console.warn(e); }
+}
+
+// Terminal message "A-001 Respond" written to this unit's V3 (works even when typed in the admin terminal)
+let lastV3Ts = null, lastV3Val = null;
+function matchesRespond(text, me) {
+    const esc = me.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    return new RegExp(`^\\s*${esc}[\\s:,\\-]+respond\\b`, 'i').test(String(text || ''));
+}
+async function pollDispatchV3() {
+    const me = myUnitId(); if (!me) return;
+    const unit = UNITS.find(u => u.id === me);
+    if (!unit || !unit.token || unit.token.length < 20 || unit.token.includes('TOKEN_')) return;
+    try {
+        let fresh = [];
+        const res = await fetch(`${BLYNK_BASE}/data/get?token=${unit.token}&pin=v3&limit=5&order=DESC`);
+        let rows = res.ok ? await res.json().catch(() => null) : null;
+        if (Array.isArray(rows) && rows.length) {
+            if (lastV3Ts === null) { lastV3Ts = rows[0].ts; return; }                // first look: don't replay history
+            fresh = rows.filter(r => r.ts > lastV3Ts).reverse().map(r => Array.isArray(r.value) ? r.value[0] : r.value);
+            lastV3Ts = rows[0].ts;
+        } else {
+            const r2 = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v3`);       // fallback: compare the current value
+            if (!r2.ok) return;
+            let v = (await r2.text()).trim().replace(/^\[?"?|"?\]?$/g, '');
+            if (lastV3Val === null) { lastV3Val = v; return; }
+            if (v !== lastV3Val) { lastV3Val = v; fresh = [v]; }
+        }
+        if (fresh.some(t => matchesRespond(t, me))) triggerDispatch('v3', null);
+    } catch (e) { /* offline / invalid token */ }
+}
+
+// ----- per-unit status changes (called from fetchUnit) -----
+function unitStateHook(unit, prev, s) {
+    const mine = unit.id === myUnitId();
+    const origin = (s.lat && s.lon) ? { lat: s.lat, lon: s.lon } : (mine ? currentOrigin() : null);
+
+    if (s.responding) {
+        const rising = !prev.responding;
+        if (mine && rising) stopAlert();                                  // RESPOND pressed -> alarm off
+        let target = unitRouteTarget[unit.id];
+        if (target && target.id !== 'DISPATCH' && incidentMarkers[target.id] && incidentMarkers[target.id].isResolved) { clearRoute(unit.id); target = null; }
+        if (!target) {
+            target = mine ? targetForMyUnit(origin) : (origin ? (id => id && targetFromIncident(id))(findNearestActiveIncident(origin.lat, origin.lon)) : null);
+            if (mine && (rising || bannerMode !== 'responding')) showBanner('responding', target);
+            if (target && origin) drawRoute(unit.id, origin, target);
+            else if (mine && !origin && rising) showToast('warn', 'No GPS fix yet', 'The route will appear as soon as your location is available.');
+        } else if (origin) {
+            const f = unitRouteFrom[unit.id];
+            if (!f || haversineKm(f[0], f[1], origin.lat, origin.lon) > 0.05) drawRoute(unit.id, origin, target);   // refresh as the unit moves
+        }
+    } else if (prev.responding) {
+        const t = unitRouteTarget[unit.id];
+        clearRoute(unit.id);
+        if (mine) {
+            if (s.arrived && t) showBanner('arrived', t); else hideBannerFor(null);
+        }
+    }
+    if (mine && s.arrived && !prev.arrived && bannerMode === 'responding') {
+        const t = unitRouteTarget[unit.id] || targetForMyUnit(origin); clearRoute(unit.id); showBanner('arrived', t);
+    }
+}
+
+// ══════════════════════════════════════════════════════
 // START
 // ══════════════════════════════════════════════════════
 setTimeout(() => map.invalidateSize(), 500);
 pollAll();
 setInterval(pollAll, 5000);
+setInterval(pollDispatchV3, 2000);
+setTimeout(pollDispatchV3, 1500);
 </script>
 </body>
 </html>
