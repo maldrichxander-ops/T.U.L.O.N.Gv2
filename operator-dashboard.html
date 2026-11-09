@@ -1629,7 +1629,8 @@ function showToast(type, title, body) {
 // ══════════════════════════════════════════════════════
 window.addEventListener('userReady', () => {
     const u = window.currentUser || {};
-    renderAvatar(document.getElementById('user-avatar'), u);
+    if (typeof renderAvatar === 'function') renderAvatar(document.getElementById('user-avatar'), u);
+    else document.getElementById('user-avatar').textContent = String(u.name || '?').trim().split(/\s+/).map(w => w[0] || '').join('').slice(0, 2).toUpperCase() || '?';
     document.getElementById('user-name').textContent   = u.name || u.email || 'Operator';
     document.getElementById('user-unit').textContent   = `Unit: ${u.unitId || '---'} | ${(u.vehicleType||'').replace('firetruck','Firetruck').replace('ambulance','Ambulance') || 'Operator'}`;
     updateMyVehiclePanel();
@@ -2057,7 +2058,12 @@ $('rb-nav').onclick = () => {
 
 // ----- emergency sound + voice (loops, max 30 s) -----
 const emg = (function () {
-    const MAX_MS = 30000;
+    // Alarm timing based on NFPA 1710 turnout times (EMS 60 s, fire 80 s):
+    const FULL_MS    = 90000;   // full siren + voice for 90 s, covering the whole turnout window
+    const REMIND_MS  = 8000;    // then an urgent double beep every 8 s...
+    const BURST_EVERY = 60000;  // ...plus a full siren burst + voice once a minute
+    const BURST_MS   = 8000;    // each burst lasts 8 s
+    const MAX_MS = FULL_MS;
     let ctx = null, sirenT = null, speechT = null, stopT = null, remindT = null, unitLabel = '', spokenLine = '';
     const chip = $('sound-chip');
     function ensure() {
@@ -2098,20 +2104,25 @@ const emg = (function () {
     }
     function stop() {
         clearInterval(sirenT); clearInterval(speechT); clearTimeout(stopT); clearInterval(remindT); sirenT = speechT = stopT = remindT = null;
+        if (typeof burstT !== 'undefined') { clearInterval(burstT); clearTimeout(burstEndT); burstT = burstEndT = null; }
         try { speechSynthesis.cancel(); } catch (e) {}
         try { navigator.vibrate && navigator.vibrate(0); } catch (e) {}
     }
-    // Responders can't mute a dispatch: full siren for 30 s, then a short reminder beep every 10 s until RESPOND is pressed
+    // Responders can't mute a dispatch. It only stops when RESPOND is pressed on the device:
+    //   0-90 s  : continuous siren + voice
+    //   after   : urgent beep every 8 s, and a full siren + voice burst every minute
+    let burstT = null, burstEndT = null;
+    function fullOn()  { if (!sirenT) { cycle(); sirenT = setInterval(cycle, 1200); } if (!speechT) { speak(); speechT = setInterval(speak, 9000); } }
+    function fullOff() { clearInterval(sirenT); clearInterval(speechT); sirenT = speechT = null; try { speechSynthesis.cancel(); } catch (e) {} }
     function start(label, line) {
         stop(); unitLabel = label || ''; spokenLine = line || ''; ensure();
-        cycle(); sirenT = setInterval(cycle, 1200);
-        speak(); speechT = setInterval(speak, 9000);
+        fullOn();
         stopT = setTimeout(() => {
-            clearInterval(sirenT); clearInterval(speechT); sirenT = speechT = null;
-            try { speechSynthesis.cancel(); } catch (e) {}
-            beep(); remindT = setInterval(beep, 10000);
-            const h = $('dsp-hint-text'); if (h) h.textContent = 'Still waiting: press RESPOND on your device to accept this call';
-        }, MAX_MS);
+            fullOff();
+            beep(); remindT = setInterval(beep, REMIND_MS);
+            burstT = setInterval(() => { fullOn(); clearTimeout(burstEndT); burstEndT = setTimeout(fullOff, BURST_MS); }, BURST_EVERY);
+            const h = $('dsp-hint-text'); if (h) h.textContent = 'No response yet: press RESPOND on your device now';
+        }, FULL_MS);
     }
     function setLine(line) { spokenLine = line || ''; }
     return { start, stop, setLine };
@@ -2163,7 +2174,11 @@ function renderDispatch() {
 }
 function tickDispatchTimer() {
     const s = Math.floor((Date.now() - dspStartedAt) / 1000);
-    $('dsp-timer').textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
+    const el = $('dsp-timer');
+    el.textContent = `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}${s >= 80 ? ' · OVERDUE' : ''}`;
+    el.classList.toggle('warn', s >= 60 && s < 80);
+    el.classList.toggle('late', s >= 80);
+    el.title = s >= 80 ? 'Turnout time exceeded (80 s)' : 'Time since the call came in';
 }
 function describeDispatchTarget() { renderDispatch(); return ''; }   // kept for older callers
 function showOverlay() {
@@ -2381,6 +2396,8 @@ window.openSettings = function() {
     document.getElementById('set-overlay').classList.add('active');
 };
 window.closeSettings = () => document.getElementById('set-overlay').classList.remove('active');
+// profile may already be loaded by the time this script runs: show the photo now
+if (window.currentUser) renderAvatar(document.getElementById('user-avatar'), window.currentUser);
 document.addEventListener('keydown', e => { if (e.key === 'Escape') closeSettings(); });
 
 // Read the picked image, crop the centre square and shrink it
@@ -2712,6 +2729,8 @@ button, input, select, textarea{ font-family: inherit; }
   font-size:36px; color:#fff; background:radial-gradient(circle at 35% 30%, var(--c), var(--c2)); box-shadow:0 0 24px var(--c); }
 .dsp-ring{ position:absolute; inset:8px; border-radius:50%; border:2px solid var(--c); animation:dspPing 1.8s ease-out infinite; }
 .dsp-ring.r2{ animation-delay:.9s; }
+.dsp-timer.warn{ background:#ffcc00; color:#1a1300; }
+.dsp-timer.late{ background:#ff1f1f; color:#fff; animation:dspBlink 1s steps(2) infinite; }
 @keyframes dspPing{ from{ transform:scale(.85); opacity:.9; } to{ transform:scale(1.55); opacity:0; } }
 .dsp-head{ min-width:0; }
 .dsp-kicker{ font-family:var(--font-display); font-size:15px; font-weight:700; letter-spacing:2.5px; text-transform:uppercase; color:var(--c); }
