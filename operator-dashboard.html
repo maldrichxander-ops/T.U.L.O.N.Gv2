@@ -1899,6 +1899,15 @@ async function fetchRoute(fLat, fLon, tLat, tLon) {
     } catch (e) {}
     return null;
 }
+// Auto-route look: bright navigation blue with a white outline, so it stands out on the
+// orange/yellow OpenStreetMap roads. Change ROUTE_COLOR here to restyle every route.
+const ROUTE_COLOR = '#0a6cff', ROUTE_CASING = '#ffffff';
+function makeRouteLayer(geometry, latlngs, weight, dash) {
+    const casing = { color: ROUTE_CASING, weight: weight + 4, opacity: 0.95, lineCap: 'round', lineJoin: 'round' };
+    const line   = { color: ROUTE_COLOR, weight, opacity: 1, dashArray: dash || null, lineCap: 'round', lineJoin: 'round' };
+    const mk = s => geometry ? L.geoJSON(geometry, { style: s, interactive: false }) : L.polyline(latlngs, { ...s, interactive: false });
+    return L.featureGroup([mk(casing), mk(line)]);
+}
 async function drawRoute(unitId, from, target) {
     if (unitRouting[unitId]) return null;
     unitRouting[unitId] = true;
@@ -1906,10 +1915,10 @@ async function drawRoute(unitId, from, target) {
     try {
         const r = await fetchRoute(from.lat, from.lon, target.lat, target.lng);
         const first = !unitRouteLines[unitId];
-        const style = { color: '#f0883e', weight: mine ? 6 : 4, opacity: 0.85, dashArray: mine ? null : '6,4' };
+        const w = mine ? 6 : 4, dash = mine ? null : '8,6';     // my route solid, other units dashed
         let layer, km, mins, approx = false;
-        if (r) { layer = L.geoJSON(r.geometry, { style }); km = r.distance / 1000; mins = Math.max(1, Math.round(r.duration / 60)); }
-        else { layer = L.polyline([[from.lat, from.lon], [target.lat, target.lng]], { ...style, dashArray: '2,8' }); km = haversineKm(from.lat, from.lon, target.lat, target.lng); mins = Math.max(1, Math.round(km / 40 * 60)); approx = true; }
+        if (r) { layer = makeRouteLayer(r.geometry, null, w, dash); km = r.distance / 1000; mins = Math.max(1, Math.round(r.duration / 60)); }
+        else { layer = makeRouteLayer(null, [[from.lat, from.lon], [target.lat, target.lng]], w, '2,8'); km = haversineKm(from.lat, from.lon, target.lat, target.lng); mins = Math.max(1, Math.round(km / 40 * 60)); approx = true; }
         if (unitRouteLines[unitId]) map.removeLayer(unitRouteLines[unitId]);
         layer.addTo(map);
         unitRouteLines[unitId] = layer; unitRouteTarget[unitId] = target; unitRouteFrom[unitId] = [from.lat, from.lon];
