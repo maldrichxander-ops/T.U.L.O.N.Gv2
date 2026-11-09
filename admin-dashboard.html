@@ -947,6 +947,15 @@ async function fetchRoute(fromLat, fromLon, toLat, toLon) {
     return null;
 }
 
+// Auto-route look: bright navigation blue with a white outline, so it stands out on the
+// orange/yellow OpenStreetMap roads. Change ROUTE_COLOR here to restyle every route.
+const ROUTE_COLOR = '#0a6cff', ROUTE_CASING = '#ffffff';
+function makeRouteLayer(geometry, latlngs, weight, dash) {
+    const casing = { color: ROUTE_CASING, weight: weight + 4, opacity: 0.95, lineCap: 'round', lineJoin: 'round' };
+    const line   = { color: ROUTE_COLOR, weight, opacity: 1, dashArray: dash || null, lineCap: 'round', lineJoin: 'round' };
+    const mk = s => geometry ? L.geoJSON(geometry, { style: s, interactive: false }) : L.polyline(latlngs, { ...s, interactive: false });
+    return L.featureGroup([mk(casing), mk(line)]);
+}
 async function drawRouteToIncident(unitId, fromLat, fromLon, incidentId) {
     const inc = activeIncidentMarkers[incidentId];
     if (!inc || unitRouting[unitId]) return;
@@ -956,12 +965,12 @@ async function drawRouteToIncident(unitId, fromLat, fromLon, incidentId) {
         const firstTime = !unitRouteLines[unitId];
         let layer, label;
         if (r) {
-            layer = L.geoJSON(r.geometry, { style: { color: '#f0883e', weight: 5, opacity: 0.85, dashArray: '6,4' } });
+            layer = makeRouteLayer(r.geometry, null, 5, null);
             const mins = Math.max(1, Math.round(r.duration / 60)), km = (r.distance / 1000).toFixed(1);
             label = `${km} km, ~${mins} min ETA (${r.src})`;
         } else {
             // Both routing services failed: draw a straight line so the dispatcher still sees the direction
-            layer = L.polyline([[fromLat, fromLon], [inc.lat, inc.lng]], { color: '#f0883e', weight: 4, opacity: 0.8, dashArray: '2,8' });
+            layer = makeRouteLayer(null, [[fromLat, fromLon], [inc.lat, inc.lng]], 4, '2,8');
             label = `${haversineKm(fromLat, fromLon, inc.lat, inc.lng).toFixed(1)} km straight-line (routing service unavailable)`;
         }
         if (unitRouteLines[unitId]) map.removeLayer(unitRouteLines[unitId]);
