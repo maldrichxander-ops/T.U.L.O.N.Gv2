@@ -38,16 +38,16 @@
 <style>
 body {
     background-color: #022649; color: white; margin: 0; padding: 0;
-    font-family: 'Open Sans', sans-serif; display: flex; flex-direction: column;
+    font-family: var(--font); display: flex; flex-direction: column;
     height: 100vh; overflow: hidden;
 }
 /* Headline / data / short-label typography — Open Sans stays the paragraph default above */
 .brand-badge, .stat-number, .report-btn, .excel-btn, .wipe-btn, .register-btn, .logout-btn,
 .section-lbl, .uc-id, .terminal-header-left, .reg-modal-title, .reg-submit, .reg-section-lbl,
 h2 {
-    font-family: Georgia, serif;
+    font-family:var(--font);
 }
-.leaflet-popup-content-wrapper b { font-family: Georgia, serif; letter-spacing: 0.3px; }
+.leaflet-popup-content-wrapper b { font-family:var(--font); letter-spacing: 0.3px; }
 .header-container {
     display: flex; align-items: center; gap: 10px; padding: 10px 20px;
     background: rgba(0,0,0,0.3); border-bottom: 1px solid #043a6d;
@@ -199,6 +199,38 @@ h2 {
 </head>
 <body>
 
+<!-- ICON SPRITE: crisp SVG icons that render the same on every device (no emoji font needed) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <symbol id="i-truck" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="9" width="12" height="7.5" rx="1"/><path d="M13.5 11.5h4l3 3.5v1.5h-7"/><circle cx="6" cy="17.5" r="2" fill="currentColor"/><circle cx="17" cy="17.5" r="2" fill="currentColor"/><path d="M2.5 6.5l10-2.5M5 6v2.5M9 5v3.5"/></symbol>
+  <symbol id="i-ambulance" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="1.5" y="7" width="12" height="9.5" rx="1"/><path d="M13.5 10h4l3 3.5v3h-7"/><circle cx="6" cy="17.5" r="2" fill="currentColor"/><circle cx="17" cy="17.5" r="2" fill="currentColor"/><path d="M7.5 9.3v4.9M5.05 11.75h4.9"/></symbol>
+  <symbol id="i-fire" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M12 1.5c.6 3.3 3.2 5.2 4.8 7.6 1.3 1.9 1.9 3.6 1.9 5.4A6.7 6.7 0 0 1 12 21.2a6.7 6.7 0 0 1-6.7-6.7c0-2.3 1-4.3 2.7-6 .2 1.9 1 3.2 2.3 3.8-.4-3.6.4-7 1.7-10.8zm.2 11.2c-1.6 1.4-2.6 2.9-2.6 4.5a2.4 2.4 0 0 0 4.8 0c0-1.5-.8-3-2.2-4.5z"/></symbol>
+  <symbol id="i-med" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M9 2.5h6v6.5h6.5v6H15v6.5H9V15H2.5V9H9z"/></symbol>
+  <symbol id="i-station" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 21V9.5l9-5.5 9 5.5V21"/><path d="M2 21h20"/><path d="M9.5 21v-5.5h5V21"/><path d="M12 7.8v4.4M9.8 10h4.4"/></symbol>
+  <symbol id="i-car" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 11l1.8-4.5h10.4L19 11"/><rect x="3" y="11" width="18" height="5.5" rx="1.5"/><circle cx="7.5" cy="18.5" r="1.5" fill="currentColor"/><circle cx="16.5" cy="18.5" r="1.5" fill="currentColor"/></symbol>
+  <symbol id="i-phone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 3h3.5l1.5 5-2.2 1.4a11 11 0 0 0 6.8 6.8l1.4-2.2 5 1.5V19a2 2 0 0 1-2 2A17 17 0 0 1 3 5a2 2 0 0 1 2-2z"/></symbol>
+  <symbol id="i-siren" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 18v-6a6 6 0 0 1 12 0v6"/><rect x="3.5" y="18" width="17" height="3.5" rx="1"/><path d="M12 1.5v2.5M3.5 5l1.8 1.8M20.5 5l-1.8 1.8M12 10v5"/></symbol>
+  <symbol id="i-report" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="4" width="14" height="17" rx="2"/><rect x="9" y="2.5" width="6" height="3" rx="1"/><path d="M8.5 11h7M8.5 15h5"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 6h18"/><path d="M8 6V4a1 1 0 0 1 1-1h6a1 1 0 0 1 1 1v2"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></symbol>
+  <symbol id="i-plus" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v8M8 12h8"/></symbol>
+  <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M8 12.5l2.8 2.8 5.7-5.8"/></symbol>
+  <symbol id="i-clock" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></symbol>
+  <symbol id="i-pin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 21.5s-6.5-6-6.5-11.5a6.5 6.5 0 0 1 13 0c0 5.5-6.5 11.5-6.5 11.5z"/><circle cx="12" cy="10" r="2.5"/></symbol>
+  <symbol id="i-close" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6l12 12M18 6L6 18"/></symbol>
+  <symbol id="i-chev-right" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 5l7 7-7 7"/></symbol>
+  <symbol id="i-chev-left" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M15 5l-7 7 7 7"/></symbol>
+  <symbol id="i-chev-up" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 15l7-7 7 7"/></symbol>
+  <symbol id="i-chev-down" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 9l7 7 7-7"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.01"/></symbol>
+  <symbol id="i-logout" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><path d="M16 17l5-5-5-5"/><path d="M21 12H9"/></symbol>
+  <symbol id="i-locate" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.5" fill="currentColor"/><path d="M12 1.5V5M12 19v3.5M1.5 12H5M19 12h3.5"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 24 24" fill="currentColor" stroke="none"><path d="M13.5 1.5L4 13.5h6.5l-1 9 9.5-12.5H12.5z"/></symbol>
+  <symbol id="i-eye" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1.5 12S5.5 5 12 5s10.5 7 10.5 7-4 7-10.5 7S1.5 12 1.5 12z"/><circle cx="12" cy="12" r="3"/></symbol>
+  <symbol id="i-globe" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3a14 14 0 0 1 0 18M12 3a14 14 0 0 0 0 18"/></symbol>
+  <symbol id="i-mail" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M3 6.5l9 6.5 9-6.5"/></symbol>
+  <symbol id="i-key" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="7.5" cy="15.5" r="4.5"/><path d="M10.7 12.3L20.5 2.5M16.5 6.5l3 3M14 9l2.5 2.5"/></symbol>
+  <symbol id="i-radio" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="2"/><path d="M7.8 7.8a6 6 0 0 0 0 8.4M16.2 7.8a6 6 0 0 1 0 8.4M4.9 4.9a10 10 0 0 0 0 14.2M19.1 4.9a10 10 0 0 1 0 14.2"/></symbol>
+</svg>
+
 <!-- FIREBASE — Auth + Firestore (incidents + registered vehicles are shared/real-time) -->
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
@@ -257,7 +289,7 @@ window.dispatchEvent(new Event('firestoreReady'));
     <h2 style="flex:1; font-size:18px; margin:0; letter-spacing:1px;">Tactical Unit Locator &amp; Network Grid</h2>
     <div style="text-align:right;">
         <div style="font-size:22px; font-weight:bold; letter-spacing:3px;">TULONG</div>
-        <div style="font-size:9px; color:#8b949e; max-width:200px; line-height:1.3;">Where Technology Meets Public Safety for Real Time Response and Real Life Impact.</div>
+        <div style="font-size:11px; color:#8b949e; max-width:230px; line-height:1.35;">Where Technology Meets Public Safety for Real Time Response and Real Life Impact.</div>
     </div>
 </div>
 
@@ -271,7 +303,7 @@ window.dispatchEvent(new Event('firestoreReady'));
 <div class="main-wrapper">
     <!-- SIDEBAR -->
     <div class="sidebar">
-        <button class="report-btn" id="report-toggle">&#9888;&#65039; Report Emergency</button>
+        <button class="report-btn" id="report-toggle"><svg class="ico" aria-hidden="true"><use href="#i-warn"/></svg> Report Emergency</button>
 
         <div class="stat-box">
             <span class="stat-number" id="active-vehicles">0</span>
@@ -286,13 +318,13 @@ window.dispatchEvent(new Event('firestoreReady'));
             <span class="stat-label">Nearby Stations</span>
         </div>
 
-        <div class="section-lbl">&#9632; Live Units (ESP32)</div>
+        <div class="section-lbl"><span class="sq"></span>Live Units (ESP32)</div>
         <div id="unit-list"></div>
 
-        <button class="excel-btn" onclick="exportToExcel()">&#128203; Export EOD Report</button>
-        <button class="wipe-btn"  onclick="wipeMapAndExport()">&#128247; Wipe Map &amp; Export</button>
-         <button class="register-btn" onclick="openRegisterModal()">&#43; Register Emergency Vehicle</button>
-        <button class="logout-btn" id="logout-trigger">&#x2715; Terminate Session</button>
+        <button class="excel-btn" onclick="exportToExcel()"><svg class="ico" aria-hidden="true"><use href="#i-report"/></svg> Export EOD Report</button>
+        <button class="wipe-btn"  onclick="wipeMapAndExport()"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg> Wipe Map &amp; Export</button>
+         <button class="register-btn" onclick="openRegisterModal()"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg> Register Emergency Vehicle</button>
+        <button class="logout-btn" id="logout-trigger"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg> Terminate Session</button>
 
         <div class="section-lbl">Fire Stations &amp; Rescue</div>
         <div class="station-list" id="station-container"></div>
@@ -306,15 +338,24 @@ window.dispatchEvent(new Event('firestoreReady'));
             <span id="blynk-label">Connecting to Blynk...</span>
         </div>
 
-        <!-- NEARBY UNITS PANEL -->
-        <div class="near-panel" id="near-panel">
+        <!-- NEARBY UNITS PANEL — docked on the right, can be hidden with the tab on its left edge -->
+        <div class="near-panel" id="near-panel" aria-label="Nearby units and dispatch">
+            <button class="near-handle" id="near-handle" type="button" onclick="toggleNearPanel()" title="Hide / show nearby units">
+                <span id="near-handle-ico"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></span>
+                <span class="near-handle-lbl">UNITS</span>
+                <b id="near-handle-count">0</b>
+            </button>
             <div class="near-head">
+                <div class="near-kicker"><svg class="ico" aria-hidden="true"><use href="#i-radio"/></svg> Nearby units &amp; dispatch</div>
                 <div class="near-title" id="near-title">Nearby Units</div>
                 <div class="near-addr" id="near-addr"></div>
-                <button class="near-close" onclick="closeNearPanel()">&times;</button>
+                <div class="near-head-btns">
+                    <button class="near-iconbtn" type="button" onclick="toggleNearPanel(true)" title="Hide panel"><svg class="ico" aria-hidden="true"><use href="#i-chev-right"/></svg></button>
+                    <button class="near-iconbtn" type="button" onclick="closeNearPanel()" title="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
+                </div>
             </div>
             <div class="near-tools">
-                <span>Radius:</span>
+                <label for="near-radius">Search radius</label>
                 <select id="near-radius" onchange="setNearRadius(this.value)">
                     <option value="3">3 km</option>
                     <option value="5">5 km</option>
@@ -322,10 +363,13 @@ window.dispatchEvent(new Event('firestoreReady'));
                     <option value="20">20 km</option>
                     <option value="50">50 km</option>
                 </select>
-                <span id="near-count" style="margin-left:auto;"></span>
+                <span id="near-count" class="near-count"></span>
             </div>
             <div class="near-list" id="near-list"></div>
-            <div class="near-foot"><button class="near-btn" onclick="respondNearest()">&#9889; Respond Nearest Unit</button></div>
+            <div class="near-foot">
+                <button class="near-btn near-btn-big" type="button" onclick="respondNearest()"><svg class="ico" aria-hidden="true"><use href="#i-bolt"/></svg> Respond Nearest Unit</button>
+                <button class="near-btn near-btn-ghost" type="button" onclick="slideToIncident(nearIncidentId)"><svg class="ico" aria-hidden="true"><use href="#i-locate"/></svg> Show incident on map</button>
+            </div>
         </div>
 
         <!-- TERMINAL PANEL -->
@@ -333,9 +377,9 @@ window.dispatchEvent(new Event('firestoreReady'));
             <div class="terminal-header" onclick="toggleTerminal()">
                 <div class="terminal-header-left">
                     <div class="terminal-dot"></div>
-                    &#9654; ESP32 COMMAND TERMINAL &mdash; V3
+                    <svg class="ico" aria-hidden="true"><use href="#i-radio"/></svg> ESP32 COMMAND TERMINAL &mdash; V3
                 </div>
-                <div class="terminal-header-right" id="term-toggle-lbl">&#9650; EXPAND</div>
+                <div class="terminal-header-right" id="term-toggle-lbl"><svg class="ico" aria-hidden="true"><use href="#i-chev-up"/></svg> EXPAND</div>
             </div>
             <div class="terminal-log" id="terminal-log"></div>
             <div class="terminal-input-row">
@@ -350,6 +394,13 @@ window.dispatchEvent(new Event('firestoreReady'));
 </div>
 
 <script>
+// ============================================================
+// ICONS — inline SVG from the sprite at the top of <body> (emojis don't render on Raspberry Pi)
+// ============================================================
+function ico(name, cls) { return `<svg class="ico${cls ? ' ' + cls : ''}" aria-hidden="true"><use href="#i-${name}"/></svg>`; }
+const TYPE_ICON = t => t === 'firetruck' ? ico('truck', 'c-fire') : ico('ambulance', 'c-med');
+const TYPE_TEXT = t => t === 'firetruck' ? 'Firetruck' : 'Ambulance';
+
 // ============================================================
 // BLYNK CONFIG
 // ============================================================
@@ -382,6 +433,19 @@ const map = L.map('map').setView([10.3157, 123.8854], 13);
 L.tileLayer('https://tile.openstreetmap.org/{z}/{x}/{y}.png', {
     attribution: '&copy; OpenStreetMap contributors', maxZoom: 19
 }).addTo(map);
+
+// Slide the map to a spot; if it's an incident, open its popup once the slide finishes
+function slideTo(lat, lng, incidentId, zoom) {
+    lat = parseFloat(lat); lng = parseFloat(lng);
+    if (!isFinite(lat) || !isFinite(lng)) return;
+    map.closePopup(); map.stop();
+    const z = zoom || Math.max(map.getZoom(), 17);
+    const done = () => { if (incidentId && activeIncidentMarkers[incidentId]) updatePopup(incidentId); };
+    if (map.getCenter().distanceTo([lat, lng]) < 5 && map.getZoom() === z) { done(); return; }
+    map.once('moveend', done);
+    map.flyTo([lat, lng], z, { duration: 1.2 });
+}
+window.slideToIncident = function(id) { const d = activeIncidentMarkers[id]; if (d) slideTo(d.lat, d.lng, id); };
 
 const cebuBounds = L.latLngBounds([9.390,123.230],[11.350,124.150]);
 L.Control.geocoder({
@@ -424,13 +488,13 @@ infoCounter.update = function() {
     const trucks = document.getElementById('ov-trucks') ? document.getElementById('ov-trucks').innerText : '0';
     const ambs   = document.getElementById('ov-ambs')   ? document.getElementById('ov-ambs').innerText   : '0';
     this._div.innerHTML = `
-        <div style="font-size:10px;color:#888;text-align:center;margin-bottom:8px;">LIVE TRACKING</div>
-        <div class="map-counter-item"><span>🚒 FIRETRUCKS</span><span class="count-val-red" id="ov-trucks">${trucks}</span></div>
-        <div class="map-counter-item"><span>🚑 AMBULANCES</span><span class="count-val-blue" id="ov-ambs">${ambs}</span></div>
+        <div style="font-size:11px;font-weight:700;color:#9aa5b1;text-align:center;margin-bottom:8px;letter-spacing:.5px;">LIVE TRACKING</div>
+        <div class="map-counter-item"><span>${ico('truck','c-fire')} FIRETRUCKS</span><span class="count-val-red" id="ov-trucks">${trucks}</span></div>
+        <div class="map-counter-item"><span>${ico('ambulance','c-med')} AMBULANCES</span><span class="count-val-blue" id="ov-ambs">${ambs}</span></div>
         <hr style="border:0;border-top:1px solid #4da3ff;margin:10px 0;">
-        <div style="font-size:10px;color:#ffcc00;text-align:center;margin-bottom:8px;">ACTIVE INCIDENTS</div>
-        <div class="map-counter-item"><span>🔥 FIRE</span><span class="count-val-yellow">${incidentCounts.fire}</span></div>
-        <div class="map-counter-item"><span>⚕️ MEDICAL</span><span class="count-val-yellow">${incidentCounts.med}</span></div>`;
+        <div style="font-size:11px;font-weight:700;color:#ffcc00;text-align:center;margin-bottom:8px;letter-spacing:.5px;">ACTIVE INCIDENTS</div>
+        <div class="map-counter-item"><span>${ico('fire','c-fire')} FIRE</span><span class="count-val-yellow">${incidentCounts.fire}</span></div>
+        <div class="map-counter-item"><span>${ico('med','c-med')} MEDICAL</span><span class="count-val-yellow">${incidentCounts.med}</span></div>`;
 };
 infoCounter.addTo(map);
 
@@ -456,7 +520,7 @@ async function getAddress(lat,lng) {
 const reportBtn = document.getElementById('report-toggle');
 reportBtn.onclick = () => {
     isReporting = !isReporting;
-    reportBtn.innerText = isReporting ? "Click map location..." : "⚠️ Report Emergency";
+    reportBtn.innerHTML = isReporting ? `${ico('pin')} Click map location...` : `${ico('warn')} Report Emergency`;
     reportBtn.classList.toggle('report-active');
     map.getContainer().style.cursor = isReporting ? 'crosshair' : '';
 };
@@ -473,10 +537,10 @@ map.on('click', async function(e) {
     L.popup().setLatLng(e.latlng).setContent(`
         <div style="text-align:center;color:black;max-width:240px;">
             <b>NEW EMERGENCY</b><br><small>${safeAddr}</small><br>
-            <button onclick="placePendingIncident('fire')" style="background:#ff4d4d;color:white;border:none;padding:8px;margin:5px;cursor:pointer;font-weight:bold;">🔥 FIRE</button>
-            <button onclick="placePendingIncident('med')" style="background:#4da3ff;color:white;border:none;padding:8px;margin:5px;cursor:pointer;font-weight:bold;">⚕️ MEDICAL</button>
+            <button onclick="placePendingIncident('fire')" style="background:#ff4d4d;color:white;border:none;padding:8px;margin:5px;cursor:pointer;font-weight:bold;">${ico('fire')} FIRE</button>
+            <button onclick="placePendingIncident('med')" style="background:#4da3ff;color:white;border:none;padding:8px;margin:5px;cursor:pointer;font-weight:bold;">${ico('med')} MEDICAL</button>
         </div>`).openOn(map);
-    isReporting=false; reportBtn.innerText="⚠️ Report Emergency";
+    isReporting=false; reportBtn.innerHTML=`${ico('warn')} Report Emergency`;
     reportBtn.classList.remove('report-active'); map.getContainer().style.cursor='';
 });
 
@@ -512,17 +576,17 @@ window.updatePopup = function(id) {
     if (d.isResolved) { d.marker.bindPopup(`<div style="color:white;"><b>RESOLVED ${d.type.toUpperCase()}</b><br><small>${d.address}</small><hr>${d.status}</div>`).openPopup(); return; }
     let c = `<div style="color:white;min-width:220px;"><b>${d.type.toUpperCase()} INCIDENT</b><hr>`;
     if (d.type==='fire') {
-        c = `<div style="color:white;min-width:220px;"><b>FIRE INCIDENT</b><hr><label style="font-size:10px;">Classification:</label><select id="status-${id}" class="status-select" onchange="handleStatusChange('${id}')">`;
+        c = `<div style="color:white;min-width:220px;"><b>FIRE INCIDENT</b><hr><label style="font-size:12px;font-weight:600;">Classification:</label><select id="status-${id}" class="status-select" onchange="handleStatusChange('${id}')">`;
         ["For Verification","False Alarm","Rubbish Fire","Post Fire","Vehicle fire","Grass fire","Residential","Commercial"].forEach(o=>c+=`<option value="${o}" ${d.status===o?'selected':''}>${o}</option>`);
-        c += `</select><div style="margin-top:10px;"><label style="font-size:10px;">Alarm Level:</label><select id="alarm-${id}" class="status-select" onchange="logAlarm('${id}')">`;
+        c += `</select><div style="margin-top:10px;"><label style="font-size:12px;font-weight:600;">Alarm Level:</label><select id="alarm-${id}" class="status-select" onchange="logAlarm('${id}')">`;
         ["Fire out upon arrival","Fire on Progress","1st Alarm","2nd Alarm","3rd Alarm","4th Alarm","5th Alarm","Task Force Alpha","Task Force Bravo","Task Force Charlie","Task Force Delta","Task Force Echo","Task Force Hotel","Task Force India","General Alarm","Under Control","Fire Out"].forEach(a=>c+=`<option value="${a}" ${d.alarm===a?'selected':''}>${a}</option>`);
         c += `</select></div>`;
     } else {
-        c = `<div style="color:white;min-width:220px;"><b>MEDICAL INCIDENT</b><hr><label style="font-size:10px;">Medical Emergency Type:</label><select id="status-${id}" class="status-select" onchange="handleMedicalStatusChange('${id}')">`;
+        c = `<div style="color:white;min-width:220px;"><b>MEDICAL INCIDENT</b><hr><label style="font-size:12px;font-weight:600;">Medical Emergency Type:</label><select id="status-${id}" class="status-select" onchange="handleMedicalStatusChange('${id}')">`;
         ["For Verification","Suspected Heart Attack / Cardiac Arrest","Suspected Stroke","Vehicular Accident","Drowning","Possible Suicide","Falling Incident","Fire Incident","Electrocution","Other"].forEach(o=>c+=`<option value="${o}" ${d.status.startsWith(o)?'selected':''}>${o}</option>`);
         c += `</select><div id="other-input-div-${id}" style="display:${d.status.startsWith('Other')?'block':'none'};margin-top:10px;"><input type="text" id="other-text-${id}" placeholder="Type specific emergency..." style="width:100%;padding:5px;color:black;" oninput="updateOtherMedicalText('${id}')"></div>`;
     }
-    c += `<button class="near-open-btn" onclick="showNearUnits('${id}')">&#128663; NEARBY UNITS &amp; DISPATCH</button>`;
+    c += `<button class="near-open-btn" onclick="showNearUnits('${id}')">${ico('radio')} NEARBY UNITS &amp; DISPATCH</button>`;
     c += `<br><br><button onclick="resolveIncident('${id}')" style="background:#217346;color:white;border:none;padding:8px;width:100%;cursor:pointer;font-weight:bold;">RESOLVE &amp; SAVE</button>
           <button onclick="deleteIncident('${id}')" style="background:#c73e1d;color:white;border:none;padding:8px;width:100%;margin-top:5px;cursor:pointer;">DELETE</button></div>`;
     d.marker.bindPopup(c).openPopup();
@@ -654,7 +718,7 @@ window.exportToExcel = async function() {
 window.wipeMapAndExport = async function() {
     const all = Object.entries(activeIncidentMarkers).map(([id,d])=>({id,...d}));
     if (all.length === 0) { alert("The map has no incidents to wipe."); return; }
-    if (!confirm("⚠️ ARE YOU SURE TO WIPE MAP? This clears ALL incidents, including active ones. A report of everything will be downloaded first.")) return;
+    if (!confirm("ARE YOU SURE TO WIPE MAP? This clears ALL incidents, including active ones. A report of everything will be downloaded first.")) return;
     const ok = writeReportWorkbook(buildReportRows(all), 'WIPE');
     if (!ok) return;   // export failed -> keep the data
     await deleteIncidentsReport(all.map(i=>i.id));
@@ -688,7 +752,7 @@ function renderIncidentFromDoc(id, data) {
     let entry = activeIncidentMarkers[id];
     if (!entry) {
         const marker = L.marker([data.lat, data.lng], { icon: L.divIcon({
-            html:`<div id="icon-inner-${id}" style="text-align:center;"><div style="font-size:30px;">${data.type==='fire'?'🔥':'⚕️'}</div><div id="label-${id}" style="background:rgba(0,0,0,0.8);color:white;font-size:10px;font-weight:bold;padding:2px 4px;border-radius:3px;white-space:nowrap;display:none;border:1px solid #4da3ff;"></div></div>`,
+            html:`<div id="icon-inner-${id}" style="text-align:center;display:flex;flex-direction:column;align-items:center;"><div class="inc-marker ${data.type==='fire'?'fire':'med'}">${ico(data.type==='fire'?'fire':'med')}</div><div id="label-${id}" style="background:rgba(0,0,0,0.8);color:white;font-size:11px;font-weight:bold;padding:2px 5px;border-radius:3px;white-space:nowrap;display:none;border:1px solid #4da3ff;margin-top:2px;"></div></div>`,
             className:'incident-marker', iconSize:[40,50], iconAnchor:[20,25]
         })}).addTo(map);
         entry = { marker };
@@ -743,9 +807,9 @@ window.addEventListener('firestoreReady', () => {
         const banner = document.getElementById('sync-banner');
         if (banner) {
             banner.style.display = 'block';
-            banner.textContent = err.code === 'permission-denied'
-                ? '⚠ Incident sync blocked — Firestore security rules need to allow read/write on the "incidents" collection. See setup instructions.'
-                : `⚠ Incident sync error: ${err.message}`;
+            banner.innerHTML = ico('warn') + ' ' + escHtml(err.code === 'permission-denied'
+                ? 'Incident sync blocked — Firestore security rules need to allow read/write on the "incidents" collection. See setup instructions.'
+                : `Incident sync error: ${err.message}`);
         }
     });
 });
@@ -789,18 +853,18 @@ const notifier = (function () {
         el.dataset.inc = id;
         el.className = `alert-pop ${resolved ? 'resolved' : (isFire ? 'fire' : 'med')}`;
         const title = resolved
-            ? `✅ ${isFire ? 'FIRE' : 'MEDICAL'} INCIDENT RESOLVED`
-            : (isFire ? '🔥 FIRE EMERGENCY' : '⚕️ MEDICAL EMERGENCY');
+            ? `${ico('check')} ${isFire ? 'FIRE' : 'MEDICAL'} INCIDENT RESOLVED`
+            : (isFire ? `${ico('fire')} FIRE EMERGENCY` : `${ico('med')} MEDICAL EMERGENCY`);
         el.innerHTML = `
-            <button class="alert-close" title="Dismiss">&times;</button>
+            <button class="alert-close" title="Dismiss">${ico('close')}</button>
             <div class="alert-title"><span class="a-dot"></span>${title}</div>
             <div class="alert-addr"></div>
             <div class="alert-time">${new Date().toLocaleTimeString('en-PH',{hour12:false})} · ${id}${resolved && data.status ? ' · ' + data.status : ''}</div>
-            <button class="alert-view">View on map</button>`;
+            <button class="alert-view">${ico('locate')} View on map</button>`;
         el.querySelector('.alert-addr').textContent = data.address || 'Location pending...';
         const close = () => { el.classList.add('out'); setTimeout(() => el.remove(), 300); };
         el.querySelector('.alert-close').onclick = close;
-        el.querySelector('.alert-view').onclick = () => { map.flyTo([data.lat, data.lng], 17); close(); };
+        el.querySelector('.alert-view').onclick = () => { slideTo(data.lat, data.lng, id); close(); };
         box.prepend(el);
         while (box.children.length > 5) box.lastElementChild.remove();
         if (resolved) setTimeout(close, 15000);   // resolved notices clear themselves; new emergencies stay until dismissed
@@ -809,7 +873,7 @@ const notifier = (function () {
         card(id, kind, data);
         tone(kind);
         const isFire = data.type === 'fire';
-        system(kind === 'resolved' ? `Incident resolved — ${id}` : `${isFire ? '🔥 Fire' : '⚕️ Medical'} emergency — ${id}`,
+        system(kind === 'resolved' ? `Incident resolved — ${id}` : `${isFire ? 'Fire' : 'Medical'} emergency — ${id}`,
                data.address || '', `${id}-${kind}`);
     }
     function dismissFor(id, kind) {
@@ -927,29 +991,43 @@ function nearUnitsFor(inc) {
         return { u, s, km: haversineKm(s.lat, s.lon, inc.lat, inc.lng) };
     }).filter(x => x && x.km <= nearRadiusKm).sort((a, b) => a.km - b.km);
 }
+// open = panel is in use for an incident; collapsed = slid off to the right, only the tab shows
+function setNearState(open, collapsed) {
+    const p = document.getElementById('near-panel');
+    p.classList.toggle('open', !!open);
+    p.classList.toggle('collapsed', !!(open && collapsed));
+    document.body.classList.toggle('near-open', !!(open && !collapsed));
+    document.getElementById('near-handle-ico').innerHTML = (open && collapsed) ? ico('chev-left') : ico('chev-right');
+}
 window.showNearUnits = function(id) {
     if (!activeIncidentMarkers[id]) return;
     nearIncidentId = id;
-    document.getElementById('near-panel').style.display = 'flex';
+    setNearState(true, false);
     renderNearPanel();
 };
 window.closeNearPanel = function() {
     nearIncidentId = null;
-    document.getElementById('near-panel').style.display = 'none';
+    setNearState(false);
+};
+window.toggleNearPanel = function(hide) {
+    if (!nearIncidentId) return;
+    const p = document.getElementById('near-panel');
+    setNearState(true, hide === true ? true : !p.classList.contains('collapsed'));
 };
 window.setNearRadius = function(v) { nearRadiusKm = parseFloat(v) || 10; renderNearPanel(); };
 function renderNearPanel() {
     if (!nearIncidentId) return;
     const inc = activeIncidentMarkers[nearIncidentId];
     if (!inc) { closeNearPanel(); return; }
-    document.getElementById('near-title').textContent = `${inc.type === 'fire' ? '🔥 FIRE' : '⚕️ MEDICAL'} · ${nearIncidentId}`;
+    document.getElementById('near-title').innerHTML = `<span class="near-type ${inc.type === 'fire' ? 'fire' : 'med'}">${ico(inc.type === 'fire' ? 'fire' : 'med')}</span><span>${inc.type === 'fire' ? 'FIRE INCIDENT' : 'MEDICAL INCIDENT'}</span><span class="near-incid">${escHtml(nearIncidentId)}</span>`;
     document.getElementById('near-addr').textContent = inc.address || '';
     const list = nearUnitsFor(inc);
     document.getElementById('near-count').textContent = `${list.length} unit${list.length === 1 ? '' : 's'} nearby`;
+    document.getElementById('near-handle-count').textContent = list.length;
     const box = document.getElementById('near-list');
     if (list.length === 0) {
         const online = Object.values(unitStates).filter(s => s.online).length;
-        box.innerHTML = `<div class="near-empty">No online unit with a GPS fix within ${nearRadiusKm} km.<br>${online} unit(s) online in total. Try a larger radius.</div>`;
+        box.innerHTML = `<div class="near-empty"><div class="near-empty-ico">${ico('radio')}</div><b>No unit within ${nearRadiusKm} km</b><br>No online unit with a GPS fix in this radius.<br>${online} unit(s) online in total. Try a larger radius.</div>`;
         return;
     }
     box.innerHTML = list.map(({u, s, km}) => {
@@ -958,10 +1036,10 @@ function renderNearPanel() {
         const sent = unitDispatch[u.id] === nearIncidentId;
         return `<div class="near-row">
             <div class="near-info">
-                <div class="near-id">${u.type === 'firetruck' ? '🚒' : '🚑'} ${escHtml(u.id)}</div>
-                <div class="near-sub">${km.toFixed(1)} km · ~${eta} min · ${status}</div>
+                <div class="near-id">${TYPE_ICON(u.type)} ${escHtml(u.id)} <span class="near-status st-${status.toLowerCase()}">${status}</span></div>
+                <div class="near-sub">${TYPE_TEXT(u.type)} · ${km.toFixed(1)} km · ~${eta} min</div>
             </div>
-            <button class="near-btn ${sent ? 'sent' : ''}" onclick="respondUnit('${escHtml(u.id)}')">${sent ? '✓ Sent' : 'Respond'}</button>
+            <button class="near-btn ${sent ? 'sent' : ''}" onclick="respondUnit('${escHtml(u.id)}')">${sent ? ico('check') + ' Sent' : 'Respond'}</button>
         </div>`;
     }).join('');
 }
@@ -1053,11 +1131,11 @@ const ST_STYLE = {
 x0.forEach(s => {
     const st = ST_STYLE[s.type] || ST_STYLE.bfp;
     const approxNote = s.approx ? `<br><small style="color:#ffcc00;">Approximate location — please verify</small>` : '';
-    L.marker([s.lat,s.lng],{icon:st.icon}).addTo(map)
-     .bindPopup(`<b>${s.name}</b><br>📞 ${s.number||"N/A"}${approxNote}`, {className: `st-${st.cls}-popup`});
+    const stMarker = L.marker([s.lat,s.lng],{icon:st.icon}).addTo(map)
+     .bindPopup(`<b>${s.name}</b><br>${ico('phone')} ${s.number||"N/A"}${approxNote}`, {className: `st-${st.cls}-popup`});
     const d=document.createElement('div'); d.className=`station-item st-${st.cls}-item`;
     d.innerHTML=`<b>${st.label}</b>: ${s.name}${s.approx ? ' <span style="color:#ffcc00;" title="Approximate location">&asymp;</span>' : ''}`;
-    d.onclick=()=>map.flyTo([s.lat,s.lng],16); sc.appendChild(d);
+    d.onclick=()=>{ map.closePopup(); map.once('moveend',()=>stMarker.openPopup()); map.flyTo([s.lat,s.lng],16,{duration:1.2}); }; sc.appendChild(d);
 });
 
 // ============================================================
@@ -1071,14 +1149,14 @@ async function fetchUnit(unit) {
     if (!unit.token || unit.token.includes('TOKEN_') || unit.token.length < 20) {
         const prev = prevButtonStates[unit.id] || {online: null};
         if (prev.online !== false) {
-            const unitLabel = `<b>${unit.id}</b> (${unit.type === 'firetruck' ? '🚒 Firetruck' : '🚑 Ambulance'})`;
+            const unitLabel = `<b>${unit.id}</b> (${TYPE_ICON(unit.type)} ${TYPE_TEXT(unit.type)})`;
             termLog('err', `${unitLabel} &mdash; No valid token configured`);
         }
         prevButtonStates[unit.id] = {...(prevButtonStates[unit.id]||{}), online: false};
         unitStates[unit.id] = {...(unitStates[unit.id]||{}), online: false, type: unit.type};
         return false;
     }
-    const unitLabel = `<b>${unit.id}</b> (${unit.type === 'firetruck' ? '🚒 Firetruck' : '🚑 Ambulance'})`;
+    const unitLabel = `<b>${unit.id}</b> (${TYPE_ICON(unit.type)} ${TYPE_TEXT(unit.type)})`;
 
     function markOffline() {
         const prev = prevButtonStates[unit.id] || {};
@@ -1159,9 +1237,9 @@ async function fetchUnit(unit) {
         }
 
         // Log button presses (only on rising edge: OFF → ON)
-        if (standby    && prev.standby    !== standby)    termLog('recv', `[${unit.id}] 🟢 &mdash; <b>STANDBY</b>`);
+        if (standby    && prev.standby    !== standby)    termLog('recv', `[${unit.id}] <span class="dot green"></span>&mdash; <b>STANDBY</b>`);
         if (responding && prev.responding !== responding) {
-            termLog('recv', `[${unit.id}] 🟠 &mdash; <b>RESPONDING</b>`);
+            termLog('recv', `[${unit.id}] <span class="dot amber"></span>&mdash; <b>RESPONDING</b>`);
             if (lat && lon) {
                 // Prefer the incident this unit was dispatched to (Respond button); otherwise the nearest active one
                 const dispatched = unitDispatch[unit.id];
@@ -1189,7 +1267,7 @@ async function fetchUnit(unit) {
             }
         }
         if (arrived    && prev.arrived    !== arrived) {
-            termLog('recv', `[${unit.id}] 🔴 &mdash; <b>ARRIVED</b>`);
+            termLog('recv', `[${unit.id}] <span class="dot red"></span>&mdash; <b>ARRIVED</b>`);
             clearRoute(unit.id);
         }
 
@@ -1214,12 +1292,12 @@ function updateUnitMarker(id, s) {
     // Vehicle type pin: FIRETRUCK = red pin, AMBULANCE = blue pin
     const pinColor = s.type==='firetruck' ? '#ff4d4d' : '#3d6fa8';
     const icon  = L.divIcon({className:'', iconSize:[44,70], iconAnchor:[22,70],
-        html:`<div style="text-align:center;width:44px;"><svg width="44" height="56" viewBox="0 0 44 56" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));"><path d="M22 0 C10 0 0 10 0 22 C0 36 22 56 22 56 C22 56 44 36 44 22 C44 10 34 0 22 0 Z" fill="${pinColor}"/><circle cx="22" cy="21" r="16" fill="white"/><image href="${img}" x="6" y="5" width="32" height="32"/></svg><div style="background:${color};color:#fff;font-size:8px;font-weight:bold;padding:1px 5px;border-radius:3px;white-space:nowrap;margin-top:2px;display:inline-block;box-shadow:0 1px 4px rgba(0,0,0,0.4);">${id}</div></div>`});
+        html:`<div style="text-align:center;width:44px;"><svg width="44" height="56" viewBox="0 0 44 56" xmlns="http://www.w3.org/2000/svg" style="display:block;filter:drop-shadow(0 3px 6px rgba(0,0,0,0.5));"><path d="M22 0 C10 0 0 10 0 22 C0 36 22 56 22 56 C22 56 44 36 44 22 C44 10 34 0 22 0 Z" fill="${pinColor}"/><circle cx="22" cy="21" r="16" fill="white"/><image href="${img}" x="6" y="5" width="32" height="32"/></svg><div style="background:${color};color:#fff;font-size:10px;font-weight:bold;padding:1px 5px;border-radius:3px;white-space:nowrap;margin-top:2px;display:inline-block;box-shadow:0 1px 4px rgba(0,0,0,0.4);">${id}</div></div>`});
     const popup = `<div style="color:white;min-width:150px;">
         <b>${id}</b><br>
         <span style="background:${color};padding:2px 6px;border-radius:3px;font-size:11px;">${lbl}</span><br><br>
-        <span style="font-size:10px;color:#8b949e;">
-          ${s.type==='firetruck'?'🚒 Firetruck':'🚑 Ambulance'}<br>
+        <span style="font-size:12px;color:#8b949e;">
+          ${TYPE_ICON(s.type)} ${TYPE_TEXT(s.type)}<br>
           Lat: ${s.lat?s.lat.toFixed(6):'N/A'} &nbsp; Lon: ${s.lon?s.lon.toFixed(6):'N/A'}
         </span></div>`;
     if (unitMarkers[id]) { unitMarkers[id].setLatLng([s.lat,s.lon]); unitMarkers[id].setIcon(icon); unitMarkers[id].setPopupContent(popup); }
@@ -1239,7 +1317,7 @@ function renderUnitList() {
         const click=s&&s.lat&&s.lon?`onclick="map.flyTo([${s.lat},${s.lon}],16)"` :'';
         return `<div class="unit-card s-${status}" ${click}>
             <div class="uc-row"><span class="uc-id">${u.id}</span><span class="uc-badge b-${status}">${status.toUpperCase()}</span></div>
-            <div class="uc-sub">${u.type==='firetruck'?'🚒':'🚑'} ${coords}</div>
+            <div class="uc-sub">${TYPE_ICON(u.type)} ${coords}</div>
         </div>`;
     }).join('');
 }
@@ -1295,7 +1373,7 @@ function toggleTerminal() {
     const lbl   = document.getElementById('term-toggle-lbl');
     const blynkBar = document.getElementById('blynk-bar-el');
     panel.classList.toggle('open', terminalOpen);
-    lbl.innerHTML = terminalOpen ? '&#9660; COLLAPSE' : '&#9650; EXPAND';
+    lbl.innerHTML = terminalOpen ? ico('chev-down') + ' COLLAPSE' : ico('chev-up') + ' EXPAND';
     blynkBar.style.bottom = terminalOpen ? '228px' : '8px';
     if (terminalOpen) {
         termLog('sys', '[ T.U.L.O.N.G. Terminal Ready — Virtual Pin V' + V_TERMINAL + ' ]');
@@ -1456,7 +1534,6 @@ setTimeout(pollTerminalRx, 1500);
     display: none; position: fixed; inset: 0;
     background: rgba(0,0,0,0.82); z-index: 9000;
     align-items: center; justify-content: center;
-    backdrop-filter: blur(4px);
 }
 .reg-overlay.active { display: flex; }
 
@@ -1506,7 +1583,7 @@ setTimeout(pollTerminalRx, 1500);
 .reg-input, .reg-select {
     width: 100%; padding: 10px 12px; box-sizing: border-box;
     background: #020e1c; border: 1px solid #1a3a5c; border-radius: 6px;
-    color: #fff; font-size: 13px; font-family: 'Open Sans', sans-serif;
+    color: #fff; font-size: 13px; font-family: var(--font);
     outline: none; transition: border-color 0.2s;
 }
 .reg-input:focus, .reg-select:focus { border-color: #ff5a36; }
@@ -1537,7 +1614,7 @@ setTimeout(pollTerminalRx, 1500);
     transition: all 0.2s; margin-top: 8px;
     box-shadow: 0 4px 20px rgba(255,90,54,0.3);
 }
-.reg-submit:hover { transform: translateY(-1px); box-shadow: 0 6px 28px rgba(255,90,54,0.45); }
+.reg-submit:hover { box-shadow: 0 6px 28px rgba(255,90,54,0.45); }
 .reg-submit:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
 .reg-status {
@@ -1568,15 +1645,15 @@ setTimeout(pollTerminalRx, 1500);
      Kept AFTER all other <style> blocks so it wins over them.
      ══════════════════════════════════════════════════════ -->
 <style>
-:root{--dark:#02101D;--blue:#3d6fa8;--acc:#ff5a36;--acc-deep:#c73e1d;--grey:#8b96a3;--grey-light:#c7ced6;--grey-dark:#3a4451;}
+:root{--font:'Open Sans','DejaVu Sans','Liberation Sans',Arial,sans-serif;--mono:'DejaVu Sans Mono','Liberation Mono','Courier New',monospace;--dark:#02101D;--blue:#3d6fa8;--acc:#ff5a36;--acc-deep:#c73e1d;--grey:#8b96a3;--grey-light:#c7ced6;--grey-dark:#3a4451;}
 
-/* Fonts: Open Sans for body text and every form control, Georgia for headline/label text */
-body,.leaflet-container,.leaflet-popup-content{font-family:'Open Sans',Tahoma,Geneva,Verdana,sans-serif;}
+/* Fonts: one sharp family (Open Sans, DejaVu Sans fallback on Raspberry Pi) for everything */
+body,.leaflet-container,.leaflet-popup-content{font-family:var(--font);}
 button,input,select,textarea{font-family:inherit;}
 .brand-badge,.stat-number,.report-btn,.excel-btn,.wipe-btn,.register-btn,.logout-btn,.section-lbl,.uc-id,
-.terminal-header-left,.reg-modal-title,.reg-submit,.reg-section-lbl,.t-send-btn,h2{font-family:Georgia,serif;}
+.terminal-header-left,.reg-modal-title,.reg-submit,.reg-section-lbl,.t-send-btn,h2{font-family:var(--font);}
 /* Terminal + credential output stay monospace on purpose */
-.terminal-log,.t-input,.t-target-select,.reg-token-display{font-family:'Courier New',monospace;}
+.terminal-log,.t-input,.t-target-select,.reg-token-display{font-family:var(--mono);}
 
 /* Palette taken from the login page */
 body{background:var(--dark);}
@@ -1653,7 +1730,7 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
 .alert-pop.out  { opacity: 0; transform: translateX(-120%); transition: all 0.3s ease; }
 @keyframes alertIn { from { transform: translateX(-120%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
 @keyframes alertDot { 0%,100% { opacity: 1; } 50% { opacity: 0.35; } }
-.alert-title { font-family: Georgia, serif; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
+.alert-title { font-family:var(--font); font-size: 12px; font-weight: 700; color: #fff; letter-spacing: 0.5px; }
 .alert-title .a-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; margin-right: 6px; background: #ff5a36; animation: alertDot 1.2s infinite; }
 .alert-pop.med .a-dot { background: #4da3ff; }
 .alert-addr { font-size: 10px; color: #c9d1d9; margin-top: 3px; line-height: 1.35; }
@@ -1688,7 +1765,7 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
     box-shadow: 0 8px 28px rgba(0,0,0,0.6); overflow: hidden; color: #c9d1d9;
 }
 .near-head { padding: 9px 12px; background: #04182b; border-bottom: 1px solid rgba(61,111,168,.4); position: relative; }
-.near-title { font-family: Georgia, serif; font-size: 12px; font-weight: 700; color: #fff; letter-spacing: .5px; padding-right: 20px; }
+.near-title { font-family:var(--font); font-size: 12px; font-weight: 700; color: #fff; letter-spacing: .5px; padding-right: 20px; }
 .near-addr { font-size: 10px; color: #8b96a3; margin-top: 2px; line-height: 1.3; }
 .near-close { position: absolute; top: 6px; right: 8px; background: none; border: none; color: #8b96a3; font-size: 16px; cursor: pointer; }
 .near-close:hover { color: #ff4d4d; }
@@ -1697,7 +1774,7 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
 .near-list { overflow-y: auto; padding: 6px 8px; flex: 1; }
 .near-row { display: flex; align-items: center; gap: 8px; padding: 7px 6px; border-bottom: 1px solid rgba(61,111,168,.2); }
 .near-info { flex: 1; min-width: 0; }
-.near-id { font-family: Georgia, serif; font-size: 12px; font-weight: bold; color: #fff; }
+.near-id { font-family:var(--font); font-size: 12px; font-weight: bold; color: #fff; }
 .near-sub { font-size: 9px; color: #8b96a3; margin-top: 2px; }
 .near-btn {
     border: none; border-radius: 4px; padding: 6px 10px; cursor: pointer; color: #fff;
@@ -1715,10 +1792,10 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
 <!-- Modal HTML -->
 <div class="reg-overlay" id="reg-overlay" onclick="if(event.target===this)closeRegisterModal()">
     <div class="reg-modal">
-        <button class="reg-close" onclick="closeRegisterModal()">&#x2715;</button>
+        <button class="reg-close" onclick="closeRegisterModal()" title="Close"><svg class="ico" aria-hidden="true"><use href="#i-close"/></svg></button>
 
         <div class="reg-modal-header">
-            <div class="reg-modal-icon">🚨</div>
+            <div class="reg-modal-icon"><svg class="ico" aria-hidden="true"><use href="#i-siren"/></svg></div>
             <div>
                 <div class="reg-modal-title">Register Emergency Vehicle</div>
                 <div class="reg-modal-sub">T.U.L.O.N.G. Unit Enrollment</div>
@@ -1735,20 +1812,21 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
             <div class="reg-field">
                 <label class="reg-label">Vehicle Type</label>
                 <select class="reg-select" id="reg-vtype">
-                    <option value="ambulance">🚑 Ambulance</option>
-                    <option value="firetruck">🚒 Firetruck</option>
+                    <option value="ambulance">Ambulance</option>
+                    <option value="firetruck">Firetruck</option>
                 </select>
             </div>
         </div>
 
-        <div class="reg-field">
-            <label class="reg-label">Plate Number</label>
-            <input class="reg-input" id="reg-plate" type="text" placeholder="e.g. XYZ 1234" maxlength="12"/>
-        </div>
-
-        <div class="reg-field">
-            <label class="reg-label">Station / Agency</label>
-            <input class="reg-input" id="reg-station" type="text" placeholder="e.g. Cebu City Fire Station"/>
+        <div class="reg-row">
+            <div class="reg-field">
+                <label class="reg-label">Plate Number</label>
+                <input class="reg-input" id="reg-plate" type="text" placeholder="e.g. XYZ 1234" maxlength="12"/>
+            </div>
+            <div class="reg-field">
+                <label class="reg-label">Station / Agency</label>
+                <input class="reg-input" id="reg-station" type="text" placeholder="e.g. Cebu City Fire Station"/>
+            </div>
         </div>
 
         <div class="reg-field">
@@ -1764,6 +1842,7 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
             <input class="reg-input" id="reg-name" type="text" placeholder="e.g. Juan Dela Cruz"/>
         </div>
 
+        <div class="reg-row">
         <div class="reg-field">
             <label class="reg-label">Email Address</label>
             <input class="reg-input" id="reg-email" type="email" placeholder="operator@email.com"/>
@@ -1772,13 +1851,14 @@ button[onclick^="deleteIncident"]{background:linear-gradient(45deg,#b3261e,#5c0f
         <div class="reg-field">
             <label class="reg-label">Password</label>
             <div class="reg-pw-wrapper">
-                <input class="reg-input" id="reg-password" type="password" placeholder="Min 6 characters" style="padding-right:36px;"/>
-                <button class="reg-pw-toggle" onclick="toggleRegPw()" id="reg-pw-eye">👁</button>
+                <input class="reg-input" id="reg-password" type="password" placeholder="Min 6 characters" style="padding-right:44px;"/>
+                <button class="reg-pw-toggle" type="button" onclick="toggleRegPw()" id="reg-pw-eye" title="Show / hide password"><svg class="ico" aria-hidden="true"><use href="#i-eye"/></svg></button>
             </div>
+        </div>
         </div>
 
         <button class="reg-submit" id="reg-submit-btn" onclick="submitRegistration()">
-            &#43; REGISTER UNIT &amp; CREATE ACCOUNT
+            <svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg> REGISTER UNIT &amp; CREATE ACCOUNT
         </button>
         <div class="reg-status" id="reg-status"></div>
         <div class="reg-token-display" id="reg-token-display"></div>
@@ -1812,6 +1892,7 @@ window.closeRegisterModal = () => document.getElementById('reg-overlay').classLi
 window.toggleRegPw = () => {
     const inp = document.getElementById('reg-password');
     inp.type  = inp.type === 'password' ? 'text' : 'password';
+    document.getElementById('reg-pw-eye').classList.toggle('on', inp.type === 'text');
 };
 
 function clearRegForm() {
@@ -1823,15 +1904,18 @@ function clearRegForm() {
     document.getElementById('reg-token-display').style.display='none';
     const b = document.getElementById('reg-submit-btn');
     b.disabled = false;
-    b.innerHTML = '&#43; REGISTER UNIT &amp; CREATE ACCOUNT';  // reset after a previous success
+    b.innerHTML = ico('plus') + ' REGISTER UNIT &amp; CREATE ACCOUNT';  // reset after a previous success
     b.style.background = '';
 }
 
 function regStatus(type, msg) {
     const el = document.getElementById('reg-status');
     el.className = `reg-status ${type}`;
-    el.textContent = msg;
+    const icon = type === 'err' ? 'warn' : /\.\.\.$/.test(msg) ? 'clock' : 'check';
+    el.innerHTML = ico(icon) + '<span></span>';
+    el.lastChild.textContent = msg;
 }
+const regEsc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
 window.submitRegistration = async function() {
     const unitId   = document.getElementById('reg-unit-id').value.trim().toUpperCase();
@@ -1844,15 +1928,15 @@ window.submitRegistration = async function() {
     const password = document.getElementById('reg-password').value;
 
     if (!unitId||!plate||!station||!name||!email||!password) {
-        regStatus('err','⚠ Please fill in all required fields.'); return;
+        regStatus('err','Please fill in all required fields.'); return;
     }
-    if (password.length < 6) { regStatus('err','⚠ Password must be at least 6 characters.'); return; }
+    if (password.length < 6) { regStatus('err','Password must be at least 6 characters.'); return; }
 
-    if (!token) { regStatus('err','⚠ Blynk token is required so the unit can connect to the dashboard.'); return; }
+    if (!token) { regStatus('err','Blynk token is required so the unit can connect to the dashboard.'); return; }
 
     const btn = document.getElementById('reg-submit-btn');
     btn.disabled = true;
-    regStatus('ok', '⏳ Checking Blynk token...');
+    regStatus('ok', 'Checking Blynk token...');
 
     // Validate the Blynk token against the Blynk cloud BEFORE creating anything
     let blynkOnline = false;
@@ -1861,13 +1945,13 @@ window.submitRegistration = async function() {
         const t = (await r.text()).trim();
         if (!r.ok || t.toLowerCase().includes('invalid')) {
             btn.disabled = false;
-            regStatus('err', '⚠ Invalid Blynk token. Copy the device token from Blynk Console > Device > Device Info.');
+            regStatus('err', 'Invalid Blynk token. Copy the device token from Blynk Console > Device > Device Info.');
             return;
         }
         blynkOnline = (t === 'true');
     } catch (e) {
         btn.disabled = false;
-        regStatus('err', '⚠ Could not reach Blynk to verify the token. Check your internet connection and try again.');
+        regStatus('err', 'Could not reach Blynk to verify the token. Check your internet connection and try again.');
         return;
     }
 
@@ -1876,7 +1960,7 @@ window.submitRegistration = async function() {
         const existing = await getDoc(doc(regDb, 'vehicles', unitId));
         if (existing.exists()) {
             btn.disabled = false;
-            regStatus('err', `⚠ Unit ${unitId} is already registered. Use a different Unit ID.`);
+            regStatus('err', `Unit ${unitId} is already registered. Use a different Unit ID.`);
             return;
         }
         // Create Firebase Auth account (on the secondary app, admin session is untouched)
@@ -1903,32 +1987,32 @@ window.submitRegistration = async function() {
         });
 
         // Show success
-        regStatus('ok', `✓ Unit ${unitId} registered! Account created for ${email}. Blynk token valid — device is ${blynkOnline ? 'ONLINE' : 'offline right now (it will appear once the ESP32 connects)'}.`);
+        regStatus('ok', `Unit ${unitId} registered! Account created for ${email}. Blynk token valid — device is ${blynkOnline ? 'ONLINE' : 'offline right now (it will appear once the ESP32 connects)'}.`);
 
         // Show login credentials summary
         const td = document.getElementById('reg-token-display');
         td.style.display = 'block';
         td.innerHTML = `
-            <b style="color:#ff5a36;">USER DASHBOARD LOGIN CREDENTIALS</b><br>
-            🌐 Login URL: <span style="color:#fff;">tulong.services/operator-dashboard</span><br>
-            📧 Email: <span style="color:#fff;">${email}</span><br>
-            🔑 Password: <span style="color:#fff;">${password}</span><br>
-            🚗 Unit: <span style="color:#fff;">${unitId} — ${vtype === 'firetruck' ? '🚒 Firetruck' : '🚑 Ambulance'}</span><br>
-            🏥 Station: <span style="color:#fff;">${station}</span>
+            <div class="cred-title">USER DASHBOARD LOGIN CREDENTIALS</div>
+            <div class="cred-row">${ico('globe')}<span class="k">Login URL</span><span class="v">tulong.services/operator-dashboard</span></div>
+            <div class="cred-row">${ico('mail')}<span class="k">Email</span><span class="v">${regEsc(email)}</span></div>
+            <div class="cred-row">${ico('key')}<span class="k">Password</span><span class="v">${regEsc(password)}</span></div>
+            <div class="cred-row">${TYPE_ICON(vtype)}<span class="k">Unit</span><span class="v">${regEsc(unitId)} — ${TYPE_TEXT(vtype)}</span></div>
+            <div class="cred-row">${ico('station')}<span class="k">Station</span><span class="v">${regEsc(station)}</span></div>
         `;
 
-        btn.textContent = '✓ REGISTERED';
+        btn.innerHTML = ico('check') + ' REGISTERED';
         btn.style.background = 'linear-gradient(45deg,#2e9e6b,#217346)';
 
     } catch (err) {
         btn.disabled = false;
         const msgs = {
-            'auth/email-already-in-use': '⚠ This email is already registered.',
-            'auth/invalid-email':        '⚠ Invalid email address.',
-            'auth/weak-password':        '⚠ Password is too weak.',
-            'permission-denied':         '⚠ Account created, but Firestore rules block the admin from writing to "vehicles"/"users".',
+            'auth/email-already-in-use': 'This email is already registered.',
+            'auth/invalid-email':        'Invalid email address.',
+            'auth/weak-password':        'Password is too weak.',
+            'permission-denied':         'Account created, but Firestore rules block the admin from writing to "vehicles"/"users".',
         };
-        regStatus('err', msgs[err.code] || `⚠ Error: ${err.message}`);
+        regStatus('err', msgs[err.code] || `Error: ${err.message}`);
     }
 };
 </script>
@@ -1948,7 +2032,7 @@ window.submitRegistration = async function() {
     flex:0 0 auto;height:34px;padding:0 13px 0 11px;border-radius:999px;cursor:pointer;
     display:flex;align-items:center;gap:9px;color:#fff;
     background:rgba(61,111,168,.18);border:1px solid #3d6fa8;
-    font-family:Georgia,serif;font-size:11px;font-weight:bold;letter-spacing:1.6px;
+    font-family:var(--font);font-size:12px;font-weight:bold;letter-spacing:1px;
     transition:background .2s,border-color .2s,box-shadow .2s,transform .1s;
   }
   .menu-toggle:hover{background:linear-gradient(45deg,#3d6fa8,#12305c);box-shadow:0 0 12px rgba(61,111,168,.55);}
@@ -1999,7 +2083,7 @@ window.submitRegistration = async function() {
 
   /* Map overlay: fixed icon / label / number columns so nothing overlaps */
   .map-counter-overlay{min-width:0;padding:7px 10px;border-width:1px;}
-  .map-counter-overlay > div[style*="font-size:10px"]{font-size:8px !important;margin-bottom:5px !important;letter-spacing:1px;}
+  .map-counter-overlay > div[style*="font-size:11px"]{font-size:10px !important;margin-bottom:5px !important;letter-spacing:1px;}
   .map-counter-overlay hr{margin:6px 0 !important;}
   .map-counter-item{display:flex;align-items:center;justify-content:space-between;gap:12px;
     font-size:11px;line-height:1.2;margin-bottom:5px;white-space:nowrap;}
@@ -2055,7 +2139,7 @@ window.submitRegistration = async function() {
 
   function decorateReport(){
     if(!mq.matches || rb.querySelector('svg')) return;
-    const t = rb.textContent.replace(/[⚠️]/g,'').trim() || 'Report Emergency';
+    const t = rb.textContent.trim() || 'Report Emergency';
     rb.innerHTML = svg('alert') + '<span>' + t + '</span>';
   }
   new MutationObserver(decorateReport).observe(rb,{childList:true});
@@ -2065,7 +2149,7 @@ window.submitRegistration = async function() {
     if(on) decorateReport();
     else if(rb.querySelector('svg')){
       const t = rb.textContent.trim();
-      rb.textContent = (t==='Report Emergency' ? '⚠️ ' : '') + t;
+      rb.innerHTML = (t==='Report Emergency' ? ico('warn') + ' ' : ico('pin') + ' ') + t;
     }
   }
 
@@ -2121,6 +2205,198 @@ window.submitRegistration = async function() {
   if(mq.matches) applyIcons(true);
 })();
 </script>
+
+<!-- ══════ READABILITY + ICONS + DOCKED DISPATCH PANEL — kept last so it overrides earlier styles ══════ -->
+<style>
+:root{ --near-w: 380px; }
+body{
+  -webkit-font-smoothing:antialiased; -moz-osx-font-smoothing:grayscale;
+  text-rendering:optimizeLegibility; font-synthesis:none;
+}
+/* ── icons ── */
+.ico{width:1em;height:1em;display:inline-block;vertical-align:-0.15em;flex:none;overflow:visible;}
+.c-fire{color:#ff6633;} .c-med{color:#6ea3e0;}
+.report-btn .ico,.excel-btn .ico,.wipe-btn .ico,.register-btn .ico,.logout-btn .ico,.reg-submit .ico{margin-right:4px;}
+.sq{display:inline-block;width:8px;height:8px;background:#ff5a36;margin-right:6px;vertical-align:1px;}
+.dot{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px;}
+.dot.green{background:#27ae60;} .dot.amber{background:#f0883e;} .dot.red{background:#ff4d4d;}
+.inc-marker{width:34px;height:34px;border-radius:50%;border:2px solid #fff;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:19px;box-shadow:0 2px 8px rgba(0,0,0,.55);box-sizing:border-box;}
+.inc-marker.fire{background:#ff5a36;} .inc-marker.med{background:#3d6fa8;}
+.alert-close .ico{font-size:15px;}
+.alert-view{display:inline-flex;align-items:center;gap:5px;}
+
+/* ── readable sizes (desktop / laptop) ── */
+.stat-label{font-size:12px;font-weight:600;letter-spacing:.3px;}
+.section-lbl{font-size:12px;letter-spacing:.8px;font-weight:700;}
+.uc-id{font-size:14px;}
+.uc-badge{font-size:10px;}
+.uc-sub{font-size:11px;}
+.station-list{font-size:13px;}
+.report-btn{font-size:14px;}
+.excel-btn,.wipe-btn,.register-btn,.logout-btn{font-size:12px;letter-spacing:.5px;}
+.map-counter-item{font-size:14px;align-items:center;gap:12px;}
+.map-counter-item > span:first-child{display:flex;align-items:center;gap:6px;}
+.blynk-bar{font-size:12px;}
+.terminal-header-left{font-size:13px;letter-spacing:.5px;}
+.terminal-header-right{font-size:12px;display:flex;align-items:center;gap:4px;}
+.terminal-log{font-size:13px;}
+.t-input,.t-target-select,.t-send-btn{font-size:13px;}
+.leaflet-popup-content{font-size:13px;line-height:1.45;}
+.status-select{font-size:13px;}
+.alert-title{font-size:13px;}
+.alert-addr{font-size:12px;}
+.alert-time{font-size:11px;}
+.alert-view{font-size:11px;letter-spacing:.5px;}
+
+/* ══════ NEARBY UNITS / DISPATCH — docked right panel ══════ */
+.near-panel{
+  display:none;flex-direction:column;position:absolute;top:0;bottom:0;right:0;left:auto;
+  width:var(--near-w);max-height:none;z-index:900;box-sizing:border-box;
+  background:#02101D;border:none;border-left:2px solid #3d6fa8;border-radius:0;
+  box-shadow:-10px 0 30px rgba(0,0,0,.5);overflow:visible;color:#c9d1d9;
+  transition:right .28s ease;
+}
+.near-panel.open{display:flex;}
+.near-panel.collapsed{right:calc(-1 * var(--near-w));}
+.near-handle{
+  position:absolute;left:-36px;top:calc(50% - 60px);width:36px;height:120px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;
+  border:none;border-radius:8px 0 0 8px;cursor:pointer;color:#fff;
+  background:linear-gradient(45deg,#ff5a36,#c73e1d);box-shadow:-4px 0 14px rgba(0,0,0,.45);
+  font-size:15px;padding:0;
+}
+.near-handle:hover{filter:brightness(1.12);}
+.near-handle-lbl{writing-mode:vertical-rl;font-size:11px;font-weight:800;letter-spacing:1.5px;}
+.near-handle b{font-size:11px;background:#02101D;color:#ffcc00;border-radius:9px;min-width:18px;line-height:18px;text-align:center;}
+.near-head{padding:14px 16px 12px;background:#04182b;border-bottom:1px solid rgba(61,111,168,.45);position:relative;}
+.near-kicker{font-size:11px;font-weight:700;letter-spacing:.8px;text-transform:uppercase;color:#6ea3e0;display:flex;align-items:center;gap:6px;padding-right:80px;min-height:32px;}
+.near-title{font-family:var(--font);font-size:18px;font-weight:800;color:#fff;letter-spacing:.3px;margin-top:6px;display:flex;align-items:center;gap:8px;padding-right:0;flex-wrap:wrap;}
+.near-incid{width:100%;font-family:var(--mono);font-size:13px;font-weight:400;color:#9aa5b1;letter-spacing:0;}
+.near-type{width:28px;height:28px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-size:16px;color:#fff;flex:none;}
+.near-type.fire{background:#ff5a36;} .near-type.med{background:#3d6fa8;}
+.near-addr{font-size:13px;color:#b5bfca;margin-top:6px;line-height:1.4;}
+.near-head-btns{position:absolute;top:10px;right:10px;display:flex;gap:6px;}
+.near-iconbtn{width:32px;height:32px;border-radius:6px;border:1px solid #3a4451;background:rgba(61,111,168,.15);
+  color:#c9d1d9;font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:0;}
+.near-iconbtn:hover{color:#fff;border-color:#ff5a36;background:rgba(255,90,54,.18);}
+.near-close{display:none;}
+.near-tools{display:flex;gap:10px;align-items:center;padding:12px 16px;font-size:13px;color:#b5bfca;border-bottom:1px solid rgba(61,111,168,.3);}
+.near-tools select{background:#04182b;color:#fff;border:1px solid #3d6fa8;border-radius:6px;font-size:14px;padding:6px 8px;min-height:34px;}
+.near-count{margin-left:auto;font-size:12px;font-weight:700;color:#ffcc00;}
+.near-list{overflow-y:auto;padding:8px 12px;flex:1;min-height:0;}
+.near-list::-webkit-scrollbar{width:6px;} .near-list::-webkit-scrollbar-thumb{background:rgba(61,111,168,.6);border-radius:3px;}
+.near-row{display:flex;align-items:center;gap:10px;padding:12px 10px;margin-bottom:8px;border:1px solid rgba(61,111,168,.35);
+  border-radius:8px;background:rgba(4,24,43,.85);}
+.near-info{flex:1;min-width:0;}
+.near-id{font-family:var(--font);font-size:16px;font-weight:800;color:#fff;display:flex;align-items:center;gap:6px;flex-wrap:wrap;}
+.near-status{font-size:10px;font-weight:700;letter-spacing:.5px;padding:2px 7px;border-radius:10px;}
+.near-status.st-standby{background:#0f2d1a;color:#3bd07a;} .near-status.st-responding{background:#3d2008;color:#f0883e;}
+.near-status.st-arrived{background:#2d0f0f;color:#ff6b6b;}
+.near-sub{font-size:13px;color:#b5bfca;margin-top:4px;}
+.near-btn{border:none;border-radius:6px;padding:0 14px;min-height:38px;cursor:pointer;color:#fff;
+  font-size:12px;font-weight:800;letter-spacing:.5px;text-transform:uppercase;
+  background:linear-gradient(45deg,#ff5a36,#c73e1d);display:inline-flex;align-items:center;justify-content:center;gap:6px;}
+.near-btn.sent{background:linear-gradient(45deg,#2e9e6b,#217346);}
+.near-empty{font-size:13px;color:#b5bfca;padding:28px 10px;text-align:center;line-height:1.6;}
+.near-empty b{color:#fff;font-size:15px;}
+.near-empty-ico{font-size:34px;color:#3d6fa8;margin-bottom:8px;line-height:1;}
+.near-foot{padding:12px 16px 14px;border-top:1px solid rgba(61,111,168,.35);display:flex;flex-direction:column;gap:8px;background:#04182b;}
+.near-foot .near-btn-big{width:100%;min-height:48px;font-size:15px;background:linear-gradient(45deg,#ff5a36,#c73e1d);}
+.near-foot .near-btn-ghost{width:100%;min-height:38px;font-size:12px;background:transparent;border:1px solid #3d6fa8;color:#c9d1d9;}
+.near-foot .near-btn-ghost:hover{background:rgba(61,111,168,.25);color:#fff;}
+.near-open-btn{display:flex !important;align-items:center;justify-content:center;gap:6px;font-size:13px;}
+/* while the panel is shown, keep map controls and the terminal clear of it */
+.leaflet-right{transition:right .28s ease;}
+body.near-open .leaflet-right{right:calc(var(--near-w) + 36px);}
+.terminal-panel{transition:height .25s ease,right .28s ease;}
+body.near-open .terminal-panel{right:var(--near-w);}
+
+/* ══════ REGISTER EMERGENCY VEHICLE ══════ */
+.reg-overlay{backdrop-filter:none;-webkit-backdrop-filter:none;}
+.reg-modal{width:540px;padding:28px 32px;}
+.reg-modal-header{gap:14px;margin-bottom:20px;}
+.reg-modal-icon{width:48px;height:48px;font-size:26px;color:#ff5a36;}
+.reg-modal-title{font-size:20px;font-weight:800;letter-spacing:.3px;}
+.reg-modal-sub{font-size:12px;letter-spacing:1px;margin-top:4px;color:#9aa5b1;}
+.reg-close{font-size:22px;top:14px;right:14px;width:36px;height:36px;display:flex;align-items:center;justify-content:center;border-radius:6px;}
+.reg-close:hover{background:rgba(255,77,77,.12);}
+.reg-section-lbl{font-size:13px;font-weight:800;letter-spacing:.8px;margin-bottom:14px;}
+.reg-field{margin-bottom:14px;}
+.reg-label{font-size:12px;font-weight:700;letter-spacing:.5px;color:#aab4bf;margin-bottom:6px;}
+.reg-input,.reg-select{font-size:15px;padding:11px 13px;color:#fff;font-family:var(--font);}
+.reg-input::placeholder{color:#6b7682;}
+/* stop Chrome's pale-blue autofill box so typed text stays crisp and readable */
+.reg-input:-webkit-autofill,.reg-input:-webkit-autofill:hover,.reg-input:-webkit-autofill:focus{
+  -webkit-text-fill-color:#fff;-webkit-box-shadow:0 0 0 1000px #04182b inset;caret-color:#fff;
+  transition:background-color 9999s ease-in-out 0s;}
+.reg-pw-toggle{top:0;bottom:0;right:4px;transform:none;width:38px;display:flex;align-items:center;justify-content:center;font-size:19px;}
+.reg-pw-toggle.on{color:#ff5a36;}
+.reg-submit{font-size:15px;letter-spacing:1px;padding:14px;display:flex;align-items:center;justify-content:center;gap:6px;}
+.reg-status{font-size:14px;line-height:1.45;align-items:flex-start;gap:8px;text-align:left;}
+.reg-status.ok,.reg-status.err{display:flex;}
+.reg-status .ico{font-size:17px;margin-top:1px;}
+.reg-token-display{font-size:13px;line-height:1.5;padding:12px 14px;color:#c9d1d9;}
+.reg-token-display .cred-title{font-family:var(--font);font-size:12px;font-weight:800;letter-spacing:.8px;color:#ff5a36;margin-bottom:8px;}
+.reg-token-display .cred-row{display:flex;align-items:center;gap:8px;padding:3px 0;}
+.reg-token-display .cred-row .ico{font-size:15px;color:#ffcc00;}
+.reg-token-display .cred-row .k{color:#ffcc00;min-width:78px;}
+.reg-token-display .cred-row .v{color:#fff;word-break:break-all;}
+
+/* ══════ SMALL SCREEN (800x480 / 7" Pi touchscreen) ══════ */
+@media (max-width:900px) and (max-height:600px){
+  :root{ --near-w: 300px; }
+  .stat-label{font-size:10px;}
+  .stat-number{font-size:20px;}
+  .section-lbl{font-size:11px;}
+  .sidebar .report-btn,.sidebar .excel-btn,.sidebar .wipe-btn,.sidebar .register-btn,.sidebar .logout-btn{font-size:11px !important;}
+  .uc-id{font-size:13px;}
+  .terminal-header-left{font-size:12px;}
+  .terminal-header-right{font-size:11px;}
+  .terminal-log{font-size:12px;}
+  .t-input,.t-target-select,.t-send-btn{font-size:12px;}
+  .map-counter-item{font-size:12px;}
+  .blynk-bar{font-size:11px;}
+  .alert-title{font-size:12px;} .alert-addr{font-size:11px;}
+
+  .near-handle{left:-30px;width:30px;height:100px;top:calc(50% - 50px);}
+  body.near-open .leaflet-right{right:calc(var(--near-w) + 30px);}
+  .near-head{padding:10px 12px 9px;}
+  .near-kicker{font-size:10px;min-height:30px;}
+  .near-incid{font-size:12px;}
+  .near-title{font-size:15px;margin-top:4px;}
+  .near-type{width:24px;height:24px;font-size:14px;}
+  .near-addr{font-size:12px;margin-top:4px;}
+  .near-head-btns{top:7px;right:7px;}
+  .near-iconbtn{width:30px;height:30px;}
+  .near-tools{padding:8px 12px;font-size:12px;gap:8px;}
+  .near-tools select{font-size:13px;min-height:32px;padding:4px 6px;}
+  .near-list{padding:6px 8px;}
+  .near-row{padding:9px 8px;margin-bottom:6px;}
+  .near-id{font-size:14px;}
+  .near-sub{font-size:12px;}
+  .near-btn{min-height:36px;font-size:11px;padding:0 10px;}
+  .near-foot{padding:8px 12px 10px;gap:6px;}
+  .near-foot .near-btn-big{min-height:44px;font-size:13px;}
+  .near-foot .near-btn-ghost{min-height:32px;font-size:11px;}
+  .near-empty{padding:16px 8px;font-size:12px;}
+
+  .reg-modal{width:min(620px,96vw);padding:14px 20px;}
+  .reg-modal-header{margin-bottom:10px;padding-bottom:8px;}
+  .reg-modal-icon{width:36px;height:36px;font-size:20px;}
+  .reg-modal-title{font-size:17px;}
+  .reg-modal-sub{font-size:11px;}
+  .reg-close{top:8px;right:8px;}
+  .reg-section-lbl{font-size:12px;margin-bottom:8px;}
+  .reg-field{margin-bottom:8px;}
+  .reg-label{font-size:11px;margin-bottom:3px;}
+  .reg-input,.reg-select{font-size:14px;padding:7px 10px;}
+  .reg-divider{margin:10px 0;}
+  .reg-submit{font-size:14px;padding:10px;}
+  .reg-status{font-size:13px;}
+  .reg-token-display{font-size:12px;}
+}
+</style>
 
 </body>
 </html>
