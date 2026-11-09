@@ -238,6 +238,7 @@ onAuthStateChanged(auth, user => {
 // so the existing incident functions can read/write shared data.
 window.db = db;
 window.fsIncidents      = collection(db, 'incidents');
+window.fsDispatchDoc    = (unitId) => doc(db, 'dispatches', unitId);   // read by the operator dashboard to ring the unit
 window.fsVehicles       = collection(db, 'vehicles');   // units registered through "Register Emergency Vehicle"
 window.fsDoc            = (id) => doc(db, 'incidents', id);
 window.fsSetDoc         = setDoc;
@@ -971,7 +972,13 @@ window.respondUnit = async function(unitId) {
     if (!terminalOpen) toggleTerminal();
     const msg = `${unit.id} Respond`;
     termLog('send', `To <b>${escHtml(unit.id)}</b>: "${msg}" (dispatch &rarr; ${nearIncidentId})`);
-    await sendToUnit(unit, msg);
+    // Tell the operator dashboard exactly where to go (Firestore) and send the same text to the ESP32 (Blynk V3)
+    const inc = activeIncidentMarkers[nearIncidentId];
+    const dispatchWrite = (inc && window.fsSetDoc) ? window.fsSetDoc(window.fsDispatchDoc(unit.id), {
+        unitId: unit.id, incidentId: nearIncidentId, type: inc.type, lat: inc.lat, lng: inc.lng,
+        address: inc.address || '', ts: Date.now(), by: 'admin'
+    }).catch(e => termLog('err', `[${unit.id}] Dispatch alert could not be saved (${e.code || e.message}). Allow admin writes to "dispatches" in Firestore rules.`)) : Promise.resolve();
+    await Promise.all([sendToUnit(unit, msg), dispatchWrite]);
     renderNearPanel();
 };
 window.respondNearest = function() {
@@ -1121,6 +1128,17 @@ async function fetchUnit(unit) {
     const a = parseFloat(parts[0]), b = parseFloat(parts[1]);
     if (isFinite(a) && isFinite(b) && !(a === 0 && b === 0)) { lon = a; lat = b; }
 }
+        // Location not in V7 as "lon,lat"? Then V7 / V8 may be two Double datastreams (V7 = latitude, V8 = longitude)
+        if (lat === null || lon === null) {
+            try {
+                const rawLat = parseFloat(Array.isArray(data[`v${V_LOC}`]) ? data[`v${V_LOC}`][0] : data[`v${V_LOC}`]);
+                const r8 = await fetch(`${BLYNK_BASE}/get?token=${unit.token}&v8`);
+                if (r8.ok && isFinite(rawLat)) {
+                    const rawLon = parseFloat((await r8.text()).replace(/[\[\]"\s]/g, ''));
+                    if (isFinite(rawLon)) { lat = rawLat; lon = rawLon; }
+                }
+            } catch (e) { /* V8 not available */ }
+        }
         // No GPS fix yet (empty or 0,0) -> treat as no location
         if (!isFinite(lat) || !isFinite(lon) || (lat === 0 && lon === 0)) { lat = null; lon = null; }
         if (lat&&lon) {
