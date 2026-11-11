@@ -16,245 +16,271 @@
     <style>
         :root {
             --dark-blue: #02101D;
+            --navy: #061E34;
             --accent-blue: #3d6fa8;
             --primary-accent: #ff5a36;
             --primary-accent-deep: #c73e1d;
+            --gold: #f2b84b;
             --grey: #8b96a3;
             --grey-light: #c7ced6;
-            --line: rgba(61,111,168,.55);
+            --line: rgba(61,111,168,.4);
             --display: 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
             --sans: 'Open Sans', Tahoma, Geneva, Verdana, sans-serif;
         }
         * { box-sizing: border-box; }
         html { background: var(--dark-blue); scroll-behavior: smooth; }
-        body {
-            margin: 0; min-height: 100vh;
-            color: white; font-family: var(--sans);
-            overflow-x: hidden; position: relative;
-        }
+        body { margin: 0; min-height: 100vh; color: #fff; font-family: var(--sans); overflow-x: hidden; position: relative; }
+        a { color: inherit; }
 
-        /* Background photo + dark blend */
-        .bg-img {
-            position: fixed; inset: 0; width: 100%; height: 100%;
-            object-fit: cover; object-position: center; z-index: 0;
-            filter: saturate(.95);
-        }
-        .bg-overlay {
-            position: fixed; inset: 0; z-index: 0;
-            background:
-                linear-gradient(105deg, rgba(2,16,29,.94) 0%, rgba(2,16,29,.78) 45%, rgba(6,30,52,.7) 100%);
-        }
-        .page { position: relative; z-index: 1; max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+        /* ═══════ LAYER 1 — fixed page background ═══════ */
+        .bg-img { position: fixed; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: 0; filter: saturate(.9); }
+        .bg-overlay { position: fixed; inset: 0; z-index: 0; background: linear-gradient(105deg, rgba(2,16,29,.95) 0%, rgba(2,16,29,.82) 50%, rgba(6,30,52,.78) 100%); }
 
-        /* Top bar */
-        .topbar {
-            display: flex; align-items: center; justify-content: space-between;
-            padding: 22px 0;
-            border-bottom: 1px solid rgba(61,111,168,.35);
-        }
-        .brand { display: flex; align-items: center; gap: 14px; text-decoration: none; color: white; }
-        .brand img { height: 48px; width: auto; display: block; }
-        .brand span { font-family: var(--display); font-size: 26px; font-weight: 700; letter-spacing: 4px; }
+        /* ═══════ LAYER 2 — a different tulongN photo behind every section ═══════ */
+        main { position: relative; z-index: 1; }
+        .band { position: relative; isolation: isolate; overflow: hidden; }
+        .band > .inner { position: relative; z-index: 2; max-width: 1180px; margin: 0 auto; padding: 0 28px; }
+        .bandbg { position: absolute; inset: 0; z-index: 0; background: linear-gradient(160deg, #0b2a47, #02101D); }
+        .bandbg img { width: 100%; height: 100%; object-fit: cover; display: block; }
+        .bandbg::after { content: ""; position: absolute; inset: 0; z-index: 1; }
 
-        .back-btn {
-            display: inline-block; padding: 11px 24px;
-            font-family: var(--display); font-size: 17px; font-weight: 600; letter-spacing: 2px;
-            text-transform: uppercase; text-decoration: none; color: white;
-            background: linear-gradient(45deg, var(--primary-accent), var(--primary-accent-deep));
-            border-radius: 3px; transition: box-shadow .3s, transform .15s;
-        }
+        /* style 1 — hero: full colour photo, dark fade from the left */
+        .s-hero .bandbg img { filter: saturate(1.05) contrast(1.05); transform: scale(1.04); animation: kenburns 24s ease-in-out infinite alternate; }
+        .s-hero .bandbg::after { background: linear-gradient(90deg, rgba(2,16,29,.97) 0%, rgba(2,16,29,.82) 42%, rgba(2,16,29,.35) 100%), linear-gradient(0deg, var(--dark-blue) 0%, transparent 28%); }
+        @keyframes kenburns { from { transform: scale(1.04) translate3d(0,0,0); } to { transform: scale(1.14) translate3d(-1.5%,-1.5%,0); } }
+
+        /* style 2 — story: photo lives in a diagonal slice on the right */
+        .s-story .bandbg { background: transparent; left: 38%; clip-path: polygon(22% 0, 100% 0, 100% 100%, 0 100%); }
+        .s-story .bandbg::after { background: linear-gradient(90deg, rgba(2,16,29,.9), rgba(2,16,29,.35) 60%, rgba(2,16,29,.55)); }
+
+        /* style 3 — numbers: blue duotone */
+        .s-stats .bandbg img { filter: grayscale(1) contrast(1.15) brightness(.8); }
+        .s-stats .bandbg::after { background: linear-gradient(120deg, rgba(20,64,110,.88), rgba(255,90,54,.35)); mix-blend-mode: multiply; }
+        .s-stats .bandbg::before { content: ""; position: absolute; inset: 0; z-index: 1; background: rgba(2,16,29,.35); }
+
+        /* style 4 — how it works: parallax (fixed) + heavy tint + scanlines */
+        .s-flow .bandbg { background-attachment: fixed; }
+        .s-flow .bandbg img { filter: saturate(.6) brightness(.7); }
+        .s-flow .bandbg::after { background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0 1px, transparent 1px 4px), linear-gradient(180deg, rgba(2,16,29,.92), rgba(6,30,52,.8) 50%, rgba(2,16,29,.95)); }
+
+
+        /* style 6 — values: frosted, soft blur */
+        .s-values .bandbg img { filter: blur(6px) saturate(.9) brightness(.75); transform: scale(1.1); }
+        .s-values .bandbg::after { background: linear-gradient(180deg, var(--dark-blue) 0%, rgba(6,30,52,.78) 22%, rgba(6,30,52,.78) 78%, var(--dark-blue) 100%); }
+
+        /* style 7 — team: vignette, photo only shows at the edges */
+        .s-team .bandbg img { filter: saturate(.85) brightness(.7); }
+        .s-team .bandbg::after { background: radial-gradient(ellipse at center, rgba(2,16,29,.94) 25%, rgba(2,16,29,.6) 70%, rgba(2,16,29,.9) 100%), linear-gradient(180deg, var(--dark-blue), transparent 14%, transparent 86%, var(--dark-blue)); }
+
+        /* styles 8 & 9 — photo divider strips */
+        .strip { height: clamp(210px, 28vw, 320px); display: flex; align-items: center; }
+        .strip .inner { width: 100%; text-align: center; }
+        .strip .bandbg img { filter: saturate(1.1) contrast(1.1); }
+        .strip.s-a .bandbg::after { background: linear-gradient(90deg, rgba(2,16,29,.88), rgba(2,16,29,.25) 50%, rgba(2,16,29,.88)); }
+        .strip.s-a .bandbg { clip-path: polygon(0 12%, 100% 0, 100% 88%, 0 100%); }
+        .strip.s-b .bandbg img { filter: grayscale(1) contrast(1.2); }
+        .strip.s-b .bandbg::after { background: linear-gradient(135deg, rgba(255,90,54,.8), rgba(199,62,29,.55) 45%, rgba(2,16,29,.85)); mix-blend-mode: multiply; }
+        .strip.s-b .bandbg::before { content: ""; position: absolute; inset: 0; z-index: 1; background: rgba(2,16,29,.25); }
+        .strip-quote { font-family: var(--display); font-weight: 600; font-size: clamp(26px, 4.4vw, 50px); letter-spacing: 1.5px; line-height: 1.1; text-transform: uppercase; margin: 0; text-shadow: 0 4px 24px rgba(0,0,0,.6); }
+        .strip-quote em { font-style: normal; color: var(--primary-accent); }
+        .strip-note { margin: 12px 0 0; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: var(--grey-light); }
+
+        /* style 10 — footer: cinematic, bottom-anchored */
+        .s-foot .bandbg img { object-position: center 35%; filter: saturate(.9) brightness(.8); }
+        .s-foot .bandbg::after { background: linear-gradient(180deg, var(--dark-blue) 0%, rgba(2,16,29,.72) 40%, rgba(2,16,29,.95) 100%); }
+
+        /* ═══════ Shared type ═══════ */
+        .eyebrow { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase; color: var(--primary-accent); margin-bottom: 12px; }
+        h2 { font-family: var(--display); font-weight: 700; font-size: clamp(36px, 5.2vw, 60px); letter-spacing: 2px; margin: 0 0 14px; text-transform: uppercase; line-height: 1;
+            background: linear-gradient(90deg, #fff, var(--grey-light) 60%, var(--accent-blue)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .section-sub { margin: 0 auto; max-width: 600px; font-size: 14px; line-height: 1.75; color: var(--grey-light); }
+        .center { text-align: center; }
+
+        /* ═══════ Top bar ═══════ */
+        .topbar-wrap { position: sticky; top: 0; z-index: 20; background: linear-gradient(180deg, rgba(2,16,29,.92), rgba(2,16,29,.7)); -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px); border-bottom: 1px solid rgba(61,111,168,.3); }
+        .topbar { max-width: 1180px; margin: 0 auto; padding: 14px 28px; display: flex; align-items: center; justify-content: space-between; gap: 16px; }
+        .brand { display: flex; align-items: center; gap: 12px; text-decoration: none; }
+        .brand img { height: 42px; width: auto; display: block; }
+        .brand span { font-family: var(--display); font-size: 24px; font-weight: 700; letter-spacing: 4px; }
+        .nav { display: flex; gap: 26px; }
+        .nav a { font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; color: var(--grey-light); position: relative; padding: 4px 0; transition: color .25s; }
+        .nav a::after { content: ""; position: absolute; left: 0; bottom: 0; height: 2px; width: 0; background: var(--primary-accent); transition: width .3s; }
+        .nav a:hover { color: #fff; } .nav a:hover::after { width: 100%; }
+        .back-btn { display: inline-block; padding: 10px 22px; font-family: var(--display); font-size: 16px; font-weight: 600; letter-spacing: 2px; text-transform: uppercase; text-decoration: none; color: #fff; background: linear-gradient(45deg, var(--primary-accent), var(--primary-accent-deep)); border-radius: 3px; transition: box-shadow .3s, transform .15s; white-space: nowrap; }
         .back-btn:hover { box-shadow: 0 0 20px rgba(255,90,54,.5); transform: translateY(-2px); }
-        .back-btn:focus-visible { outline: 2px solid white; outline-offset: 3px; }
+        .back-btn:focus-visible { outline: 2px solid #fff; outline-offset: 3px; }
         .back-btn:active { transform: scale(.98); }
 
-        /* Hero */
-        .hero {
-            display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px;
-            align-items: center; padding: 78px 0 70px;
-        }
-        .badge {
-            display: inline-flex; align-items: center; gap: 10px;
-            font-size: 12px; font-weight: 600; letter-spacing: 1.5px;
-            color: var(--grey-light);
-            padding-left: 14px; border-left: 3px solid var(--primary-accent);
-        }
-        h1 {
-            font-family: var(--display); font-weight: 700;
-            font-size: clamp(64px, 11vw, 132px);
-            line-height: .9; letter-spacing: 3px; margin: 22px 0 18px;
-            background: linear-gradient(180deg, #fff 25%, var(--accent-blue) 130%);
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .hero-sub {
-            font-family: var(--display); font-size: clamp(20px, 2.4vw, 28px);
-            font-weight: 500; letter-spacing: 3px; text-transform: uppercase;
-            color: var(--primary-accent); margin: 0;
-        }
+        /* ═══════ Hero ═══════ */
+        .s-hero .inner { display: grid; grid-template-columns: 1.05fr 1fr; gap: 56px; align-items: center; padding-top: 84px; padding-bottom: 96px; }
+        .badge { display: inline-flex; font-size: 12px; font-weight: 600; letter-spacing: 1.5px; color: var(--grey-light); padding-left: 14px; border-left: 3px solid var(--primary-accent); }
+        h1 { font-family: var(--display); font-weight: 700; font-size: clamp(64px, 11vw, 132px); line-height: .9; letter-spacing: 3px; margin: 22px 0 18px; background: linear-gradient(180deg, #fff 25%, var(--accent-blue) 130%); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        .hero-sub { font-family: var(--display); font-size: clamp(20px, 2.4vw, 28px); font-weight: 500; letter-spacing: 3px; text-transform: uppercase; color: var(--primary-accent); margin: 0; }
+        .hero-logo { display: block; height: clamp(84px, 11vw, 120px); width: auto; max-width: 100%; object-fit: contain; margin: 0 0 22px; filter: drop-shadow(0 6px 18px rgba(0,0,0,.45)); }
+        .tagline-img { display: block; width: min(100%, 420px); height: auto; margin: 26px 0 0; filter: drop-shadow(0 6px 18px rgba(0,0,0,.4)); }
 
-        /* Hero logo + tagline images (from the repo) */
-        .hero-logo {
-            display: block; height: clamp(84px, 11vw, 120px); width: auto; max-width: 100%;
-            object-fit: contain; margin: 0 0 22px;
-            filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
-        }
-        .tagline-img {
-            display: block; width: min(100%, 420px); height: auto; margin: 26px 0 0;
-            filter: drop-shadow(0 6px 18px rgba(0,0,0,.4));
-        }
-
-        /* Last-mile route: the signature motion */
-        .route-panel {
-            border: 1px solid rgba(61,111,168,.55); border-radius: 12px;
-            background: linear-gradient(160deg, rgba(6,30,52,.75), rgba(2,16,29,.6));
-            -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px);
-            box-shadow: 0 25px 60px rgba(0,0,0,.5), inset 0 0 24px rgba(61,111,168,.12);
-            padding: 22px 22px 14px;
-        }
+        .route-panel { border: 1px solid rgba(61,111,168,.55); border-radius: 12px; background: linear-gradient(160deg, rgba(6,30,52,.78), rgba(2,16,29,.62)); -webkit-backdrop-filter: blur(12px); backdrop-filter: blur(12px); box-shadow: 0 25px 60px rgba(0,0,0,.5), inset 0 0 24px rgba(61,111,168,.12); padding: 22px 22px 14px; }
         .route-panel svg { width: 100%; height: auto; display: block; overflow: visible; }
         .street { stroke: rgba(139,150,163,.22); stroke-width: 1; fill: none; }
         .route-base { stroke: rgba(61,111,168,.45); stroke-width: 2; stroke-dasharray: 4 8; fill: none; }
-        .route-live {
-            stroke: url(#routeGrad); stroke-width: 3.5; stroke-linecap: round; fill: none;
-            stroke-dasharray: 640; stroke-dashoffset: 640;
-            animation: draw 6s cubic-bezier(.45,.05,.3,1) infinite;
-        }
-        .unit {
-            offset-path: path('M60 210 C 150 210, 150 120, 240 120 S 340 60, 430 60 S 470 130, 520 110');
-            offset-rotate: 0deg; offset-distance: 0%;
-            animation: travel 6s cubic-bezier(.45,.05,.3,1) infinite;
-        }
-        @keyframes draw   { 0% { stroke-dashoffset: 640; } 70%,100% { stroke-dashoffset: 0; } }
-        @keyframes travel { 0% { offset-distance: 0%; opacity: 1; } 70% { offset-distance: 100%; opacity: 1; } 100% { offset-distance: 100%; opacity: 1; } }
+        .route-live { stroke: url(#routeGrad); stroke-width: 3.5; stroke-linecap: round; fill: none; stroke-dasharray: 640; stroke-dashoffset: 640; animation: draw 6s cubic-bezier(.45,.05,.3,1) infinite; }
+        .unit { offset-path: path('M60 210 C 150 210, 150 120, 240 120 S 340 60, 430 60 S 470 130, 520 110'); offset-rotate: 0deg; offset-distance: 0%; animation: travel 6s cubic-bezier(.45,.05,.3,1) infinite; }
+        @keyframes draw { 0% { stroke-dashoffset: 640; } 70%,100% { stroke-dashoffset: 0; } }
+        @keyframes travel { 0% { offset-distance: 0%; } 70%,100% { offset-distance: 100%; } }
         .pin-ring { fill: none; stroke: var(--primary-accent); stroke-width: 2; transform-box: fill-box; transform-origin: center; animation: ring 2.4s ease-out infinite; }
         @keyframes ring { from { transform: scale(1); opacity: .9; } to { transform: scale(4); opacity: 0; } }
         .route-caption { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--grey); }
         .route-caption b { color: var(--grey-light); font-weight: 600; }
         .route-label { font-family: var(--display); font-size: 15px; letter-spacing: 1.5px; fill: var(--grey-light); }
 
-        /* Story */
-        .story {
-            display: grid; grid-template-columns: 1.2fr 1fr; gap: 56px;
-            padding: 64px 0; border-top: 1px solid rgba(61,111,168,.35);
-        }
-        .lead {
-            font-family: var(--display); font-weight: 500;
-            font-size: clamp(28px, 3.6vw, 44px); line-height: 1.15; letter-spacing: .5px; margin: 0;
-        }
+        /* ═══════ Story ═══════ */
+        .s-story .inner { display: grid; grid-template-columns: 1.15fr 1fr; gap: 56px; padding-top: 96px; padding-bottom: 96px; align-items: center; }
+        .lead { font-family: var(--display); font-weight: 500; font-size: clamp(28px, 3.6vw, 44px); line-height: 1.15; letter-spacing: .5px; margin: 0; }
         .lead strong { font-weight: 700; color: var(--primary-accent); }
-        .story-side p {
-            margin: 0 0 22px; padding-left: 20px; font-size: 15px; line-height: 1.85; color: var(--grey-light);
-            border-left: 2px solid; border-image: linear-gradient(180deg, var(--primary-accent), var(--accent-blue)) 1;
-        }
-        .story-side p:last-child { margin-bottom: 0; }
-        .story-side strong { color: white; }
+        .story-side { display: grid; gap: 18px; }
+        .story-card { margin: 0; padding: 22px 24px; font-size: 14.5px; line-height: 1.85; color: var(--grey-light); border: 1px solid rgba(61,111,168,.4); border-left: 3px solid var(--primary-accent); border-radius: 10px; background: rgba(2,16,29,.72); -webkit-backdrop-filter: blur(8px); backdrop-filter: blur(8px); }
+        .story-card strong { color: #fff; }
 
-        /* ═══════════ TEAM — framed portraits ═══════════ */
-        .team-wrap { padding: 64px 0 90px; border-top: 1px solid rgba(61,111,168,.35); }
-        .team-head { text-align: center; margin-bottom: 52px; }
-        .eyebrow {
-            display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 4px; text-transform: uppercase;
-            color: var(--primary-accent); margin-bottom: 12px;
-        }
-        h2 {
-            font-family: var(--display); font-weight: 700; font-size: clamp(36px, 5.2vw, 58px);
-            letter-spacing: 2px; margin: 0 0 12px; text-transform: uppercase; line-height: 1;
-            background: linear-gradient(90deg, #fff, var(--grey-light) 60%, var(--accent-blue));
-            -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent;
-        }
-        .team-sub { margin: 0 auto; max-width: 560px; font-size: 14px; line-height: 1.7; color: var(--grey); }
+        /* ═══════ Stats ═══════ */
+        .s-stats .inner { padding-top: 70px; padding-bottom: 70px; display: grid; grid-template-columns: repeat(4, 1fr); gap: 20px; }
+        .stat { text-align: center; padding: 10px 14px; position: relative; }
+        .stat + .stat::before { content: ""; position: absolute; left: -10px; top: 12%; height: 76%; width: 1px; background: linear-gradient(180deg, transparent, rgba(255,255,255,.4), transparent); }
+        .stat b { display: block; font-family: var(--display); font-size: clamp(44px, 6vw, 76px); font-weight: 700; line-height: 1; letter-spacing: 2px; text-shadow: 0 4px 22px rgba(0,0,0,.5); }
+        .stat b i { font-style: normal; color: var(--gold); }
+        .stat span { display: block; margin-top: 10px; font-size: 11px; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; color: #fff; opacity: .85; }
 
-        /* Each portrait is shown COMPLETE (never cropped) so the name plate in the photo is always fully readable,
-           in full colour, inside a gradient frame. */
-        .gallery { perspective: 1200px; --gap: 24px; --w: min(100vw - 60px, 1560px); width: var(--w); margin-left: calc((100% - var(--w)) / 2);
+        /* ═══════ How it works ═══════ */
+        .s-flow .inner { padding-top: 96px; padding-bottom: 100px; }
+        .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 26px; margin-top: 54px; position: relative; counter-reset: step; }
+        .steps::before { content: ""; position: absolute; top: 36px; left: 16%; right: 16%; height: 2px; background: repeating-linear-gradient(90deg, rgba(255,90,54,.8) 0 8px, transparent 8px 16px); z-index: 0; }
+        .step { position: relative; z-index: 1; padding: 0 12px; text-align: center; }
+        .step .num { width: 72px; height: 72px; margin: 0 auto 22px; display: grid; place-items: center; font-family: var(--display); font-size: 32px; font-weight: 700; border-radius: 50%; background: radial-gradient(circle at 30% 30%, #ff7a5a, var(--primary-accent-deep)); box-shadow: 0 0 0 6px rgba(255,90,54,.18), 0 12px 28px rgba(0,0,0,.5); }
+        .step h3 { font-family: var(--display); font-size: 26px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 10px; }
+        .step p { margin: 0 auto; max-width: 300px; font-size: 14px; line-height: 1.75; color: var(--grey-light); }
+
+        /* ═══════ Vision (rotating words) ═══════ */
+        .s-vision .bandbg img { filter: saturate(1.1) brightness(.55); transform: scale(1.08); }
+        .s-vision .bandbg::after { background: radial-gradient(ellipse 55% 75% at 50% 50%, rgba(2,16,29,.35), rgba(2,16,29,.92) 80%), linear-gradient(180deg, var(--dark-blue), transparent 18%, transparent 82%, var(--dark-blue)); }
+        .s-vision .bandbg::before { content: ""; position: absolute; left: 50%; top: 50%; width: 220%; aspect-ratio: 1; z-index: 1; translate: -50% -50%; background: repeating-conic-gradient(from 0deg, rgba(255,90,54,.10) 0 6deg, transparent 6deg 24deg); animation: spin 90s linear infinite; mask-image: radial-gradient(circle, #000 0, transparent 45%); -webkit-mask-image: radial-gradient(circle, #000 0, transparent 45%); }
+        @keyframes spin { to { rotate: 360deg; } }
+        .s-vision .inner { padding-top: 110px; padding-bottom: 110px; text-align: center; }
+        .rotor { height: clamp(70px, 11vw, 130px); overflow: hidden; margin: 6px 0 18px; }
+        .rotor-track { animation: rotor 9s cubic-bezier(.7,0,.2,1) infinite; }
+        .rotor span { display: block; height: clamp(70px, 11vw, 130px); line-height: clamp(70px, 11vw, 130px); font-family: var(--display); font-weight: 700; font-size: clamp(52px, 9.5vw, 118px); letter-spacing: 4px; text-transform: uppercase; background: linear-gradient(90deg, #fff, var(--primary-accent)); -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; }
+        @keyframes rotor { 0%,26% { transform: translateY(0); } 33%,59% { transform: translateY(-33.333%); } 66%,92% { transform: translateY(-66.666%); } 100% { transform: translateY(-100%); } }
+
+        /* ═══════ Extra motion ═══════ */
+        .progress { position: fixed; top: 0; left: 0; height: 3px; width: 100%; z-index: 40; transform-origin: 0 50%; transform: scaleX(0); background: linear-gradient(90deg, var(--primary-accent), var(--gold), var(--accent-blue)); box-shadow: 0 0 12px rgba(255,90,54,.7); }
+        .bandbg { top: -70px; bottom: -70px; }
+        .embers { position: absolute; inset: 0; z-index: 1; pointer-events: none; overflow: hidden; }
+        .ember { position: absolute; bottom: -12px; width: var(--s, 4px); height: var(--s, 4px); border-radius: 50%; background: radial-gradient(circle, #ffd27a, var(--primary-accent) 60%, transparent 70%); opacity: 0; animation: ember var(--t, 9s) linear var(--dl, 0s) infinite; filter: blur(.4px); }
+        @keyframes ember { 0% { transform: translate(0,0) scale(1); opacity: 0; } 12% { opacity: .9; } 100% { transform: translate(var(--dx, 40px), -110vh) scale(.3); opacity: 0; } }
+        .glow { position: fixed; width: 520px; height: 520px; left: 0; top: 0; z-index: 0; pointer-events: none; border-radius: 50%; background: radial-gradient(circle, rgba(61,111,168,.22), transparent 65%); transform: translate3d(var(--gx, -999px), var(--gy, -999px), 0) translate(-50%, -50%); transition: transform .25s ease-out; mix-blend-mode: screen; }
+        h2 { background-size: 220% 100%; animation: shimmer 7s ease-in-out infinite alternate; }
+        @keyframes shimmer { from { background-position: 0% 0; } to { background-position: 100% 0; } }
+        .back-btn { position: relative; overflow: hidden; }
+        .back-btn::after { content: ""; position: absolute; top: 0; bottom: 0; width: 40%; left: -60%; background: linear-gradient(100deg, transparent, rgba(255,255,255,.45), transparent); transform: skewX(-20deg); animation: btnshine 4s ease-in-out 1.5s infinite; }
+        @keyframes btnshine { 0% { left: -60%; } 40%,100% { left: 130%; } }
+        .live-dot { display: inline-block; width: 10px; height: 10px; margin-right: 10px; border-radius: 50%; background: var(--gold); vertical-align: middle; box-shadow: 0 0 0 0 rgba(242,184,75,.7); animation: pulse 1.8s ease-out infinite; }
+        @keyframes pulse { to { box-shadow: 0 0 0 16px rgba(242,184,75,0); } }
+        .lead strong { background: linear-gradient(90deg, var(--primary-accent), var(--gold), var(--primary-accent)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 5s linear infinite alternate; }
+        .story-card { transition: transform .4s cubic-bezier(.2,.8,.2,1), border-color .4s, box-shadow .4s; }
+        .story-card:hover { transform: translateX(8px); border-left-color: var(--gold); box-shadow: 0 16px 40px rgba(0,0,0,.4); }
+        .step .num { transition: transform .5s cubic-bezier(.2,.8,.2,1); animation: bob 4s ease-in-out infinite alternate; }
+        .step:nth-child(2) .num { animation-delay: -1.3s; } .step:nth-child(3) .num { animation-delay: -2.6s; }
+        .step:hover .num { transform: scale(1.12) rotate(-6deg); }
+        @keyframes bob { from { translate: 0 -4px; } to { translate: 0 6px; } }
+        .steps::before { animation: dashmove 1.2s linear infinite; background-size: 16px 2px; }
+        @keyframes dashmove { to { background-position: 16px 0; } }
+        .strip-quote em { display: inline-block; animation: glowtext 3s ease-in-out infinite alternate; }
+        @keyframes glowtext { from { text-shadow: 0 0 6px rgba(255,90,54,.2); } to { text-shadow: 0 0 28px rgba(255,90,54,.9); } }
+
+        /* ═══════ Values ═══════ */
+        .s-values .inner { padding-top: 100px; padding-bottom: 100px; }
+        .values { display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-top: 52px; }
+        .value { padding: 34px 28px; border-radius: 14px; border: 1px solid rgba(255,255,255,.14); background: linear-gradient(160deg, rgba(255,255,255,.1), rgba(255,255,255,.03)); -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px); box-shadow: 0 20px 50px rgba(0,0,0,.4); transition: transform .4s cubic-bezier(.2,.8,.2,1), border-color .4s, box-shadow .4s; }
+        .value:hover { transform: translateY(-8px); border-color: rgba(255,90,54,.7); box-shadow: 0 30px 60px rgba(0,0,0,.5), 0 0 30px rgba(255,90,54,.2); }
+        .value .ico { width: 54px; height: 54px; display: grid; place-items: center; border-radius: 12px; background: linear-gradient(135deg, var(--primary-accent), var(--primary-accent-deep)); margin-bottom: 20px; }
+        .value .ico svg { width: 28px; height: 28px; stroke: #fff; fill: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+        .value h3 { font-family: var(--display); font-size: 26px; letter-spacing: 2px; text-transform: uppercase; margin: 0 0 10px; }
+        .value p { margin: 0; font-size: 14px; line-height: 1.75; color: var(--grey-light); }
+
+        /* ═══════ Team ═══════ */
+        .s-team .inner { max-width: none; padding: 100px 30px 110px; }
+        .team-head { text-align: center; margin-bottom: 56px; }
+        .gallery { perspective: 1200px; --gap: 24px; --w: min(100vw - 60px, 1560px); width: var(--w); margin: 0 auto;
             --cw: min(290px, calc((var(--w) - 4 * var(--gap) - 4px) / 5)); display: flex; flex-wrap: wrap; justify-content: center; align-items: flex-start; gap: var(--gap); padding-bottom: 36px; }
         .member { margin: 0; position: relative; width: var(--cw); flex: none; border-radius: 18px; --mx: 50%; --my: 30%; }
-        .member:nth-child(even) { margin-top: 30px; }          /* gentle wave so it doesn't read as a rigid grid */
-        .photo {
-            position: relative; border-radius: 18px; overflow: hidden; isolation: isolate; padding: 4px;
-            background: linear-gradient(145deg, #ff5a36 0%, #3d6fa8 55%, #1a3a5f 100%);
-            box-shadow: 0 18px 40px rgba(0,0,0,.45);
-            transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px));
-            transition: transform .7s cubic-bezier(.2,.8,.2,1), box-shadow .55s, background-position .5s;
-            will-change: transform;
-        }
+        .member:nth-child(even) { margin-top: 30px; }
+        .photo { position: relative; border-radius: 18px; overflow: hidden; isolation: isolate; padding: 4px; background: linear-gradient(145deg, #ff5a36 0%, #3d6fa8 55%, #1a3a5f 100%); box-shadow: 0 18px 40px rgba(0,0,0,.5);
+            transform: perspective(900px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateY(var(--lift, 0px)); transition: transform .7s cubic-bezier(.2,.8,.2,1), box-shadow .55s; will-change: transform; }
         .photo.tilting { transition: transform .12s linear, box-shadow .55s; }
-        .photo img {
-            display: block; width: 100%; height: auto; border-radius: 14px;
-            background: #04121f;
-        }
-        /* placeholder shown only if a photo file is missing */
+        .photo img { display: block; width: 100%; height: auto; border-radius: 14px; background: #04121f; }
         .photo.noimg { aspect-ratio: 3 / 4; }
-        .photo.noimg::after {
-            content: ""; position: absolute; inset: 4px; border-radius: 14px; background-color: #0b2a47;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 160'%3E%3Ccircle cx='60' cy='62' r='24' fill='%23c7ced6' fill-opacity='.25'/%3E%3Cpath d='M16 150c0-30 20-48 44-48s44 18 44 48z' fill='%23c7ced6' fill-opacity='.25'/%3E%3C/svg%3E");
-            background-position: center; background-size: 70%; background-repeat: no-repeat;
-        }
-        /* light that follows the cursor (hover only, never darkens the photo) */
-        .photo::before {
-            content: ""; position: absolute; inset: 4px; border-radius: 14px; z-index: 1; pointer-events: none; opacity: 0;
-            background: radial-gradient(240px circle at var(--mx) var(--my), rgba(255,255,255,.18), transparent 60%);
-            transition: opacity .4s;
-        }
+        .photo.noimg::after { content: ""; position: absolute; inset: 4px; border-radius: 14px; background-color: #0b2a47; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 120 160'%3E%3Ccircle cx='60' cy='62' r='24' fill='%23c7ced6' fill-opacity='.25'/%3E%3Cpath d='M16 150c0-30 20-48 44-48s44 18 44 48z' fill='%23c7ced6' fill-opacity='.25'/%3E%3C/svg%3E"); background-position: center; background-size: 70%; background-repeat: no-repeat; }
+        .photo::before { content: ""; position: absolute; inset: 4px; border-radius: 14px; z-index: 1; pointer-events: none; opacity: 0; background: radial-gradient(240px circle at var(--mx) var(--my), rgba(255,255,255,.18), transparent 60%); transition: opacity .4s; }
         .member:hover .photo::before { opacity: 1; }
-        .member:hover .photo, .member:focus-visible .photo {
-            --lift: -10px;
-            box-shadow: 0 28px 54px rgba(0,0,0,.55), 0 0 34px rgba(255,90,54,.35);
-        }
+        .member:hover .photo, .member:focus-visible .photo { --lift: -10px; box-shadow: 0 28px 54px rgba(0,0,0,.55), 0 0 34px rgba(255,90,54,.35); }
         .member:focus-visible { outline: none; }
         .member:focus-visible .photo { outline: 2px solid #fff; outline-offset: 3px; }
-
-        /* ── Animation ── */
-        /* entrance: each portrait rises out of blur with a 3D tilt, and its photo is unveiled from the bottom */
-        .member.reveal {
-            opacity: 0; transform: translateY(70px) rotateX(-22deg) scale(.88); filter: blur(10px); transform-origin: 50% 100%;
-            transition: opacity .9s ease var(--d, 0s), transform 1.1s cubic-bezier(.16,1,.3,1) var(--d, 0s), filter .9s ease var(--d, 0s);
-        }
+        .member.reveal { opacity: 0; transform: translateY(70px) rotateX(-22deg) scale(.88); filter: blur(10px); transform-origin: 50% 100%; transition: opacity .9s ease var(--d, 0s), transform 1.1s cubic-bezier(.16,1,.3,1) var(--d, 0s), filter .9s ease var(--d, 0s); }
         .member.reveal.in { opacity: 1; transform: none; filter: none; }
         .member.reveal .photo img { clip-path: inset(100% 0 0 0 round 14px); transform: scale(1.15); }
-        .member.reveal.in .photo img {
-            clip-path: inset(0 0 0 0 round 14px); transform: none;
-            transition: clip-path 1.2s cubic-bezier(.77,0,.18,1) calc(var(--d, 0s) + .25s), transform 1.7s cubic-bezier(.16,1,.3,1) calc(var(--d, 0s) + .25s);
-        }
+        .member.reveal.in .photo img { clip-path: inset(0 0 0 0 round 14px); transform: none; transition: clip-path 1.2s cubic-bezier(.77,0,.18,1) calc(var(--d, 0s) + .25s), transform 1.7s cubic-bezier(.16,1,.3,1) calc(var(--d, 0s) + .25s); }
         .member.reveal.done .photo img { clip-path: none; transition: none; }
-        /* one light sweep across the portrait right after it appears */
-        .sheen {
-            position: absolute; inset: 4px; border-radius: 14px; z-index: 3; pointer-events: none; transform: translateX(-120%); overflow: hidden;
-            background: linear-gradient(105deg, transparent 36%, rgba(255,255,255,.28) 50%, transparent 64%);
-        }
-        .member.in .sheen { animation: sheen 1.4s ease calc(var(--d, 0s) + 1s) 1 forwards; }
-        @keyframes sheen { to { transform: translateX(120%); } }
-        /* idle: slow, out-of-phase floating so the wall of photos feels alive */
+        .member .sheen { position: absolute; inset: 4px; border-radius: 14px; z-index: 3; pointer-events: none; transform: translateX(-120%); overflow: hidden; background: linear-gradient(105deg, transparent 36%, rgba(255,255,255,.28) 50%, transparent 64%); }
+        .member.in .sheen { animation: sheen1 1.4s ease calc(var(--d, 0s) + 1s) 1 forwards; }
+        @keyframes sheen1 { to { transform: translateX(120%); } }
         .float { display: block; }
         .member.in .float { animation: float 5.5s ease-in-out infinite alternate; animation-delay: var(--fd, 0s); }
         .member:hover .float, .member:focus-visible .float { animation-play-state: paused; }
         @keyframes float { from { transform: translateY(-4px); } to { transform: translateY(7px); } }
 
-        /* scroll reveal */
         .reveal { opacity: 0; transform: translateY(26px); transition: opacity .8s ease, transform .8s cubic-bezier(.2,.8,.2,1); transition-delay: var(--d, 0s); }
         .reveal.in { opacity: 1; transform: none; }
 
-        .footer {
-            border-top: 1px solid rgba(61,111,168,.35); padding: 26px 0 34px;
-            display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap;
-            font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: rgba(199,206,214,.55);
-        }
+        /* guide section */
+        .s-lead .bandbg img { filter: saturate(.8) brightness(.5) blur(3px); transform: scale(1.1); }
+        .s-lead .bandbg::after { background: radial-gradient(ellipse 50% 60% at 50% 55%, rgba(61,111,168,.28), transparent 70%), linear-gradient(180deg, var(--dark-blue) 0%, rgba(2,16,29,.82) 30%, rgba(2,16,29,.82) 75%, rgba(2,16,29,.95) 100%); }
+        .s-lead .inner { padding-top: 90px; padding-bottom: 70px; text-align: center; }
+        .lead-head { margin-bottom: 34px; }
+        .lead-line { width: 70px; height: 3px; margin: 4px auto 0; border-radius: 3px; background: linear-gradient(90deg, var(--primary-accent), var(--accent-blue)); transform-origin: center; animation: linegrow 3.5s ease-in-out infinite alternate; }
+        @keyframes linegrow { from { transform: scaleX(.4); } to { transform: scaleX(1.5); } }
 
-        @media (max-width: 900px) {
-            .hero, .story { grid-template-columns: 1fr; gap: 36px; }
-            .hero { padding: 52px 0 48px; }
-            .brand span { font-size: 20px; letter-spacing: 3px; }
-            .gallery { --gap: 14px; width: auto; margin-left: 0; --cw: calc((100% - 2 * var(--gap)) / 3); }
+        /* ═══════ Footer ═══════ */
+        .s-foot .inner { padding-top: 90px; padding-bottom: 34px; text-align: center; }
+        .foot-logo { height: 72px; width: auto; margin: 0 auto 16px; display: block; filter: drop-shadow(0 6px 18px rgba(0,0,0,.5)); }
+        .foot-title { font-family: var(--display); font-size: clamp(28px, 4vw, 46px); letter-spacing: 3px; text-transform: uppercase; margin: 0 0 8px; }
+        .foot-sub { margin: 0 0 28px; font-size: 14px; color: var(--grey-light); }
+        .footer { margin-top: 64px; border-top: 1px solid rgba(61,111,168,.35); padding-top: 24px; display: flex; justify-content: space-between; align-items: center; gap: 16px; flex-wrap: wrap; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; color: rgba(199,206,214,.6); }
+
+        /* ═══════ Responsive ═══════ */
+        @media (max-width: 960px) {
+            .nav { display: none; }
+            .s-hero .inner, .s-story .inner { grid-template-columns: 1fr; gap: 40px; }
+            .s-hero .inner { padding-top: 56px; padding-bottom: 64px; }
+            .s-story .bandbg { left: 0; clip-path: none; opacity: .45; }
+            .s-story .inner, .s-values .inner, .s-flow .inner { padding-top: 64px; padding-bottom: 64px; }
+            .s-stats .inner { grid-template-columns: repeat(2, 1fr); gap: 26px 10px; }
+            .stat:nth-child(3)::before { display: none; }
+            .steps, .values { grid-template-columns: 1fr; }
+            .steps::before { display: none; }
+            .s-flow .bandbg { background-attachment: scroll; }
+            .s-team .inner { padding: 64px 20px 72px; }
+            .gallery { --gap: 14px; width: auto; --cw: calc((100% - 2 * var(--gap)) / 3); }
             .member:nth-child(even) { margin-top: 0; }
             .member:nth-child(3n+2) { margin-top: 24px; }
+            .brand span { font-size: 20px; letter-spacing: 3px; }
         }
         @media (max-width: 480px) {
-            .page { padding: 0 18px; }
-            .hero > * { min-width: 0; }
+            .band > .inner, .topbar { padding-left: 18px; padding-right: 18px; }
+            .s-team .inner { padding-left: 14px; padding-right: 14px; }
             .gallery { --cw: calc((100% - var(--gap)) / 2); }
             .member:nth-child(3n+2) { margin-top: 0; }
             .member:nth-child(even) { margin-top: 22px; }
             h1 { font-size: clamp(40px, 13.5vw, 64px); letter-spacing: 2px; }
-            .back-btn { padding: 9px 14px; font-size: 15px; }
+            .back-btn { padding: 9px 14px; font-size: 14px; }
+            .brand span { display: none; }
         }
         @media (prefers-reduced-motion: reduce) {
             *, *::before, *::after { animation: none !important; transition: none !important; }
@@ -265,51 +291,36 @@
             .sheen { display: none; }
         }
     </style>
-<style>
-/* ═══ 800x480 view only — desktop/laptop/phone layouts are unaffected ═══ */
-@media (max-width:900px) and (max-height:600px){
-  .page{padding:0 20px;}
-  .topbar{padding:10px 0;}
-  .brand img{height:34px;}
-  .brand span{font-size:18px;letter-spacing:3px;}
-  .back-btn{padding:7px 14px;font-size:14px;}
-  .hero{grid-template-columns:1.05fr 1fr;gap:24px;padding:26px 0 24px;}
-  h1{font-size:60px;margin:12px 0 10px;letter-spacing:2px;}
-  .badge{font-size:10px;}
-  .hero-logo{height:56px;margin-bottom:10px;}
-  .tagline-img{width:min(100%,260px);margin-top:12px;}
-  .hero-sub{font-size:16px;letter-spacing:2px;}
-  .route-panel{padding:12px 12px 8px;}
-  .route-caption{font-size:10px;}
-  .story{grid-template-columns:1.2fr 1fr;gap:24px;padding:26px 0;}
-  .lead{font-size:24px;}
-  .story-side p{font-size:12px;line-height:1.6;margin-bottom:12px;padding-left:12px;}
-  .team-wrap{padding:30px 0 30px;}
-  .team-head{margin-bottom:24px;}
-  h2{font-size:28px;margin-bottom:8px;}
-  .team-sub{font-size:11px;}
-  .gallery{--gap:12px;--cw:calc((100% - 4 * var(--gap)) / 5);}
-  .member:nth-child(3n+2){margin-top:0;} .member:nth-child(even){margin-top:18px;}
-  .footer{padding:14px 0 18px;font-size:9px;letter-spacing:2px;}
-}
-</style>
 </head>
 <body>
 
+<div class="progress" id="progress"></div>
+<div class="glow" id="glow"></div>
+<!-- LAYER 1 -->
 <img class="bg-img" src="/background.jpg" alt="" onerror="this.style.display='none'">
 <div class="bg-overlay"></div>
 
-<div class="page">
+<div class="topbar-wrap">
     <header class="topbar">
         <a class="brand" href="/" aria-label="T.U.L.O.N.G. home">
             <img src="/tulonglogo.png" alt="T.U.L.O.N.G. Logo" onerror="this.style.display='none'">
             <span>T.U.L.O.N.G.</span>
         </a>
+        <nav class="nav" aria-label="Page sections">
+            <a href="#story">Mission</a>
+            <a href="#how">How it works</a>
+            <a href="#team">Team</a>
+        </nav>
         <a href="/" class="back-btn">Return to Login Page</a>
     </header>
+</div>
 
-    <main>
-        <section class="hero">
+<main>
+    <!-- LAYER 2 · 1 — HERO -->
+    <section class="band s-hero">
+        <div class="bandbg"><img src="/tulong1.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="embers" id="embers" aria-hidden="true"></div>
+        <div class="inner">
             <div>
                 <img class="hero-logo" src="/tulonglogo.png" alt="T.U.L.O.N.G. logo" onerror="this.style.display='none'">
                 <div class="badge">CLASSIFIED: PROJECT TULONG</div>
@@ -342,20 +353,112 @@
                 </svg>
                 <div class="route-caption"><span><b>Alarm received</b></span><span><b>The last mile</b> &mdash; tracked live</span></div>
             </div>
-        </section>
+        </div>
+    </section>
 
-        <section class="story">
-            <p class="lead"><strong>Tactical Unit Locator &amp; Operations Network Grid (T.U.L.O.N.G.)</strong> was developed to revolutionize community-level emergency response within <strong>Cebu City</strong>.</p>
+    <!-- LAYER 2 · 2 — STORY -->
+    <section class="band s-story" id="story">
+        <div class="bandbg"><img src="/tulong2.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
+            <p class="lead reveal"><strong>Tactical Unit Locator &amp; Operations Network Grid (T.U.L.O.N.G.)</strong> was developed to revolutionize community-level emergency response within <strong>Cebu City</strong>.</p>
             <div class="story-side">
-                <p>Traditional dispatch systems often struggle with the "last mile"—the critical gap between receiving an alarm and the arrival of responders in dense urban environments. Our grid provides real-time tactical data to bridge this gap, ensuring that help arrives exactly where it is needed, without delay.</p>
-                <p>This system is maintained by the <strong>Tinago Fire Volunteers</strong> and is dedicated to the safety of our local community through technical innovation and volunteer coordination.</p>
+                <p class="story-card reveal" style="--d:.1s">Traditional dispatch systems often struggle with the "last mile"&mdash;the critical gap between receiving an alarm and the arrival of responders in dense urban environments. Our grid provides real-time tactical data to bridge this gap, ensuring that help arrives exactly where it is needed, without delay.</p>
+                <p class="story-card reveal" style="--d:.2s">This system is built and maintained by the <strong>CTU researchers</strong> and is dedicated to the safety of our local community through technical innovation and research.</p>
             </div>
-        </section>
-        <section class="team-wrap" id="team">
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 3 — DIVIDER STRIP (angled) -->
+    <section class="band strip s-a" aria-label="Mission statement">
+        <div class="bandbg"><img src="/tulong3.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner reveal">
+            <p class="strip-quote">Every second on the road is a <em>life</em> on the line.</p>
+            <p class="strip-note">Closing the last mile &middot; Cebu City</p>
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 4 — NUMBERS (duotone) -->
+    <section class="band s-stats" aria-label="The grid at a glance">
+        <div class="bandbg"><img src="/tulong4.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
+            <div class="stat reveal"><b>24<i>/</i>7</b><span>Always watching</span></div>
+            <div class="stat reveal" style="--d:.08s"><b><i class="live-dot"></i>LIVE</b><span>Unit tracking</span></div>
+            <div class="stat reveal" style="--d:.16s"><b>1</b><span>Unified grid</span></div>
+            <div class="stat reveal" style="--d:.24s"><b>0</b><span>Gap in the last mile</span></div>
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 5 — HOW IT WORKS (parallax + scanlines) -->
+    <section class="band s-flow" id="how">
+        <div class="bandbg"><img src="/tulong5.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
+            <div class="center reveal">
+                <span class="eyebrow">From alarm to arrival</span>
+                <h2>How The Grid Works</h2>
+                <p class="section-sub">Three moves that turn a raw alarm into a coordinated response.</p>
+            </div>
+            <div class="steps">
+                <div class="step reveal"><div class="num">1</div><h3>Alarm Received</h3><p>An incident is reported and instantly placed on the grid with its exact location.</p></div>
+                <div class="step reveal" style="--d:.12s"><div class="num">2</div><h3>Units Located</h3><p>The nearest available responders are identified and tracked in real time.</p></div>
+                <div class="step reveal" style="--d:.24s"><div class="num">3</div><h3>Help Arrives</h3><p>Live route data guides the team through the last mile, straight to the scene.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 6 — VISION (rotating words) -->
+    <section class="band s-vision" id="vision">
+        <div class="bandbg"><img src="/tulong6.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
+            <div class="reveal">
+                <span class="eyebrow">Our vision</span>
+                <div class="rotor" aria-label="Locate. Respond. Reach."><div class="rotor-track"><span>Locate.</span><span>Respond.</span><span>Reach.</span><span>Locate.</span></div></div>
+                <p class="section-sub">One grid that sees every unit, every incident, and every street &mdash; so no call for help is ever answered late.</p>
+            </div>
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 7 — VALUES (frosted glass) -->
+    <section class="band s-values">
+        <div class="bandbg"><img src="/tulong7.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
+            <div class="center reveal">
+                <span class="eyebrow">What drives us</span>
+                <h2>Built On Three Promises</h2>
+            </div>
+            <div class="values">
+                <div class="value reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><h3>Speed</h3><p>Real-time data so responders spend less time searching and more time saving.</p></div>
+                <div class="value reveal" style="--d:.1s"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></div><h3>Precision</h3><p>Every unit and every incident pinned to the map, down to the street.</p></div>
+                <div class="value reveal" style="--d:.2s"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg></div><h3>Community</h3><p>Built by CTU researchers for the neighbours they serve &mdash; safety that starts at the barangay.</p></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 8 — DIVIDER STRIP (grayscale + orange) -->
+    <section class="band strip s-b" aria-label="Researchers">
+        <div class="bandbg"><img src="/tulong8.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner reveal">
+            <p class="strip-quote">Built by <em>researchers.</em> Driven by purpose.</p>
+            <p class="strip-note">CTU Researchers</p>
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 10 — GUIDE (member0, own section above the team) -->
+    <section class="band s-lead" id="lead">
+        <div class="bandbg"><img src="/tulong3.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
+            <div class="lead-head reveal"><span class="eyebrow">Guided By</span><div class="lead-line"></div></div>
+            <figure class="member reveal" tabindex="0" style="--cw:min(340px,78vw);margin:0 auto"><div class="float"><div class="photo"><img src="/member0.jpg" alt="TULONG team member 0" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
+        </div>
+    </section>
+
+    <!-- LAYER 2 · 9 — TEAM (vignette) -->
+    <section class="band s-team" id="team">
+        <div class="bandbg"><img src="/tulong9.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
             <div class="team-head reveal">
                 <span class="eyebrow">The People Behind The Grid</span>
                 <h2>Team Behind TULONG</h2>
-                <p class="team-sub">The people working together to keep the last mile connected.</p>
+                <p class="section-sub">The people working together to keep the last mile connected.</p>
             </div>
 
             <!-- Photos: member1.jpg ... member9.jpg in the site root (same folder as index.html) -->
@@ -370,14 +473,24 @@
                 <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="/member8.jpg" alt="TULONG team member 8" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
                 <figure class="member reveal" tabindex="0"><div class="float"><div class="photo"><img src="/member9.jpg" alt="TULONG team member 9" loading="lazy" onerror="this.parentNode.classList.add('noimg');this.remove()"><span class="sheen"></span></div></div></figure>
             </div>
-        </section>
-    </main>
+        </div>
+    </section>
 
-    <footer class="footer">
-        <span>&copy; 2026 T.U.L.O.N.G.</span>
-        <a href="/" class="back-btn">Return to Login Page</a>
+    <!-- LAYER 2 · 10 — FOOTER (cinematic) -->
+    <footer class="band s-foot">
+        <div class="bandbg"><img src="/tulong10.jpeg" alt="" onerror="this.remove()"></div>
+        <div class="inner">
+            <img class="foot-logo" src="/tulonglogo.png" alt="" onerror="this.style.display='none'">
+            <h2 class="foot-title" style="-webkit-text-fill-color:#fff;background:none;">Help, right where it's needed.</h2>
+            <p class="foot-sub">Ready to get back to the grid?</p>
+            <a href="/" class="back-btn">Return to Login Page</a>
+            <div class="footer">
+                <span>&copy; 2026 T.U.L.O.N.G.</span>
+                <span>Cebu City &middot; CTU Researchers</span>
+            </div>
+        </div>
     </footer>
-</div>
+</main>
 
 <script>
 // Scroll reveal + staggered entrance for the portraits (they open from the middle outwards)
@@ -392,7 +505,7 @@
         el.classList.add('in');
         if (el.classList.contains('member')) {
             var d = parseFloat(el.style.getPropertyValue('--d')) || 0;
-            setTimeout(function () { el.classList.add('done'); }, (d + 1.9) * 1000);   // after the unveil, hand the photo back to the hover transition
+            setTimeout(function () { el.classList.add('done'); }, (d + 1.9) * 1000);
         }
     }
     var els = document.querySelectorAll('.reveal');
@@ -419,6 +532,44 @@ document.querySelectorAll('.member').forEach(function (m) {
         photo.style.setProperty('--rx', '0deg'); photo.style.setProperty('--ry', '0deg');
     });
 });
+</script>
+<script>
+// Scroll progress bar, parallax photos, cursor glow, hero embers
+(function () {
+    var bar = document.getElementById('progress'), bgs = Array.prototype.slice.call(document.querySelectorAll('.bandbg'));
+    var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches, tick = false;
+    function update() {
+        tick = false;
+        var h = document.documentElement.scrollHeight - innerHeight;
+        bar.style.transform = 'scaleX(' + (h > 0 ? Math.min(1, scrollY / h) : 0) + ')';
+        if (reduce) return;
+        bgs.forEach(function (b) {
+            var r = b.parentNode.getBoundingClientRect();
+            if (r.bottom < -100 || r.top > innerHeight + 100) return;
+            var p = (r.top + r.height / 2 - innerHeight / 2) / innerHeight;
+            b.style.transform = 'translate3d(0,' + (p * -46).toFixed(1) + 'px,0)';
+        });
+    }
+    function req() { if (!tick) { tick = true; requestAnimationFrame(update); } }
+    addEventListener('scroll', req, { passive: true }); addEventListener('resize', req); update();
+
+    var glow = document.getElementById('glow');
+    addEventListener('pointermove', function (e) {
+        if (e.pointerType !== 'mouse') return;
+        glow.style.setProperty('--gx', e.clientX + 'px'); glow.style.setProperty('--gy', e.clientY + 'px');
+    });
+
+    var box = document.getElementById('embers');
+    if (box && !reduce) for (var i = 0; i < 22; i++) {
+        var e = document.createElement('span'); e.className = 'ember';
+        e.style.left = (Math.random() * 100) + '%';
+        e.style.setProperty('--s', (2 + Math.random() * 5).toFixed(1) + 'px');
+        e.style.setProperty('--t', (7 + Math.random() * 8).toFixed(1) + 's');
+        e.style.setProperty('--dl', (-Math.random() * 12).toFixed(1) + 's');
+        e.style.setProperty('--dx', (Math.random() * 120 - 60).toFixed(0) + 'px');
+        box.appendChild(e);
+    }
+})();
 </script>
 </body>
 </html>
