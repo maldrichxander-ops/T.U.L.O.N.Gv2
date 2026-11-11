@@ -23,12 +23,16 @@
 <meta property="og:site_name" content="T.U.L.O.N.G.">
 <meta property="og:title" content="T.U.L.O.N.G. — Operator Dashboard">
 <meta property="og:description" content="Real-time data for faster, coordinated last-mile emergency response.">
-<meta property="og:image" content="tulonglogo.png">
+<meta property="og:image" content="https://tulong.services/tulonglogo.png">
+<meta property="og:image:width" content="1920">
+<meta property="og:image:height" content="1080">
+<meta property="og:image:alt" content="T.U.L.O.N.G. shield logo">
 <meta property="og:locale" content="en_PH">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:title" content="T.U.L.O.N.G. — Operator Dashboard">
 <meta name="twitter:description" content="Real-time data for faster, coordinated last-mile emergency response.">
-<meta name="twitter:image" content="tulonglogo.png">
+<meta name="twitter:image" content="https://tulong.services/tulonglogo.png">
+<meta name="twitter:image:alt" content="T.U.L.O.N.G. shield logo">
 
 <!-- Favicon -->
 <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
@@ -773,10 +777,9 @@ onAuthStateChanged(auth, async user => {
                 <div class="user-unit" id="user-unit">Unit: ---</div>
             </div>
         </button>
-        <a class="info-link" href="/about-us" target="_blank" rel="noopener">About Us</a>
-        <a class="info-link" href="/contact-us" target="_blank" rel="noopener">Contact Us</a>
         <button class="settings-btn btn-ico" type="button" onclick="openSettings()" title="Settings"><svg class="ico" aria-hidden="true"><use href="#i-gear"/></svg><span>Settings</span></button>
         <button class="logout-btn btn-ico" onclick="confirmLogout()"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg> Logout</button>
+        <button class="help-btn" id="help-open" type="button" onclick="openHelp()" title="How to use the operator dashboard (manual)" aria-label="Open operator manual">?</button>
     </div>
 </header>
 
@@ -2801,16 +2804,258 @@ button, input, select, textarea{ font-family: inherit; }
 </style>
 
 
+
 <style>
-/* ── ABOUT US / CONTACT US links in the header ── */
-.info-link{display:inline-flex;align-items:center;justify-content:center;height:34px;padding:0 12px;text-decoration:none;white-space:nowrap;
-  border:1px solid rgba(61,111,168,.6);border-radius:6px;background:rgba(61,111,168,.12);color:#c9d1d9;
-  font-family:var(--font-display,var(--font));font-size:13px;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s;}
-.info-link:hover{background:linear-gradient(45deg,#3d6fa8,#12305c);color:#fff;box-shadow:0 0 14px rgba(61,111,168,.45);}
-@media (max-width:1100px){ .info-link{padding:0 9px;font-size:12px;letter-spacing:.5px;} }
-@media (max-width:900px) and (max-height:600px){ .info-link{height:30px;padding:0 8px;font-size:11px;letter-spacing:.3px;} }
-@media (max-width:700px){ .info-link{display:none;} }
+/* ── "?" HELP BUTTON + SIDEBAR INFO LINKS ── */
+.help-btn{flex:0 0 auto;order:99;width:34px;height:34px;margin-left:6px;border-radius:50%;cursor:pointer;color:#6ea3e0;font-family:var(--font-display);
+  font-size:19px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;
+  background:rgba(61,111,168,.14);border:1.5px solid #3d6fa8;transition:background .2s,color .2s,box-shadow .2s,transform .1s;}
+.help-btn:hover{background:linear-gradient(45deg,#3d6fa8,#12305c);color:#fff;box-shadow:0 0 14px rgba(110,163,224,.55);}
+.help-btn:active{transform:scale(.94);}
+
+/* ── USER MANUAL MODAL ── */
+.help-overlay{display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:12px;box-sizing:border-box;}
+.help-overlay.active{display:flex;}
+.help-modal{width:900px;max-width:96vw;height:86vh;max-height:96vh;display:flex;flex-direction:column;background:#02101D;
+  border:1px solid #3d6fa8;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.65);color:#c9d1d9;overflow:hidden;animation:modalIn .25s ease;}
+.help-head{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#04182b;border-bottom:1px solid #1a3a5c;}
+.help-head-ico{width:44px;height:44px;border-radius:8px;border:1px solid #3d6fa8;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:26px;font-weight:700;color:#6ea3e0;flex:none;}
+.help-title{font-family:var(--font-display);font-size:24px;font-weight:700;letter-spacing:.8px;color:#fff;}
+.help-sub{font-size:13px;color:#9aa5b1;margin-top:2px;}
+.help-close{margin-left:auto;width:36px;height:36px;border-radius:6px;border:1px solid #3a4451;background:none;color:#c9d1d9;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex:none;font-size:18px;}
+.help-close:hover{color:#ff4d4d;border-color:#ff4d4d;}
+.help-main{display:flex;flex:1;min-height:0;}
+.help-nav{width:230px;flex:none;overflow-y:auto;padding:10px;background:#031425;border-right:1px solid #1a3a5c;}
+.help-nav button{display:block;width:100%;text-align:left;margin-bottom:4px;padding:9px 12px;border:1px solid transparent;border-radius:6px;
+  background:none;color:#b5bfca;cursor:pointer;font-family:var(--font-display);font-size:16px;font-weight:600;letter-spacing:.5px;}
+.help-nav button:hover{background:rgba(61,111,168,.2);color:#fff;}
+.help-nav button.on{background:rgba(255,90,54,.14);border-color:#ff5a36;color:#fff;}
+.help-body{flex:1;overflow-y:auto;padding:20px 26px 28px;font-size:15px;line-height:1.6;}
+.help-body h3{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:.6px;color:#fff;margin:0 0 4px;}
+.help-body h4{font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:1px;color:#ff5a36;text-transform:uppercase;margin:20px 0 6px;}
+.help-lead{color:#9aa5b1;margin:0 0 12px;}
+.help-body p{margin:6px 0;}
+.help-body ol,.help-body ul{margin:6px 0 6px 4px;padding-left:22px;}
+.help-body li{margin:4px 0;}
+.help-body b{color:#fff;}
+.help-body code,.help-body kbd{font-family:var(--mono);font-size:13px;background:#04182b;border:1px solid #1a3a5c;border-radius:4px;padding:1px 6px;color:#ffcc00;}
+.help-note{margin:12px 0;padding:10px 14px;border-left:4px solid #3d6fa8;background:rgba(61,111,168,.12);border-radius:0 6px 6px 0;}
+.help-note.warn{border-left-color:#ff5a36;background:rgba(255,90,54,.1);}
+.help-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px;}
+.help-table th,.help-table td{text-align:left;padding:7px 10px;border-bottom:1px solid rgba(61,111,168,.3);vertical-align:top;}
+.help-table th{font-family:var(--font-display);font-size:14px;letter-spacing:1px;color:#9aa5b1;text-transform:uppercase;}
+.help-dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;}
+.help-pane{display:none;}
+.help-pane.on{display:block;}
+@media (max-width:900px) and (max-height:600px){
+  .help-modal{height:96vh;}
+  .help-head{padding:8px 14px;}
+  .help-head-ico{width:32px;height:32px;font-size:20px;}
+  .help-title{font-size:19px;}
+  .help-sub{display:none;}
+  .help-nav{width:150px;padding:6px;}
+  .help-nav button{font-size:14px;padding:6px 8px;}
+  .help-body{padding:12px 16px 20px;font-size:13px;}
+  .help-body h3{font-size:21px;}
+  .help-body h4{font-size:15px;}
+  .help-btn{width:30px;height:30px;font-size:17px;margin-left:2px;}
+}
+@media (max-width:640px){
+  .help-main{flex-direction:column;}
+  .help-nav{width:auto;display:flex;gap:4px;overflow-x:auto;overflow-y:hidden;border-right:none;border-bottom:1px solid #1a3a5c;padding:6px;}
+  .help-nav button{white-space:nowrap;width:auto;margin:0;}
+}
+@keyframes modalIn{from{transform:translateY(-20px) scale(.97);opacity:0;}to{transform:translateY(0) scale(1);opacity:1;}}
 </style>
+<!-- OPERATOR MANUAL — opened with the "?" button in the header (or press ? / Esc to close) -->
+<div class="help-overlay" id="help-overlay" onclick="if(event.target===this)closeHelp()">
+  <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="help-head">
+      <div class="help-head-ico">?</div>
+      <div style="min-width:0;">
+        <div class="help-title" id="help-title">Operator Manual</div>
+        <div class="help-sub">How to use the T.U.L.O.N.G. Operator Dashboard &mdash; for drivers and responders.</div>
+      </div>
+      <button class="help-close" type="button" onclick="closeHelp()" title="Close (Esc)" aria-label="Close manual">&#10005;</button>
+    </div>
+    <div class="help-main">
+      <nav class="help-nav" id="help-nav" aria-label="Manual sections">
+        <button type="button" data-p="overview" class="on">Overview</button>
+        <button type="button" data-p="dispatch">Dispatch Calls</button>
+        <button type="button" data-p="vehicle">My Vehicle &amp; Status</button>
+        <button type="button" data-p="incidents">Incidents on the Map</button>
+        <button type="button" data-p="panel">Side Panel &amp; Counters</button>
+        <button type="button" data-p="gps">Sharing My Location</button>
+        <button type="button" data-p="settings">Settings &amp; Password</button>
+        <button type="button" data-p="session">Session &amp; Security</button>
+        <button type="button" data-p="trouble">Troubleshooting</button>
+      </nav>
+      <div class="help-body" id="help-body">
+
+        <section class="help-pane on" id="hp-overview">
+          <h3>Welcome, Operator</h3>
+          <p class="help-lead">T.U.L.O.N.G. &mdash; Tactical Unit Locator &amp; Network Grid. This dashboard shows you the live map, your vehicle, and every emergency the dispatcher logs.</p>
+          <h4>What you can do here</h4>
+          <ul>
+            <li><b>Receive dispatch calls</b> from the admin with the incident type, address and a route.</li>
+            <li><b>Watch your unit&rsquo;s status</b> (Standby / Responding / Arrived) and GPS.</li>
+            <li><b>See all active incidents</b> and stations on the map, and open the incident log.</li>
+            <li><b>Update an incident</b> you are handling (classification, alarm level) and <b>resolve</b> it.</li>
+            <li><b>Share your phone&rsquo;s live location</b> with the dispatcher.</li>
+            <li><b>Edit your profile</b> and change your password in Settings.</li>
+          </ul>
+          <div class="help-note">Operators cannot create, delete or dispatch incidents &mdash; the admin does that. Your own vehicle is registered by the admin, so you do not need to set anything up.</div>
+          <h4>Header</h4>
+          <ul>
+            <li>Live clock and date, your name and unit (click to edit your profile), <b>Settings</b>, and <b>Logout</b>.</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-dispatch">
+          <h3>Dispatch Calls</h3>
+          <p class="help-lead">When the admin sends your unit to an emergency, a full-screen alert appears and an alarm sounds.</p>
+          <h4>What you will see and hear</h4>
+          <ul>
+            <li>A red dispatch screen with a timer, the <b>incident type</b> (with its classification and alarm level), the <b>address</b>, the <b>distance</b> from you, and your unit ID.</li>
+            <li>A siren with a spoken voice message, and vibration on phones.</li>
+          </ul>
+          <h4>What to do</h4>
+          <ol>
+            <li>Press the <b>RESPOND</b> button on your vehicle&rsquo;s device (ESP32). <b>This is the only thing that stops the alarm.</b></li>
+            <li>Optionally tap <b>View location &amp; route</b> to hide the screen and fly the map to the incident. The alarm keeps reminding you until you press RESPOND on the device.</li>
+            <li>A blue route to the incident is drawn automatically, with distance and ETA, and it refreshes as you move.</li>
+            <li>When you reach the scene, press <b>ARRIVED</b> on the device. The route is cleared and an <i>Arrived</i> banner is shown.</li>
+          </ol>
+          <div class="help-note warn">The timer turns urgent after <b>80 seconds</b> (the turnout-time target). If there is no response, the alarm gets louder in bursts every minute until RESPOND is pressed.</div>
+          <div class="help-note">No sound? Tap the <b>&ldquo;Tap to enable emergency sound&rdquo;</b> button that appears at the bottom-left. Browsers only allow audio after you have touched the page once, so do this at the start of every shift.</div>
+        </section>
+
+        <section class="help-pane" id="hp-vehicle">
+          <h3>My Vehicle &amp; Status</h3>
+          <p class="help-lead">The <b>My Vehicle</b> card in the side panel shows your unit&rsquo;s details and current status.</p>
+          <table class="help-table">
+            <tr><th>Item</th><th>Meaning</th></tr>
+            <tr><td>Unit ID / Type / Station</td><td>Your registered vehicle (set by the admin).</td></tr>
+            <tr><td>GPS</td><td>Your unit&rsquo;s coordinates, or <i>No Fix</i> if the GPS has no signal yet.</td></tr>
+            <tr><td><span class="help-dot" style="background:#27ae60"></span>Standby</td><td>Online and available.</td></tr>
+            <tr><td><span class="help-dot" style="background:#f0883e"></span>Respond</td><td>You are on the way to an incident.</td></tr>
+            <tr><td><span class="help-dot" style="background:#ff4d4d"></span>Arrived</td><td>You are at the scene.</td></tr>
+          </table>
+          <div class="help-note">The three status boxes only <i>show</i> your state &mdash; you change it with the physical <b>STANDBY / RESPONDING / ARRIVED</b> buttons on your ESP32 device. If your device is off, your unit appears <b>offline</b> and cannot receive routes.</div>
+          <p>On the map, vehicle pins are <b>red for firetrucks</b> and <b>blue for ambulances</b>; the label color under the pin shows the status (green, orange or red).</p>
+        </section>
+
+        <section class="help-pane" id="hp-incidents">
+          <h3>Incidents on the Map</h3>
+          <p class="help-lead">Every active emergency appears on the map as a red (fire) or blue (medical) marker, shared live with the admin.</p>
+          <h4>Open an incident</h4>
+          <p>Tap or click a marker to open its popup showing the address and controls.</p>
+          <ul>
+            <li><b>Fire:</b> set the <b>Classification</b> (e.g. Residential, Grass fire, False Alarm) and the <b>Alarm Level</b> (Fire on Progress, 1st&ndash;5th Alarm, Task Force, General Alarm, Under Control, Fire Out).</li>
+            <li><b>Medical:</b> set the <b>Medical Emergency Type</b> (e.g. Vehicular Accident, Drowning, Suspected Stroke). Choose <b>Other</b> to type a specific emergency.</li>
+            <li><b>Resolve &amp; Save</b> closes the incident when the situation is over. The marker turns grey. Choosing <b>Fire Out</b> resolves it automatically.</li>
+          </ul>
+          <p>Changes are time-stamped in the incident timeline and appear instantly on the admin dashboard.</p>
+          <div class="help-note warn">Only resolve an incident when the response is truly finished &mdash; the admin sees it as closed and may export it to the daily report.</div>
+          <h4>Incident log</h4>
+          <p>Open the <b>Events</b> tab to see all incidents, newest first, with filters <b>All / Active / Resolved</b>. Tap an entry to jump to it on the map.</p>
+        </section>
+
+        <section class="help-pane" id="hp-panel">
+          <h3>Side Panel &amp; Counters</h3>
+          <ul>
+            <li><b>Status ribbon</b> (top): counts of online firetrucks and ambulances, active fire and medical incidents, and stations.</li>
+            <li><b>Units</b> tab: your vehicle card and the live units list. Tap a unit to fly to it. Units that are offline are greyed out.</li>
+            <li><b>Events</b> tab: the incident log (see Incidents on the Map).</li>
+            <li><b>Stations</b> tab: fire stations, volunteer brigades and ambulance/rescue teams. Tap one to see it on the map; its popup shows the hotline number. A yellow <b>&asymp;</b> means the pin is approximate.</li>
+            <li>The round arrow button on the panel&rsquo;s edge <b>hides or shows</b> the whole side panel to give the map more room.</li>
+            <li>The <b>Live Tracking</b> box on the map can be collapsed with its small toggle.</li>
+            <li>The sync bar at the bottom-left shows the time of the last successful update from your units.</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-gps">
+          <h3>Sharing My Location (phones)</h3>
+          <p class="help-lead">On a phone or tablet, you can let the admin see exactly where you are during a response.</p>
+          <ol>
+            <li>When the dashboard opens, a prompt asks <b>&ldquo;Share your live location?&rdquo;</b> Tap <b>Allow location</b>, then allow it again in your phone&rsquo;s permission popup.</li>
+            <li>A bar at the bottom shows <b>Sharing live location</b> with your accuracy (&plusmn; metres) and the last update time.</li>
+            <li>Tap <b>Stop</b> on that bar any time to stop sharing; tap <b>Turn on</b> to start again.</li>
+          </ol>
+          <ul>
+            <li>Your location is shared <b>only while this page is open</b> and sharing is on. Logging out also stops it.</li>
+            <li>Your position appears as a blue dot on your own map.</li>
+            <li>If you tapped <i>Not now</i>, use the bottom bar&rsquo;s <b>Turn on</b> button later.</li>
+            <li>Keep the screen on and the page open for continuous updates.</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-settings">
+          <h3>Settings &amp; Password</h3>
+          <p class="help-lead">Click your name badge or the <b>Settings</b> button in the header.</p>
+          <ul>
+            <li><b>Profile picture</b> &mdash; choose a photo (PNG, JPG, WEBP or GIF); it is resized automatically. You can also remove it.</li>
+            <li><b>Full name</b> and <b>Mobile number</b> &mdash; editable. The phone number may contain digits, spaces, + - and brackets.</li>
+            <li><b>Email (login)</b> and <b>Unit / Station</b> &mdash; read-only; ask the admin if they need to change.</li>
+            <li><b>Change password</b> &mdash; enter your current password, then the new one twice (minimum 6 characters).</li>
+          </ul>
+          <p>Press <b>Save</b> to apply. A green message confirms the change.</p>
+        </section>
+
+        <section class="help-pane" id="hp-session">
+          <h3>Session &amp; Security</h3>
+          <ul>
+            <li>You are <b>signed out automatically after 15 minutes of inactivity</b>. Touching or moving the screen keeps you signed in.</li>
+            <li>Use <b>Logout</b> (header) when your shift ends &mdash; this also stops location sharing.</li>
+            <li>Never share your password. Change it in Settings if you think someone else knows it.</li>
+            <li>Notifications and alarms need the page to stay open, so do not close this tab while on duty.</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-trouble">
+          <h3>Troubleshooting</h3>
+          <table class="help-table">
+            <tr><th>Problem</th><th>What to check</th></tr>
+            <tr><td>No alarm when dispatched</td><td>Tap the sound-enable button, raise your volume, and make sure the tab is open and not muted.</td></tr>
+            <tr><td>My unit shows offline</td><td>Check your ESP32 has power and Wi-Fi/data. It reconnects by itself.</td></tr>
+            <tr><td>No route shown</td><td>Press RESPONDING on the device and wait for a GPS fix. If routing is unavailable, a dashed straight line is shown.</td></tr>
+            <tr><td>&ldquo;No GPS fix yet&rdquo;</td><td>Move to open sky; the route appears when a location is found.</td></tr>
+            <tr><td>Admin cannot see my phone</td><td>Check the bottom bar says <i>Sharing live location</i>; allow location in your browser/phone settings.</td></tr>
+            <tr><td>Red sync banner / &ldquo;unit list unavailable&rdquo;</td><td>Check your internet. If it stays, tell the admin so the database permissions can be checked.</td></tr>
+            <tr><td>Logged out suddenly</td><td>The 15-minute inactivity timer ended the session. Sign in again.</td></tr>
+          </table>
+          <p>Need help? Contact your admin or the T.U.L.O.N.G. support team.</p>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Operator manual (the "?" button) ──
+(function(){
+  const ov = document.getElementById('help-overlay');
+  const nav = document.getElementById('help-nav');
+  function show(p){
+    nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+    document.querySelectorAll('.help-pane').forEach(s => s.classList.toggle('on', s.id === 'hp-' + p));
+    document.getElementById('help-body').scrollTop = 0;
+  }
+  nav.addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (b) show(b.dataset.p); });
+  window.openHelp  = () => { ov.classList.add('active'); document.getElementById('help-body').scrollTop = 0; };
+  window.closeHelp = () => ov.classList.remove('active');
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && ov.classList.contains('active')) { closeHelp(); return; }
+    const tag = (e.target && e.target.tagName || '').toLowerCase();
+    if (e.key === '?' && !['input','textarea','select'].includes(tag) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      ov.classList.contains('active') ? closeHelp() : openHelp();
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
