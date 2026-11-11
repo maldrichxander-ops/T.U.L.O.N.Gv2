@@ -91,6 +91,17 @@
             color: var(--primary-accent); margin: 0;
         }
 
+        /* Hero logo + tagline images (from the repo) */
+        .hero-logo {
+            display: block; height: clamp(84px, 11vw, 120px); width: auto; max-width: 100%;
+            object-fit: contain; margin: 0 0 22px;
+            filter: drop-shadow(0 6px 18px rgba(0,0,0,.45));
+        }
+        .tagline-img {
+            display: block; width: min(100%, 420px); height: auto; margin: 26px 0 0;
+            filter: drop-shadow(0 6px 18px rgba(0,0,0,.4));
+        }
+
         /* Last-mile route: the signature motion */
         .route-panel {
             border: 1px solid rgba(61,111,168,.55); border-radius: 12px;
@@ -265,6 +276,8 @@
   .hero{grid-template-columns:1.05fr 1fr;gap:24px;padding:26px 0 24px;}
   h1{font-size:60px;margin:12px 0 10px;letter-spacing:2px;}
   .badge{font-size:10px;}
+  .hero-logo{height:56px;margin-bottom:10px;}
+  .tagline-img{width:min(100%,260px);margin-top:12px;}
   .hero-sub{font-size:16px;letter-spacing:2px;}
   .route-panel{padding:12px 12px 8px;}
   .route-caption{font-size:10px;}
@@ -298,9 +311,11 @@
     <main>
         <section class="hero">
             <div>
+                <img class="hero-logo" src="/tulonglogo.png" alt="T.U.L.O.N.G. logo" onerror="this.style.display='none'">
                 <div class="badge">CLASSIFIED: PROJECT TULONG</div>
                 <h1>T.U.L.O.N.G.</h1>
                 <p class="hero-sub">Tactical Unit Locator &amp; Operations Network Grid</p>
+                <img class="tagline-img" src="/TAGLINE.png" alt="T.U.L.O.N.G. tagline" onerror="this.style.display='none'">
             </div>
 
             <div class="route-panel" aria-hidden="true">
