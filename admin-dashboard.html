@@ -5,6 +5,13 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>T.U.L.O.N.G. Dispatch Dashboard</title>
 
+<!-- PAGE PROTECTION: page stays hidden until auth-guard.js confirms the sign-in and role -->
+<style id="guard-prehide">html{visibility:hidden;}</style>
+<script type="module">
+  import { protectPage } from "/auth-guard.js";
+  protectPage({ role: "admin" });
+</script>
+
 <!-- SEO -->
 <meta name="description" content="T.U.L.O.N.G. Dispatch Dashboard: real-time tactical unit locator and incident grid for faster last-mile emergency response.">
 <meta name="keywords" content="TULONG, dispatch dashboard, tactical unit locator, network grid, emergency response, Cebu, Philippines">
@@ -292,6 +299,7 @@ window.fsArchiveDoc     = (id) => doc(db, 'incidentArchive', id);
     <img src="tulonglogo.png" style="height:45px;" onerror="this.style.display='none'"/>
     <div class="brand-badge">T.U.L.O.N.G.</div>
     <h2 style="flex:1; font-size:18px; margin:0; letter-spacing:1px;">Tactical Unit Locator &amp; Network Grid</h2>
+    <button class="help-btn" id="help-open" type="button" onclick="openHelp()" title="How to use T.U.L.O.N.G. (manual)" aria-label="Open user manual">?</button>
     <div style="text-align:right;">
         <div style="font-size:22px; font-weight:bold; letter-spacing:3px;">TULONG</div>
         <div style="font-size:11px; color:#8b949e; max-width:230px; line-height:1.35;">Where Technology Meets Public Safety for Real Time Response and Real Life Impact.</div>
@@ -330,6 +338,8 @@ window.fsArchiveDoc     = (id) => doc(db, 'incidentArchive', id);
         <button class="wipe-btn"  onclick="wipeMapAndExport()"><svg class="ico" aria-hidden="true"><use href="#i-trash"/></svg> Wipe Map &amp; Export</button>
         <button class="history-btn" onclick="openHistory()"><svg class="ico" aria-hidden="true"><use href="#i-clock"/></svg> Report History</button>
          <button class="register-btn" onclick="openRegisterModal()"><svg class="ico" aria-hidden="true"><use href="#i-plus"/></svg> Register Emergency Vehicle</button>
+        <a class="info-link" href="/about-us" target="_blank" rel="noopener">About Us</a>
+        <a class="info-link" href="/contact-us" target="_blank" rel="noopener">Contact Us</a>
         <button class="logout-btn" id="logout-trigger"><svg class="ico" aria-hidden="true"><use href="#i-logout"/></svg> Terminate Session</button>
 
         <div class="section-lbl">Fire Stations &amp; Rescue</div>
@@ -2773,6 +2783,320 @@ button, input, select, textarea{ font-family: inherit; }
   .alert-title{ font-size:14px; }
 }
 </style>
+
+
+<style>
+/* ── "?" HELP BUTTON + SIDEBAR INFO LINKS ── */
+.help-btn{flex:0 0 auto;width:38px;height:38px;border-radius:50%;cursor:pointer;color:#fff;font-family:var(--font-display);
+  font-size:22px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;
+  background:linear-gradient(45deg,#3d6fa8,#0a1f3d);border:1px solid #6ea3e0;box-shadow:0 0 0 0 rgba(110,163,224,.5);
+  transition:box-shadow .2s,filter .2s,transform .1s;}
+.help-btn:hover{filter:brightness(1.2);box-shadow:0 0 14px rgba(110,163,224,.6);}
+.help-btn:active{transform:scale(.94);}
+.info-link{display:block;box-sizing:border-box;width:100%;margin-top:5px;padding:10px;text-align:center;text-decoration:none;
+  border:1px solid rgba(61,111,168,.6);border-radius:4px;background:rgba(61,111,168,.12);color:#c9d1d9;
+  font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;transition:all .2s;}
+.info-link:hover{background:linear-gradient(45deg,#3d6fa8,#12305c);color:#fff;box-shadow:0 0 14px rgba(61,111,168,.45);}
+
+/* ── USER MANUAL MODAL ── */
+.help-overlay{display:none;position:fixed;inset:0;z-index:9500;background:rgba(0,0,0,.82);align-items:center;justify-content:center;padding:12px;box-sizing:border-box;}
+.help-overlay.active{display:flex;}
+.help-modal{width:900px;max-width:96vw;height:86vh;max-height:96vh;display:flex;flex-direction:column;background:#02101D;
+  border:1px solid #3d6fa8;border-radius:12px;box-shadow:0 24px 60px rgba(0,0,0,.65);color:#c9d1d9;overflow:hidden;animation:modalIn .25s ease;}
+.help-head{display:flex;align-items:center;gap:12px;padding:16px 20px;background:#04182b;border-bottom:1px solid #1a3a5c;}
+.help-head-ico{width:44px;height:44px;border-radius:8px;border:1px solid #3d6fa8;display:flex;align-items:center;justify-content:center;
+  font-family:var(--font-display);font-size:26px;font-weight:700;color:#6ea3e0;flex:none;}
+.help-title{font-family:var(--font-display);font-size:24px;font-weight:700;letter-spacing:.8px;color:#fff;}
+.help-sub{font-size:13px;color:#9aa5b1;margin-top:2px;}
+.help-close{margin-left:auto;width:36px;height:36px;border-radius:6px;border:1px solid #3a4451;background:none;color:#c9d1d9;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;flex:none;font-size:18px;}
+.help-close:hover{color:#ff4d4d;border-color:#ff4d4d;}
+.help-main{display:flex;flex:1;min-height:0;}
+.help-nav{width:230px;flex:none;overflow-y:auto;padding:10px;background:#031425;border-right:1px solid #1a3a5c;}
+.help-nav button{display:block;width:100%;text-align:left;margin-bottom:4px;padding:9px 12px;border:1px solid transparent;border-radius:6px;
+  background:none;color:#b5bfca;cursor:pointer;font-family:var(--font-display);font-size:16px;font-weight:600;letter-spacing:.5px;}
+.help-nav button:hover{background:rgba(61,111,168,.2);color:#fff;}
+.help-nav button.on{background:rgba(255,90,54,.14);border-color:#ff5a36;color:#fff;}
+.help-body{flex:1;overflow-y:auto;padding:20px 26px 28px;font-size:15px;line-height:1.6;}
+.help-body h3{font-family:var(--font-display);font-size:26px;font-weight:700;letter-spacing:.6px;color:#fff;margin:0 0 4px;}
+.help-body h4{font-family:var(--font-display);font-size:18px;font-weight:700;letter-spacing:1px;color:#ff5a36;text-transform:uppercase;margin:20px 0 6px;}
+.help-lead{color:#9aa5b1;margin:0 0 12px;}
+.help-body p{margin:6px 0;}
+.help-body ol,.help-body ul{margin:6px 0 6px 4px;padding-left:22px;}
+.help-body li{margin:4px 0;}
+.help-body b{color:#fff;}
+.help-body code,.help-body kbd{font-family:var(--mono);font-size:13px;background:#04182b;border:1px solid #1a3a5c;border-radius:4px;padding:1px 6px;color:#ffcc00;}
+.help-note{margin:12px 0;padding:10px 14px;border-left:4px solid #3d6fa8;background:rgba(61,111,168,.12);border-radius:0 6px 6px 0;}
+.help-note.warn{border-left-color:#ff5a36;background:rgba(255,90,54,.1);}
+.help-table{width:100%;border-collapse:collapse;margin:8px 0;font-size:14px;}
+.help-table th,.help-table td{text-align:left;padding:7px 10px;border-bottom:1px solid rgba(61,111,168,.3);vertical-align:top;}
+.help-table th{font-family:var(--font-display);font-size:14px;letter-spacing:1px;color:#9aa5b1;text-transform:uppercase;}
+.help-dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;}
+.help-pane{display:none;}
+.help-pane.on{display:block;}
+@media (max-width:900px) and (max-height:600px){
+  .help-modal{height:96vh;}
+  .help-head{padding:8px 14px;}
+  .help-head-ico{width:32px;height:32px;font-size:20px;}
+  .help-title{font-size:19px;}
+  .help-sub{display:none;}
+  .help-nav{width:150px;padding:6px;}
+  .help-nav button{font-size:14px;padding:6px 8px;}
+  .help-body{padding:12px 16px 20px;font-size:13px;}
+  .help-body h3{font-size:21px;}
+  .help-body h4{font-size:15px;}
+  .help-btn{width:32px;height:32px;font-size:19px;}
+}
+@media (max-width:640px){
+  .help-main{flex-direction:column;}
+  .help-nav{width:auto;display:flex;gap:4px;overflow-x:auto;overflow-y:hidden;border-right:none;border-bottom:1px solid #1a3a5c;padding:6px;}
+  .help-nav button{white-space:nowrap;width:auto;margin:0;}
+}
+</style>
+
+<!-- USER MANUAL — opened with the "?" button in the header (or press ? / Esc to close) -->
+<div class="help-overlay" id="help-overlay" onclick="if(event.target===this)closeHelp()">
+  <div class="help-modal" role="dialog" aria-modal="true" aria-labelledby="help-title">
+    <div class="help-head">
+      <div class="help-head-ico">?</div>
+      <div style="min-width:0;">
+        <div class="help-title" id="help-title">T.U.L.O.N.G. User Manual</div>
+        <div class="help-sub">How to use the Admin Dispatch Dashboard &mdash; its functions and features.</div>
+      </div>
+      <button class="help-close" type="button" onclick="closeHelp()" title="Close (Esc)" aria-label="Close manual">&#10005;</button>
+    </div>
+    <div class="help-main">
+      <nav class="help-nav" id="help-nav" aria-label="Manual sections">
+        <button type="button" data-p="overview" class="on">Overview</button>
+        <button type="button" data-p="report">Reporting an Emergency</button>
+        <button type="button" data-p="manage">Managing Incidents</button>
+        <button type="button" data-p="dispatch">Nearby Units &amp; Dispatch</button>
+        <button type="button" data-p="units">Live Units (ESP32)</button>
+        <button type="button" data-p="terminal">Command Terminal</button>
+        <button type="button" data-p="register">Register Vehicle</button>
+        <button type="button" data-p="reports">Reports &amp; History</button>
+        <button type="button" data-p="stations">Stations &amp; Map</button>
+        <button type="button" data-p="alerts">Notifications</button>
+        <button type="button" data-p="session">Session &amp; Security</button>
+        <button type="button" data-p="trouble">Troubleshooting</button>
+      </nav>
+      <div class="help-body" id="help-body">
+
+        <section class="help-pane on" id="hp-overview">
+          <h3>What is T.U.L.O.N.G.?</h3>
+          <p class="help-lead">Tactical Unit Locator &amp; Network Grid &mdash; a real-time map for dispatching fire trucks and ambulances in Cebu and Mactan.</p>
+          <p>The admin dashboard is the control center. From here you can log emergencies on the map, watch registered vehicles (ESP32 units) move live, send a unit to an incident, talk to units through the terminal, register new vehicles and operator accounts, and export end-of-day reports.</p>
+          <h4>Screen layout</h4>
+          <ul>
+            <li><b>Left sidebar</b> &mdash; Report Emergency button, live counters, the list of live units, report/export buttons, Register Emergency Vehicle, About/Contact links, Terminate Session, and the list of fire stations and rescue teams.</li>
+            <li><b>Map (center)</b> &mdash; incidents, units and stations. Use the search box (top-left of the map) to find a street in Cebu/Mactan. The <b>Live Tracking</b> panel (top-right) shows how many firetrucks, ambulances and incidents are active.</li>
+            <li><b>Nearby Units panel (right)</b> &mdash; opens when you choose an incident; used to dispatch units.</li>
+            <li><b>ESP32 Command Terminal (bottom)</b> &mdash; click its bar to expand or collapse.</li>
+            <li><b>? button (header)</b> &mdash; opens this manual.</li>
+          </ul>
+          <h4>Sidebar counters</h4>
+          <table class="help-table">
+            <tr><th>Counter</th><th>Meaning</th></tr>
+            <tr><td>Total Units (Live)</td><td>Registered vehicles that are online right now.</td></tr>
+            <tr><td>Active Incidents</td><td>Fire + medical incidents that are not yet resolved.</td></tr>
+            <tr><td>Nearby Stations</td><td>Number of fire stations / rescue teams listed on the map.</td></tr>
+          </table>
+          <div class="help-note">On the small 7&Prime; touchscreen, the sidebar is hidden behind the <b>MENU</b> button at the top-left.</div>
+        </section>
+
+        <section class="help-pane" id="hp-report">
+          <h3>Reporting an Emergency</h3>
+          <p class="help-lead">Put a new incident on the map. It appears instantly for every admin and operator.</p>
+          <ol>
+            <li>Press <b>Report Emergency</b> in the sidebar. The button turns yellow and the cursor becomes a crosshair.</li>
+            <li>Click the exact location on the map. The address is looked up automatically.</li>
+            <li>In the popup, choose <b>FIRE</b> or <b>MEDICAL</b>.</li>
+          </ol>
+          <p>The incident gets an ID like <code>INC-20261111-00001</code>, starts as <b>For Verification</b>, and the Nearby Units panel opens so you can dispatch right away.</p>
+          <div class="help-note">Changed your mind? Press the yellow button again to cancel, or just close the popup &mdash; nothing is saved until you pick FIRE or MEDICAL.</div>
+        </section>
+
+        <section class="help-pane" id="hp-manage">
+          <h3>Managing Incidents</h3>
+          <p class="help-lead">Click any incident marker to open its control popup.</p>
+          <h4>Fire incidents</h4>
+          <ul>
+            <li><b>Classification</b> &mdash; For Verification, False Alarm, Rubbish Fire, Post Fire, Vehicle fire, Grass fire, Residential, Commercial.</li>
+            <li><b>Alarm Level</b> &mdash; from Fire out upon arrival / Fire on Progress up through 1st&ndash;5th Alarm, Task Force Alpha to India, General Alarm, Under Control, and Fire Out. The current tactical level is shown as a label under the marker.</li>
+            <li>Choosing <b>Fire Out</b> automatically resolves the incident after a moment.</li>
+          </ul>
+          <h4>Medical incidents</h4>
+          <ul>
+            <li><b>Medical Emergency Type</b> &mdash; Suspected Heart Attack / Cardiac Arrest, Suspected Stroke, Vehicular Accident, Drowning, Possible Suicide, Falling Incident, Fire Incident, Electrocution, or Other.</li>
+            <li>For <b>Other</b>, type the specific emergency in the box that appears.</li>
+          </ul>
+          <h4>Buttons in the popup</h4>
+          <table class="help-table">
+            <tr><th>Button</th><th>What it does</th></tr>
+            <tr><td>Nearby Units &amp; Dispatch</td><td>Opens the dispatch panel for this incident.</td></tr>
+            <tr><td>Resolve &amp; Save</td><td>Marks the incident resolved (marker turns grey, routes are removed). It stays on the map until you export it.</td></tr>
+            <tr><td>Delete</td><td>Removes the incident completely. Use for mistakes only &mdash; it is not saved to any report.</td></tr>
+          </table>
+          <p>Every status or alarm change is written to the incident&rsquo;s <b>timeline</b> with a time stamp, which is included in the Excel report.</p>
+        </section>
+
+        <section class="help-pane" id="hp-dispatch">
+          <h3>Nearby Units &amp; Dispatch</h3>
+          <p class="help-lead">Find the closest online vehicles and send them to an incident.</p>
+          <ol>
+            <li>Click an incident, then <b>Nearby Units &amp; Dispatch</b> (it also opens automatically for incidents you just created).</li>
+            <li>Pick a <b>Search radius</b> (3, 5, 10, 20 or 50 km). Only units that are online <i>and</i> have a GPS fix are listed, nearest first, with distance and a rough ETA.</li>
+            <li>Press <b>Respond</b> beside a unit &mdash; or <b>Respond Nearest Unit</b> to automatically pick the closest unit that is not already responding.</li>
+            <li>The button changes to <b>Sent</b>. The unit&rsquo;s operator dashboard rings and shows the incident location and address.</li>
+          </ol>
+          <h4>What Respond really does</h4>
+          <ul>
+            <li>Sends the text <code>UNIT-ID Respond</code> to that unit&rsquo;s ESP32 (shown in the terminal).</li>
+            <li>Saves a dispatch alert that the operator dashboard picks up.</li>
+            <li>When the unit presses its <b>RESPONDING</b> button, a blue route to the incident is drawn automatically (with distance and ETA) and refreshes as the unit moves.</li>
+          </ul>
+          <p>Use <b>Show incident on map</b> to fly back to the incident, and the <b>UNITS</b> tab on the panel&rsquo;s left edge to hide or show the panel.</p>
+        </section>
+
+        <section class="help-pane" id="hp-units">
+          <h3>Live Units (ESP32)</h3>
+          <p class="help-lead">Every registered vehicle reports its status and GPS location through Blynk, refreshed every 5 seconds.</p>
+          <table class="help-table">
+            <tr><th>Status</th><th>Marker / badge</th><th>Meaning</th></tr>
+            <tr><td><span class="help-dot" style="background:#27ae60"></span>STANDBY</td><td>Green</td><td>Online and available.</td></tr>
+            <tr><td><span class="help-dot" style="background:#f0883e"></span>RESPONDING</td><td>Orange</td><td>On the way to an incident (route is drawn).</td></tr>
+            <tr><td><span class="help-dot" style="background:#ff4d4d"></span>ARRIVED</td><td>Red</td><td>At the scene (route is cleared).</td></tr>
+            <tr><td><span class="help-dot" style="background:#555"></span>OFFLINE</td><td>Greyed in the list</td><td>Device not connected, or no valid token. It is removed from the map.</td></tr>
+          </table>
+          <ul>
+            <li><b>Pin colors</b> &mdash; red pin = firetruck, blue pin = ambulance.</li>
+            <li>Click a unit card in the sidebar to fly to it; click its marker for coordinates.</li>
+            <li>A unit with no GPS fix shows <i>No GPS fix</i> and cannot be dispatched until it gets one.</li>
+            <li>Going online, offline, and every button press are logged in the terminal.</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-terminal">
+          <h3>ESP32 Command Terminal</h3>
+          <p class="help-lead">Send text to your vehicles and read what they send back (Blynk virtual pin V3).</p>
+          <ol>
+            <li>Click the terminal bar at the bottom to expand it.</li>
+            <li>Choose <b>ALL UNITS</b> or one specific unit in the dropdown.</li>
+            <li>Type your message and press <kbd>Enter</kbd> or <b>SEND</b>.</li>
+          </ol>
+          <table class="help-table">
+            <tr><th>Tag</th><th>Meaning</th></tr>
+            <tr><td><code>[TX &gt;&gt;]</code></td><td>Message you sent.</td></tr>
+            <tr><td><code>[ACK]</code></td><td>Delivered to Blynk / unit came online.</td></tr>
+            <tr><td><code>[RX &lt;&lt;]</code></td><td>Message or button press received from a unit.</td></tr>
+            <tr><td><code>[ERR]</code></td><td>Failure, unit offline, or missing token.</td></tr>
+            <tr><td><code>[SYS]</code></td><td>System information.</td></tr>
+          </table>
+          <p>The terminal opens by itself when a unit goes online/offline or sends a message.</p>
+        </section>
+
+        <section class="help-pane" id="hp-register">
+          <h3>Register Emergency Vehicle</h3>
+          <p class="help-lead">Add a new ESP32 unit and create the driver&rsquo;s login in one step.</p>
+          <ol>
+            <li>Press <b>Register Emergency Vehicle</b> in the sidebar.</li>
+            <li>Fill in <b>Unit ID</b> (e.g. A-004), <b>Vehicle Type</b>, <b>Plate Number</b>, <b>Station / Agency</b>, and the <b>Blynk Token</b> of the ESP32 (Blynk Console &rarr; Device &rarr; Device Info).</li>
+            <li>Fill in the operator&rsquo;s <b>Full Name</b>, <b>Email</b> and a <b>Password</b> (minimum 6 characters).</li>
+            <li>Press <b>Register Unit &amp; Create Account</b>.</li>
+          </ol>
+          <p>The Blynk token is checked first, duplicate Unit IDs are rejected, and your admin session is not affected. On success, a summary of the login is shown: the operator signs in at <code>tulong.services/operator-dashboard</code> with that email and password.</p>
+          <div class="help-note warn">Copy the credentials from the summary before closing the window &mdash; the password is not shown again. Share it with the operator privately.</div>
+        </section>
+
+        <section class="help-pane" id="hp-reports">
+          <h3>Reports &amp; History</h3>
+          <p class="help-lead">Export incidents to Excel and keep a permanent archive.</p>
+          <table class="help-table">
+            <tr><th>Button</th><th>What it does</th></tr>
+            <tr><td>Export EOD Report</td><td>Downloads an Excel file of <b>resolved</b> incidents only, then clears them from the map. Active incidents stay.</td></tr>
+            <tr><td>Wipe Map &amp; Export</td><td>Downloads a report of <b>everything</b> (active + resolved) after a confirmation, then clears the whole map.</td></tr>
+            <tr><td>Report History</td><td>Lists every past export. <b>Download</b> a copy again or <b>Show on map</b> to view archived incidents (press <b>Hide</b> on the chip to remove them).</td></tr>
+          </table>
+          <p>The workbook has sheets for <b>All Incidents</b>, <b>Fire Incidents</b> and <b>Medical Incidents</b> with ID, location, coordinates, reported/resolved time, duration, classification, final alarm and the progression timeline.</p>
+          <div class="help-note">Incidents are copied to the archive <i>before</i> being cleared, so nothing is lost if a download fails. If Excel cannot be created, a CSV copy is downloaded instead.</div>
+          <div class="help-note warn">Always export before pressing <b>Terminate Session</b> or wiping the map.</div>
+        </section>
+
+        <section class="help-pane" id="hp-stations">
+          <h3>Stations &amp; Map</h3>
+          <ul>
+            <li>The <b>Fire Stations &amp; Rescue</b> list in the sidebar shows BFP stations (red-orange border), volunteer brigades (blue) and ambulance/rescue teams (green). Click one to fly to it and see its hotline number.</li>
+            <li>A yellow <b>&asymp;</b> next to a station means its pin is approximate &mdash; verify before relying on it.</li>
+            <li>The map search box finds streets inside the Cebu/Mactan coverage area; results outside it are rejected.</li>
+            <li>Scroll or pinch to zoom; drag to move around.</li>
+            <li>The <b>Blynk sync</b> bar at the bottom-left shows the time of the last successful unit update (green dot = at least one unit reachable).</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-alerts">
+          <h3>Notifications</h3>
+          <ul>
+            <li>When an incident is reported from <i>another</i> dashboard, a card slides in on the left with the address and a <b>View on map</b> button, plus a short alert tone. New-emergency cards stay until dismissed.</li>
+            <li>When an incident is resolved, a green card appears and clears itself after 15 seconds.</li>
+            <li>If the browser tab is in the background, a desktop notification is shown (allow notifications when asked).</li>
+            <li>Sound and notifications become active after your first click or key press on the page (a browser rule).</li>
+            <li>A red banner under the header means incident sync is failing; it retries automatically.</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-session">
+          <h3>Session &amp; Security</h3>
+          <ul>
+            <li>This page is <b>admin only</b>. Signed-out visitors are sent to the login page, and operators are sent to their own dashboard.</li>
+            <li>For safety you are <b>signed out automatically after 15 minutes of inactivity</b> (no click, key press, scroll or mouse movement).</li>
+            <li>Use <b>Terminate Session</b> to log out manually. Download your EOD report first.</li>
+            <li>Never share the admin password. Operators only ever need their own login.</li>
+            <li><b>About Us</b> and <b>Contact Us</b> (sidebar) open in a new tab so your live map keeps running.</li>
+          </ul>
+        </section>
+
+        <section class="help-pane" id="hp-trouble">
+          <h3>Troubleshooting</h3>
+          <table class="help-table">
+            <tr><th>Problem</th><th>What to check</th></tr>
+            <tr><td>A unit shows OFFLINE</td><td>Is the ESP32 powered and on Wi-Fi? Is the Blynk token correct? It reappears automatically once connected.</td></tr>
+            <tr><td>Unit is missing from Nearby Units</td><td>It must be online with a GPS fix and inside the search radius &mdash; try 20 or 50 km.</td></tr>
+            <tr><td>No route drawn</td><td>The unit must press RESPONDING and have a GPS fix, and an active incident must exist. If routing services are down, a dashed straight line is drawn instead.</td></tr>
+            <tr><td>Red &ldquo;sync&rdquo; banner</td><td>Check the internet connection. Persistent <i>permission denied</i> means the Firestore rules need updating.</td></tr>
+            <tr><td>Export did not download</td><td>Allow downloads for this site. The incidents were kept; use <b>Report History &rarr; Download</b>.</td></tr>
+            <tr><td>Logged out unexpectedly</td><td>The 15-minute inactivity timer ended the session. Sign in again.</td></tr>
+            <tr><td>No sound for alerts</td><td>Click anywhere on the page once, and check the browser/tab is not muted.</td></tr>
+          </table>
+          <p>Still stuck? Use <b>Contact Us</b> in the sidebar to reach the T.U.L.O.N.G. team.</p>
+        </section>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── User manual (the "?" button) ──
+(function(){
+  const ov = document.getElementById('help-overlay');
+  const nav = document.getElementById('help-nav');
+  function show(p){
+    nav.querySelectorAll('button').forEach(b => b.classList.toggle('on', b.dataset.p === p));
+    document.querySelectorAll('.help-pane').forEach(s => s.classList.toggle('on', s.id === 'hp-' + p));
+    document.getElementById('help-body').scrollTop = 0;
+  }
+  nav.addEventListener('click', e => { const b = e.target.closest('button[data-p]'); if (b) show(b.dataset.p); });
+  window.openHelp  = () => { ov.classList.add('active'); document.getElementById('help-body').scrollTop = 0; };
+  window.closeHelp = () => ov.classList.remove('active');
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && ov.classList.contains('active')) { closeHelp(); return; }
+    const tag = (e.target && e.target.tagName || '').toLowerCase();
+    if (e.key === '?' && !['input','textarea','select'].includes(tag) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      ov.classList.contains('active') ? closeHelp() : openHelp();
+    }
+  });
+})();
+</script>
 
 </body>
 </html>
