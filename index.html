@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>T.U.L.O.N.G. | Secure Access</title>
+    <link rel="canonical" href="https://tulong.services/">
 
     <!-- SEO -->
     <meta name="description" content="T.U.L.O.N.G. (Tactical Unit Locator &amp; Network Grid) is a real-time tactical grid that bridges the last-mile gap in emergency response, helping local units coordinate faster for community safety.">
@@ -16,21 +17,22 @@
     <!-- Open Graph / Facebook -->
     <meta property="og:type" content="website">
     <meta property="og:site_name" content="T.U.L.O.N.G.">
+    <meta property="og:url" content="https://tulong.services/">
     <meta property="og:title" content="T.U.L.O.N.G. | Tactical Unit Locator &amp; Network Grid">
     <meta property="og:description" content="Real-time data for faster, coordinated last-mile emergency response and community safety.">
-    <meta property="og:image" content="tulonglogo.png">
+    <meta property="og:image" content="https://tulong.services/tulonglogo.png">
     <meta property="og:locale" content="en_PH">
 
     <!-- Twitter -->
     <meta name="twitter:card" content="summary">
     <meta name="twitter:title" content="T.U.L.O.N.G. | Tactical Unit Locator &amp; Network Grid">
     <meta name="twitter:description" content="Real-time data for faster, coordinated last-mile emergency response and community safety.">
-    <meta name="twitter:image" content="tulonglogo.png">
+    <meta name="twitter:image" content="https://tulong.services/tulonglogo.png">
 
     <!-- Favicon -->
-    <link rel="icon" type="image/png" sizes="64x64" href="favicon.png">
-    <link rel="shortcut icon" href="favicon.ico">
-    <link rel="apple-touch-icon" href="tulonglogo.png">
+    <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png">
+    <link rel="shortcut icon" href="/favicon.ico">
+    <link rel="apple-touch-icon" href="/tulonglogo.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
@@ -394,8 +396,8 @@
 <body>
 
 <!-- Background photo (falls back to .jpg if .jpeg isn't found) -->
-<img class="bg-img" src="background.jpeg" alt=""
-     onerror="var f=['background.jpg','background.png','background.jpeg.jpg'];var i=+(this.dataset.i||0);if(i<f.length){this.dataset.i=i+1;this.src=f[i];}else{this.style.display='none';console.warn('Background image not found next to this HTML file.');}">
+<img class="bg-img" src="/background.jpeg" alt=""
+     onerror="var f=['/background.jpg','/background.png','/background.jpeg.jpg'];var i=+(this.dataset.i||0);if(i<f.length){this.dataset.i=i+1;this.src=f[i];}else{this.style.display='none';console.warn('Background image not found in the site root.');}">
 <div class="bg-overlay"></div>
 
 <div class="login-card">
@@ -403,7 +405,7 @@
     <div class="brand-panel">
         <div>
             <div class="logo-area">
-                <img src="tulonglogo.png" alt="T.U.L.O.N.G. Logo"
+                <img src="/tulonglogo.png" alt="T.U.L.O.N.G. Logo"
                      onerror="this.src='https://via.placeholder.com/80/ff5a36/fff?text=T'">
             </div>
 
@@ -421,12 +423,12 @@
 
         <div>
             <div class="tactical-footer">
-                <a href="about-us.html"   class="back-btn">ABOUT US</a>
-                <a href="contact-us.html" class="back-btn">CONTACT US</a>
+                <a href="/about-us"   class="back-btn">ABOUT US</a>
+                <a href="/contact-us" class="back-btn">CONTACT US</a>
             </div>
             <div class="legal-links">
-                <a href="terms.html">Terms of Service</a>
-                <a href="privacy.html">Privacy Policy</a>
+                <a href="/terms">Terms of Service</a>
+                <a href="/privacy">Privacy Policy</a>
             </div>
         </div>
     </div>
@@ -477,6 +479,10 @@ const app       = initializeApp(firebaseConfig);
 const analytics = getAnalytics(app);
 const auth      = getAuth(app);
 
+// ── Clean URL destinations (no .html) ──
+const ADMIN_PATH    = '/admin-dashboard';
+const OPERATOR_PATH = '/operator-dashboard';
+
 const loginForm   = document.getElementById('loginForm');
 const btn         = document.getElementById('loginBtn');
 const routeStatus = document.getElementById('routeStatus');
@@ -506,24 +512,22 @@ loginForm.addEventListener('submit', async (e) => {
         setStatus('checking', '⬡ CHECKING CLEARANCE LEVEL...');
 
         // ── Step 2: Route by email — only one admin account ──
-        // ONLY this exact email is routed to the admin dashboard.
-        // Every other account, no exceptions, goes to operator-dashboard.
-        // NOTE: update this to match whatever admin email you create
-        // in Firebase Console → Authentication → Users.
+        // This only decides which page opens. Real protection is the
+        // Firestore rules + auth-guard.js on each dashboard page.
         const ADMIN_EMAIL = 'admin@tulong.com';
 
         if (cred.user.email.toLowerCase() === ADMIN_EMAIL) {
             btn.innerText = "ACCESS GRANTED — ADMIN";
             btn.style.background = "linear-gradient(45deg, #ff5a36, #c73e1d)";
             setStatus('admin', '🔴 ADMIN ACCESS — Routing to Command Dashboard...');
-            setTimeout(() => { window.location.href = 'admin-dashboard'; }, 1000);
+            setTimeout(() => { window.location.href = ADMIN_PATH; }, 1000);
 
         } else {
             // Every registered operator lands here — no exceptions
             btn.innerText = "ACCESS GRANTED — OPERATOR";
             btn.style.background = "linear-gradient(45deg, #3d6fa8, #0a1f3d)";
             setStatus('operator', '🔵 OPERATOR ACCESS — Routing to Unit Dashboard...');
-            setTimeout(() => { window.location.href = 'operator-dashboard'; }, 1000);
+            setTimeout(() => { window.location.href = OPERATOR_PATH; }, 1000);
         }
 
     } catch (error) {
