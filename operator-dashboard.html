@@ -353,13 +353,19 @@ button, input, select, textarea { font-family: inherit; }
 .ov-body { margin-top: 10px; }
 .right-panel { transition: width 0.25s ease; }
 .right-panel.collapsed { width: 0; border-left: none; }
+/* Floating round map-control button — sits inboard on the map (never on the screen edge/bezel)
+   so it stays reachable on a 7" touchscreen whose casing covers the edges. */
 .panel-toggle {
-    position: absolute; right: 0; top: calc(50% - 32px); z-index: 1000;
-    width: 22px; height: 64px; border: none; cursor: pointer; color: #fff; font-size: 13px;
-    border-radius: 6px 0 0 6px; background: linear-gradient(45deg, #ff5a36, #c73e1d);
-    box-shadow: -2px 0 10px rgba(0,0,0,0.4); transition: filter .2s;
+    position: absolute; right: 22px; bottom: 22px; z-index: 1000;
+    width: 56px; height: 56px; border: none; cursor: pointer; color: #fff; font-size: 20px;
+    border-radius: 50%; background: linear-gradient(135deg, #ff5a36, #c73e1d);
+    box-shadow: 0 6px 18px rgba(0,0,0,0.55), 0 0 0 4px rgba(255,90,54,0.18);
+    display: flex; align-items: center; justify-content: center;
+    transition: filter .2s, transform .15s;
 }
+.panel-toggle .ico { width: 24px; height: 24px; }
 .panel-toggle:hover { filter: brightness(1.15); }
+.panel-toggle:active { transform: scale(0.92); }
 
 /* ── MY VEHICLE PANEL ── */
 .my-vehicle-panel {
@@ -560,7 +566,8 @@ body.gps-mobile .blynk-status { bottom: 84px; }
     .ov-divider { margin: 5px 0; }
     .ov-toggle { width: 18px; height: 18px; font-size: 12px; }
     .leaflet-control-zoom a { width: 26px !important; height: 26px !important; line-height: 26px !important; }
-    .panel-toggle { height: 44px; width: 18px; font-size: 11px; }
+    .panel-toggle { width: 46px; height: 46px; right: 12px; bottom: 12px; font-size: 16px; }
+    .panel-toggle .ico { width: 20px; height: 20px; }
     .blynk-status { bottom: 6px; left: 6px; padding: 3px 8px; font-size: 10px; }
 
     /* Right panel: narrower, one section at a time via tabs */
@@ -2849,6 +2856,8 @@ button, input, select, textarea{ font-family: inherit; }
 .help-dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;}
 .help-pane{display:none;}
 .help-pane.on{display:block;}
+.help-img{width:100%;max-width:640px;display:block;margin:12px 0;border-radius:10px;border:1px solid rgba(61,111,168,.4);box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.help-img-cap{font-size:12px;color:#8b96a3;margin:-6px 0 14px;text-align:center;}
 @media (max-width:900px) and (max-height:600px){
   .help-modal{height:96vh;}
   .help-head{padding:8px 14px;}
@@ -2897,6 +2906,8 @@ button, input, select, textarea{ font-family: inherit; }
         <section class="help-pane on" id="hp-overview">
           <h3>Welcome, Operator</h3>
           <p class="help-lead">T.U.L.O.N.G. &mdash; Tactical Unit Locator &amp; Network Grid. This dashboard shows you the live map, your vehicle, and every emergency the dispatcher logs.</p>
+          <img class="help-img" src="guide-op-layout.png" alt="Operator dashboard layout: map, status ribbon, and the right-hand panel of Units, Events and Stations"/>
+          <div class="help-img-cap">The operator dashboard layout</div>
           <h4>What you can do here</h4>
           <ul>
             <li><b>Receive dispatch calls</b> from the admin with the incident type, address and a route.</li>
@@ -2916,6 +2927,8 @@ button, input, select, textarea{ font-family: inherit; }
         <section class="help-pane" id="hp-dispatch">
           <h3>Dispatch Calls</h3>
           <p class="help-lead">When the admin sends your unit to an emergency, a full-screen alert appears and an alarm sounds.</p>
+          <img class="help-img" src="guide-op-dispatch.png" alt="Dispatch alert screen: incident type, address, distance and unit ID with a siren and RESPOND prompt"/>
+          <div class="help-img-cap">What you see when the admin calls your unit</div>
           <h4>What you will see and hear</h4>
           <ul>
             <li>A red dispatch screen with a timer, the <b>incident type</b> (with its classification and alarm level), the <b>address</b>, the <b>distance</b> from you, and your unit ID.</li>
@@ -2935,6 +2948,8 @@ button, input, select, textarea{ font-family: inherit; }
         <section class="help-pane" id="hp-vehicle">
           <h3>My Vehicle &amp; Status</h3>
           <p class="help-lead">The <b>My Vehicle</b> card in the side panel shows your unit&rsquo;s details and current status.</p>
+          <img class="help-img" src="guide-op-status.png" alt="My Vehicle card showing unit status, mapped to the ESP32 device's STANDBY, RESPONDING and ARRIVED buttons"/>
+          <div class="help-img-cap">Unit status &mdash; set by the physical buttons on your ESP32 device</div>
           <table class="help-table">
             <tr><th>Item</th><th>Meaning</th></tr>
             <tr><td>Unit ID / Type / Station</td><td>Your registered vehicle (set by the admin).</td></tr>
@@ -2965,12 +2980,14 @@ button, input, select, textarea{ font-family: inherit; }
 
         <section class="help-pane" id="hp-panel">
           <h3>Side Panel &amp; Counters</h3>
+          <img class="help-img" src="guide-op-panel.png" alt="Side panel toggle and GPS location-sharing bar"/>
+          <div class="help-img-cap">The floating panel toggle and the location-sharing bar</div>
           <ul>
             <li><b>Status ribbon</b> (top): counts of online firetrucks and ambulances, active fire and medical incidents, and stations.</li>
             <li><b>Units</b> tab: your vehicle card and the live units list. Tap a unit to fly to it. Units that are offline are greyed out.</li>
             <li><b>Events</b> tab: the incident log (see Incidents on the Map).</li>
             <li><b>Stations</b> tab: fire stations, volunteer brigades and ambulance/rescue teams. Tap one to see it on the map; its popup shows the hotline number. A yellow <b>&asymp;</b> means the pin is approximate.</li>
-            <li>The round arrow button on the panel&rsquo;s edge <b>hides or shows</b> the whole side panel to give the map more room.</li>
+            <li>The round orange button floating on the map <b>hides or shows</b> the whole side panel to give the map more room.</li>
             <li>The <b>Live Tracking</b> box on the map can be collapsed with its small toggle.</li>
             <li>The sync bar at the bottom-left shows the time of the last successful update from your units.</li>
           </ul>
@@ -3007,7 +3024,6 @@ button, input, select, textarea{ font-family: inherit; }
         <section class="help-pane" id="hp-session">
           <h3>Session &amp; Security</h3>
           <ul>
-            <li>You are <b>signed out automatically after 15 minutes of inactivity</b>. Touching or moving the screen keeps you signed in.</li>
             <li>Use <b>Logout</b> (header) when your shift ends &mdash; this also stops location sharing.</li>
             <li>Never share your password. Change it in Settings if you think someone else knows it.</li>
             <li>Notifications and alarms need the page to stay open, so do not close this tab while on duty.</li>
@@ -3024,7 +3040,6 @@ button, input, select, textarea{ font-family: inherit; }
             <tr><td>&ldquo;No GPS fix yet&rdquo;</td><td>Move to open sky; the route appears when a location is found.</td></tr>
             <tr><td>Admin cannot see my phone</td><td>Check the bottom bar says <i>Sharing live location</i>; allow location in your browser/phone settings.</td></tr>
             <tr><td>Red sync banner / &ldquo;unit list unavailable&rdquo;</td><td>Check your internet. If it stays, tell the admin so the database permissions can be checked.</td></tr>
-            <tr><td>Logged out suddenly</td><td>The 15-minute inactivity timer ended the session. Sign in again.</td></tr>
           </table>
           <p>Need help? Contact your admin or the T.U.L.O.N.G. support team.</p>
         </section>
