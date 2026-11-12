@@ -305,8 +305,7 @@ window.fsArchiveDoc     = (id) => doc(db, 'incidentArchive', id);
     <h2 style="flex:1; font-size:18px; margin:0; letter-spacing:1px;">Tactical Unit Locator &amp; Network Grid</h2>
     <button class="help-btn" id="help-open" type="button" onclick="openHelp()" title="How to use T.U.L.O.N.G. (manual)" aria-label="Open user manual">?</button>
     <div style="text-align:right;">
-        <div style="font-size:22px; font-weight:bold; letter-spacing:3px;">TULONG</div>
-        <div style="font-size:11px; color:#8b949e; max-width:230px; line-height:1.35;">Where Technology Meets Public Safety for Real Time Response and Real Life Impact.</div>
+        <img src="TAGLINE.png" alt="T.U.L.O.N.G. — Where Technology Meets Public Safety for Real Time Response and Real Life Impact." class="tagline-img" onerror="this.style.display='none'"/>
     </div>
 </div>
 
@@ -2603,7 +2602,6 @@ body.near-open .terminal-panel{right:var(--near-w);}
 
 /* ══════ SMALL SCREEN (800x480 / 7" Pi touchscreen) ══════ */
 @media (max-width:900px) and (max-height:600px){
-  :root{ --near-w: 300px; }
   .stat-label{font-size:10px;}
   .stat-number{font-size:20px;}
   .section-lbl{font-size:11px;}
@@ -2668,7 +2666,7 @@ button, input, select, textarea{ font-family: inherit; }
 .leaflet-container, .leaflet-popup-content{ font-family: var(--font); }
 
 /* headings, labels, buttons, numbers */
-.brand-badge, h2, .header-container > div:last-child > div:first-child, .menu-toggle,
+.brand-badge, h2, .menu-toggle,
 .stat-number, .stat-label, .report-btn, .excel-btn, .wipe-btn, .register-btn, .logout-btn, .history-btn,
 .section-lbl, .uc-id, .uc-badge, .station-item b, .terminal-header-left, .terminal-header-right, .t-send-btn,
 .map-counter-overlay, .map-counter-item, .alert-title, .alert-view,
@@ -2686,8 +2684,7 @@ button, input, select, textarea{ font-family: inherit; }
 
 .brand-badge{ font-size:15px; font-weight:700; letter-spacing:2.5px; }
 .header-container h2{ font-size:24px !important; font-weight:700; letter-spacing:1.2px !important; text-transform:uppercase; }
-.header-container > div:last-child > div:first-child{ font-size:28px !important; letter-spacing:5px !important; font-weight:700; }
-.header-container > div:last-child > div:last-child{ font-size:12px !important; }
+.tagline-img{ height:40px; width:auto; display:block; }
 .stat-number{ font-size:34px; font-weight:700; }
 .stat-label{ font-size:13px; font-weight:600; letter-spacing:1.2px; }
 .report-btn{ font-size:16px; font-weight:700; letter-spacing:1.2px; }
@@ -2831,6 +2828,8 @@ button, input, select, textarea{ font-family: inherit; }
 .help-dot{display:inline-block;width:11px;height:11px;border-radius:50%;margin-right:6px;vertical-align:-1px;}
 .help-pane{display:none;}
 .help-pane.on{display:block;}
+.help-img{width:100%;max-width:640px;display:block;margin:12px 0;border-radius:10px;border:1px solid rgba(61,111,168,.4);box-shadow:0 8px 24px rgba(0,0,0,.4);}
+.help-img-cap{font-size:12px;color:#8b96a3;margin:-6px 0 14px;text-align:center;}
 @media (max-width:900px) and (max-height:600px){
   .help-modal{height:96vh;}
   .help-head{padding:8px 14px;}
@@ -2883,6 +2882,8 @@ button, input, select, textarea{ font-family: inherit; }
           <h3>What is T.U.L.O.N.G.?</h3>
           <p class="help-lead">Tactical Unit Locator &amp; Network Grid &mdash; a real-time map for dispatching fire trucks and ambulances in Cebu and Mactan.</p>
           <p>The admin dashboard is the control center. From here you can log emergencies on the map, watch registered vehicles (ESP32 units) move live, send a unit to an incident, talk to units through the terminal, register new vehicles and operator accounts, and export end-of-day reports.</p>
+          <img class="help-img" src="guide-admin-layout.png" alt="Admin dashboard layout: sidebar, map, live tracking panel and command terminal"/>
+          <div class="help-img-cap">The main areas of the admin dispatch screen</div>
           <h4>Screen layout</h4>
           <ul>
             <li><b>Left sidebar</b> &mdash; Report Emergency button, live counters, the list of live units, report/export buttons, Register Emergency Vehicle, Terminate Session, and the list of fire stations and rescue teams.</li>
@@ -2904,6 +2905,8 @@ button, input, select, textarea{ font-family: inherit; }
         <section class="help-pane" id="hp-report">
           <h3>Reporting an Emergency</h3>
           <p class="help-lead">Put a new incident on the map. It appears instantly for every admin and operator.</p>
+          <img class="help-img" src="guide-admin-report.png" alt="Three steps to report an emergency: press Report Emergency, click the map location, pick Fire or Medical"/>
+          <div class="help-img-cap">Three clicks put a new incident on the map</div>
           <ol>
             <li>Press <b>Report Emergency</b> in the sidebar. The button turns yellow and the cursor becomes a crosshair.</li>
             <li>Click the exact location on the map. The address is looked up automatically.</li>
@@ -2940,6 +2943,8 @@ button, input, select, textarea{ font-family: inherit; }
         <section class="help-pane" id="hp-dispatch">
           <h3>Nearby Units &amp; Dispatch</h3>
           <p class="help-lead">Find the closest online vehicles and send them to an incident.</p>
+          <img class="help-img" src="guide-admin-dispatch.png" alt="Nearby Units and Dispatch panel with search radius, Respond buttons and Respond Nearest Unit"/>
+          <div class="help-img-cap">Send the closest available vehicle to an incident</div>
           <ol>
             <li>Click an incident, then <b>Nearby Units &amp; Dispatch</b> (it also opens automatically for incidents you just created).</li>
             <li>Pick a <b>Search radius</b> (3, 5, 10, 20 or 50 km). Only units that are online <i>and</i> have a GPS fix are listed, nearest first, with distance and a rough ETA.</li>
@@ -3008,6 +3013,8 @@ button, input, select, textarea{ font-family: inherit; }
         <section class="help-pane" id="hp-reports">
           <h3>Reports &amp; History</h3>
           <p class="help-lead">Export incidents to Excel and keep a permanent archive.</p>
+          <img class="help-img" src="guide-admin-reports.png" alt="Reports and history flow: Resolve and Save, Export EOD Report, Report History"/>
+          <div class="help-img-cap">How incidents move from the map to your records</div>
           <table class="help-table">
             <tr><th>Button</th><th>What it does</th></tr>
             <tr><td>Export EOD Report</td><td>Downloads an Excel file of <b>resolved</b> incidents only, then clears them from the map. Active incidents stay.</td></tr>
@@ -3045,7 +3052,6 @@ button, input, select, textarea{ font-family: inherit; }
           <h3>Session &amp; Security</h3>
           <ul>
             <li>This page is <b>admin only</b>. Signed-out visitors are sent to the login page, and operators are sent to their own dashboard.</li>
-            <li>For safety you are <b>signed out automatically after 15 minutes of inactivity</b> (no click, key press, scroll or mouse movement).</li>
             <li>Use <b>Terminate Session</b> to log out manually. Download your EOD report first.</li>
             <li>Never share the admin password. Operators only ever need their own login.</li>
           </ul>
@@ -3060,7 +3066,6 @@ button, input, select, textarea{ font-family: inherit; }
             <tr><td>No route drawn</td><td>The unit must press RESPONDING and have a GPS fix, and an active incident must exist. If routing services are down, a dashed straight line is drawn instead.</td></tr>
             <tr><td>Red &ldquo;sync&rdquo; banner</td><td>Check the internet connection. Persistent <i>permission denied</i> means the Firestore rules need updating.</td></tr>
             <tr><td>Export did not download</td><td>Allow downloads for this site. The incidents were kept; use <b>Report History &rarr; Download</b>.</td></tr>
-            <tr><td>Logged out unexpectedly</td><td>The 15-minute inactivity timer ended the session. Sign in again.</td></tr>
             <tr><td>No sound for alerts</td><td>Click anywhere on the page once, and check the browser/tab is not muted.</td></tr>
           </table>
           <p>Still stuck? Contact the T.U.L.O.N.G. support team.</p>
