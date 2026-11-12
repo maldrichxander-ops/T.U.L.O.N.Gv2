@@ -369,6 +369,159 @@
         @media (prefers-reduced-motion: reduce) {
             .login-card { animation: none; }
         }
+
+        /* ═══════════════════════════════════════════════
+           INTRO SPLASH — emergency video + logo, fires once
+           on load, then self-dismisses into the login card.
+           ═══════════════════════════════════════════════ */
+        .intro-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: var(--dark-blue);
+            overflow: hidden;
+            animation: introSequence 5.5s ease-in forwards;
+        }
+        @keyframes introSequence {
+            0%   { opacity: 1; }
+            85%  { opacity: 1; }
+            100% { opacity: 0; visibility: hidden; pointer-events: none; }
+        }
+        .intro-video {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0.5;
+            filter: saturate(1.05) contrast(1.05);
+        }
+        .intro-scrim {
+            position: absolute;
+            inset: 0;
+            background:
+                radial-gradient(ellipse at center, rgba(2,16,29,0.35) 0%, rgba(2,16,29,0.94) 100%);
+        }
+        /* Ambient "fire + medical" fallback FX — always present at low
+           opacity so the intro still reads correctly even if the video
+           file below hasn't been uploaded to the site yet. */
+        .intro-fx { position: absolute; inset: 0; pointer-events: none; }
+        .intro-fx .siren {
+            position: absolute;
+            width: 440px;
+            height: 440px;
+            border-radius: 50%;
+            filter: blur(70px);
+            opacity: 0.3;
+            animation: sirenPulse 1.1s ease-in-out infinite;
+        }
+        .intro-fx .siren.red  { left: -100px; top: -100px; background: var(--primary-accent); }
+        .intro-fx .siren.blue { right: -100px; bottom: -100px; background: var(--accent-blue); animation-delay: 0.55s; }
+        @keyframes sirenPulse {
+            0%, 100% { opacity: 0.15; transform: scale(0.9); }
+            50%      { opacity: 0.45; transform: scale(1.05); }
+        }
+        .intro-pulse {
+            position: absolute;
+            bottom: 24%;
+            left: 0;
+            width: 100%;
+            height: 60px;
+            opacity: 0.55;
+        }
+        .intro-pulse path {
+            fill: none;
+            stroke: var(--primary-accent);
+            stroke-width: 2;
+            stroke-dasharray: 900;
+            stroke-dashoffset: 900;
+            animation: pulseDraw 2.6s linear infinite;
+        }
+        @keyframes pulseDraw { to { stroke-dashoffset: 0; } }
+
+        .intro-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            padding: 0 24px;
+        }
+        .intro-logo {
+            height: 110px;
+            width: auto;
+            margin-bottom: 18px;
+            animation: logoPulse 2.2s ease-in-out infinite;
+            filter: drop-shadow(0 0 22px rgba(255, 90, 54, 0.55));
+        }
+        @keyframes logoPulse {
+            0%, 100% { transform: scale(1); }
+            50%      { transform: scale(1.06); }
+        }
+        .intro-title {
+            font-family: Georgia, serif;
+            font-size: 34px;
+            font-weight: 700;
+            letter-spacing: 6px;
+            margin-bottom: 6px;
+        }
+        .intro-sub {
+            font-size: 11px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--grey-light);
+            opacity: 0.85;
+            margin-bottom: 26px;
+        }
+        .intro-bar {
+            width: 220px;
+            height: 3px;
+            background: rgba(255,255,255,0.12);
+            border-radius: 2px;
+            overflow: hidden;
+            margin-bottom: 14px;
+        }
+        .intro-bar-fill {
+            height: 100%;
+            width: 0%;
+            background: linear-gradient(90deg, var(--primary-accent), var(--accent-blue));
+            animation: barFill 4.6s ease forwards;
+        }
+        @keyframes barFill { to { width: 100%; } }
+        .intro-status {
+            font-size: 10px;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--grey);
+            margin-bottom: 22px;
+        }
+        .intro-skip {
+            background: transparent;
+            border: 1px solid var(--grey-dark);
+            color: var(--grey-light);
+            padding: 8px 18px;
+            font-size: 11px;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            border-radius: 3px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            font-family: 'Open Sans', sans-serif;
+        }
+        .intro-skip:hover, .intro-skip:focus-visible {
+            border-color: var(--accent-blue);
+            color: #fff;
+            outline: none;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            .intro-overlay { animation-duration: 0.4s; animation-delay: 0s; }
+            .intro-logo, .intro-fx .siren, .intro-bar-fill, .intro-pulse path { animation: none !important; }
+        }
     </style>
 <style>
 /* ═══ 800x480 view only — desktop/laptop/phone layouts are unaffected ═══ */
@@ -394,10 +547,48 @@
   .login-btn{padding:10px;font-size:13px;margin-top:4px;}
   .route-status{margin-top:8px;padding:6px 10px;font-size:11px;}
   .system-footer{margin-top:8px;font-size:9px;letter-spacing:2px;}
+  .intro-logo{height:64px;margin-bottom:10px;}
+  .intro-title{font-size:22px;letter-spacing:4px;}
 }
 </style>
 </head>
 <body>
+
+<!-- ═══════════════════════════════════════════════════════
+     INTRO SPLASH
+     Drop your own clip at /intro-emergency.webm (+ .mp4 fallback)
+     in the site root — same convention as /background.jpeg and
+     /tulonglogo.png below. If no video file is present yet, the
+     siren-glow + heartbeat-pulse animation still carries the
+     "medical & fire emergency" intro on its own, so the page
+     never looks broken either way.
+     ═══════════════════════════════════════════════════════ -->
+<div class="intro-overlay" id="introOverlay" role="dialog" aria-label="T.U.L.O.N.G. loading">
+    <video class="intro-video" autoplay muted playsinline
+           poster="/tulonglogo.png"
+           onerror="this.style.display='none';">
+        <source src="/intro-emergency.webm" type="video/webm">
+        <source src="/intro-emergency.mp4" type="video/mp4">
+    </video>
+    <div class="intro-fx" aria-hidden="true">
+        <div class="siren red"></div>
+        <div class="siren blue"></div>
+        <svg class="intro-pulse" viewBox="0 0 600 80" preserveAspectRatio="none" aria-hidden="true">
+            <path d="M0 40 H170 L195 8 L222 72 L248 40 H420 L440 20 L458 55 L475 40 H600" />
+        </svg>
+    </div>
+    <div class="intro-scrim"></div>
+
+    <div class="intro-content">
+        <img class="intro-logo" src="/tulonglogo.png" alt="T.U.L.O.N.G. logo"
+             onerror="this.onerror=null;this.src='https://via.placeholder.com/110/ff5a36/fff?text=T'">
+        <div class="intro-title">T.U.L.O.N.G.</div>
+        <div class="intro-sub">Tactical Unit Locator &amp; Network Grid</div>
+        <div class="intro-bar"><div class="intro-bar-fill"></div></div>
+        <div class="intro-status">Initializing Emergency Response Grid...</div>
+        <button type="button" class="intro-skip" id="introSkip">Skip Intro</button>
+    </div>
+</div>
 
 <!-- Background photo (falls back to .jpg if .jpeg isn't found) -->
 <img class="bg-img" src="/background.jpeg" alt=""
@@ -410,7 +601,7 @@
         <div>
             <div class="logo-area">
                 <img src="/tulonglogo.png" alt="T.U.L.O.N.G. Logo"
-                     onerror="this.src='https://via.placeholder.com/80/ff5a36/fff?text=T'">
+                     onerror="this.onerror=null;this.src='https://via.placeholder.com/80/ff5a36/fff?text=T'">
             </div>
 
             <div class="brand-name">T.U.L.O.N.G.</div>
@@ -460,6 +651,33 @@
 </div>
 
 <footer class="system-footer">&copy; 2026 T.U.L.O.N.G.</footer>
+
+<!-- ══════════════════════════════════════════════════════
+     INTRO SPLASH — control script
+     The overlay auto-dismisses via its own CSS animation even
+     without JS; this just adds the Skip button and a safety
+     cleanup so it never lingers and blocks clicks.
+     ══════════════════════════════════════════════════════ -->
+<script>
+(function () {
+    var overlay = document.getElementById('introOverlay');
+    var skip    = document.getElementById('introSkip');
+    if (!overlay) return;
+
+    function dismissIntro() {
+        overlay.style.transition = 'opacity .5s ease';
+        overlay.style.opacity = '0';
+        overlay.style.pointerEvents = 'none';
+        setTimeout(function () { overlay.style.display = 'none'; }, 520);
+    }
+
+    if (skip) skip.addEventListener('click', dismissIntro);
+
+    // Safety net: guarantees the overlay is fully gone from the DOM
+    // flow even if something upstream prevented the CSS animation.
+    setTimeout(dismissIntro, 6500);
+})();
+</script>
 
 <!-- ══════════════════════════════════════════════════════
      FIREBASE — Auth + Firestore role check
