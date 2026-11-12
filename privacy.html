@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -34,6 +35,7 @@
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Open+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+
     <style>
         :root {
             --dark-blue: #02101D;
@@ -46,6 +48,7 @@
             --display: 'Barlow Condensed', 'Arial Narrow', Impact, sans-serif;
             --sans: 'Open Sans', Tahoma, Geneva, Verdana, sans-serif;
         }
+
         * { box-sizing: border-box; }
         html { background: var(--dark-blue); scroll-behavior: smooth; scroll-padding-top: 96px; }
         body { margin: 0; min-height: 100vh; color: #fff; font-family: var(--sans); overflow-x: hidden; position: relative; }
@@ -165,8 +168,6 @@
                 <ol>
                     <li><a href="#p-collect">What we collect</a></li>
                     <li><a href="#p-use">How we use it</a></li>
-                    <li><a href="#p-location">Your location</a></li>
-                    <li><a href="#p-services">Services we use</a></li>
                     <li><a href="#p-share">Who can see it</a></li>
                     <li><a href="#p-keep">Keeping &amp; security</a></li>
                     <li><a href="#p-rights">Your rights</a></li>
@@ -182,8 +183,7 @@
                         <h3>What we collect</h3>
                         <ul>
                             <li><strong>Account details:</strong> your name, email address, mobile number, profile picture (optional), role, and assigned unit or station.</li>
-                            <li><strong>Vehicle details:</strong> unit ID, vehicle type, plate number, station or agency, and the device (Blynk) token that links a vehicle to the system.</li>
-                            <li><strong>Location:</strong> the GPS position of each vehicle, and of an operator's phone if the operator chooses to share it.</li>
+                            <li><strong>Vehicle details:</strong> unit ID, vehicle type, plate number, station or agency.</li>
                             <li><strong>Incident records:</strong> type, address and coordinates, classification, alarm level, who responded, and a time-stamped timeline of changes. Exported reports and an incident archive are kept.</li>
                             <li><strong>Sign-in and device data:</strong> your sign-in session, and small settings saved in your browser, such as sound preferences. We do not use advertising trackers.</li>
                         </ul>
@@ -194,39 +194,18 @@
                         <h3>How we use it</h3>
                         <ul>
                             <li>To sign you in and give you the right access.</li>
-                            <li>To show units and incidents on the map, find the nearest vehicle, and send dispatch alerts and routes.</li>
+                            <li>To manage unit and incident records.</li>
                             <li>To keep records and create end-of-day reports.</li>
                             <li>To keep the system secure and fix problems.</li>
                         </ul>
                         <p>We do not sell your information and do not use it for advertising.</p>
                     </article>
 
-                    <article id="p-location">
-                        <h3>Your location</h3>
-                        <ul>
-                            <li>Vehicle GPS is sent by the unit's own device while it is online.</li>
-                            <li>On a phone or tablet, the browser asks for your permission before location is shared. It is shared <strong>only while the operator page is open and sharing is on</strong>.</li>
-                            <li>You can press <strong>Stop</strong> on the sharing bar, or turn off location permission in your browser or phone, at any time. Logging out also stops it.</li>
-                        </ul>
-                    </article>
-
-                    <article id="p-services">
-                        <h3>Services we use</h3>
-                        <p>To work, T.U.L.O.N.G. relies on outside services. They receive only what is needed for their part and handle it under their own policies.</p>
-                        <ul>
-                            <li><strong>Google Firebase:</strong> sign-in and the database that stores accounts, vehicles, incidents and live locations.</li>
-                            <li><strong>Blynk:</strong> the link between the vehicle devices (ESP32) and the dashboards.</li>
-                            <li><strong>OpenStreetMap:</strong> map tiles and address search (Nominatim).</li>
-                            <li><strong>OSRM and OpenRouteService:</strong> route and arrival-time calculation. These receive the start and end coordinates of a route.</li>
-                            <li><strong>Google Fonts and public code libraries (unpkg, cdnjs):</strong> load page fonts and scripts. Like any website you visit, they can see your IP address and browser type.</li>
-                        </ul>
-                    </article>
-
                     <article id="p-share">
                         <h3>Who can see it</h3>
                         <ul>
                             <li><strong>Administrators</strong> can see all units, incidents and operator accounts.</li>
-                            <li><strong>Operators</strong> can see the live map, incidents and other units, and their own profile.</li>
+                            <li><strong>Operators</strong> can see incident records, other units, and their own profile.</li>
                             <li>We may disclose information if the law or a government authority requires it, or to protect someone's safety.</li>
                         </ul>
                     </article>
