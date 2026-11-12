@@ -1,32 +1,13 @@
 // ============================================================================
 // T.U.L.O.N.G. — auth-guard.js
 // ----------------------------------------------------------------------------
-// Put this file in the ROOT of your repo (next to index.html) and load it at the
-// top of dashboard.html and user-dashboard.html / operator-dashboard.html.
 //
 // WHAT IT DOES
 //  1. Hides the page until the visitor is verified (no flash of private content)
 //  2. Sends signed-out visitors back to the login page
 //  3. Checks the user's role against Firestore (admin email + users/{uid} profile)
 //     — NOT against a hard-coded email in the browser
-//  4. Signs the user out after 15 minutes of inactivity
-//  5. Cleans ".html" out of the address bar (tulong.services/operator-dashboard)
-//
-// IMPORTANT: this guard is a convenience layer. A determined person can bypass
-// any front-end script. Real protection is firestore.rules — deploy that too.
-//
-// USAGE (in the dashboard page, inside <head>):
-//
-//   <script type="module">
-//     import { protectPage } from "/auth-guard.js";
-//     protectPage({ role: "admin" });      // for admin-dashboard.html
-//   </script>
-//
-//   <script type="module">
-//     import { protectPage } from "/auth-guard.js";
-//     protectPage({ role: "operator" });   // for operator-dashboard.html
-//   </script>
-// ============================================================================
+
 
 import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
 import { getAuth, onAuthStateChanged, signOut } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
@@ -49,7 +30,6 @@ const LOGIN_PATH    = "/";
 const ADMIN_PATH    = "/admin-dashboard";
 const OPERATOR_PATH = "/operator-dashboard";
 
-const IDLE_LIMIT_MS = 15 * 60 * 1000; // 15 minutes
 
 const app  = getApps().length ? getApp() : initializeApp(firebaseConfig);
 const auth = getAuth(app);
@@ -72,21 +52,6 @@ function cleanAddressBar() {
     const clean = pathname.replace(/\/index\.html$/, "/").replace(/\.html$/, "");
     window.history.replaceState(null, "", clean + search + hash);
   }
-}
-
-function startIdleTimer() {
-  let timer;
-  const reset = () => {
-    clearTimeout(timer);
-    timer = setTimeout(async () => {
-      await signOut(auth);
-      window.location.replace(LOGIN_PATH);
-    }, IDLE_LIMIT_MS);
-  };
-  ["click", "keydown", "mousemove", "touchstart", "scroll"].forEach((evt) =>
-    window.addEventListener(evt, reset, { passive: true })
-  );
-  reset();
 }
 
 export function protectPage({ role = "operator" } = {}) {
@@ -124,7 +89,6 @@ export function protectPage({ role = "operator" } = {}) {
 
     // 4. Verified
     document.documentElement.style.visibility = "visible";
-    startIdleTimer();
   });
 }
 
