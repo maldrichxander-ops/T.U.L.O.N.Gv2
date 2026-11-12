@@ -6,6 +6,17 @@
     <title>T.U.L.O.N.G. | Secure Access</title>
     <link rel="canonical" href="https://tulong.services/">
 
+    <!-- INTRO ONCE-PER-VISIT CHECK — runs before first paint so the splash never flashes on return visits -->
+    <script>
+    (function () {
+        try {
+            if (sessionStorage.getItem('tulongIntroSeen') === '1') {
+                document.documentElement.classList.add('intro-seen');
+            }
+        } catch (e) { /* storage blocked: intro will just play normally */ }
+    })();
+    </script>
+
     <!-- SEO -->
     <meta name="description" content="T.U.L.O.N.G. (Tactical Unit Locator &amp; Network Grid) is a real-time tactical grid that bridges the last-mile gap in emergency response, helping local units coordinate faster for community safety.">
     <meta name="keywords" content="TULONG, tactical unit locator, network grid, emergency response, last mile, community safety, barangay, disaster response, unit tracking, Philippines">
@@ -371,8 +382,10 @@
         }
 
         /* ═══════════════════════════════════════════════
-           INTRO SPLASH — emergency video + logo, fires once
-           on load, then self-dismisses into the login card.
+           INTRO SPLASH — emergency video + logo.
+           Plays once per visit (per browser tab/session), then
+           self-dismisses into the login card. It will NOT replay
+           when you navigate to another page and come back.
            ═══════════════════════════════════════════════ */
         .intro-overlay {
             position: fixed;
@@ -385,6 +398,11 @@
             overflow: hidden;
             animation: introSequence 5.5s ease-in forwards;
         }
+        /* Already seen this visit → never show it, never flash it */
+        html.intro-seen .intro-overlay { display: none !important; }
+        /* Also skip the card's entrance animation on return visits */
+        html.intro-seen .login-card { animation: none; }
+
         @keyframes introSequence {
             0%   { opacity: 1; }
             85%  { opacity: 1; }
@@ -654,9 +672,11 @@
 
 <!-- ══════════════════════════════════════════════════════
      INTRO SPLASH — control script
-     The overlay auto-dismisses via its own CSS animation even
-     without JS; this just adds the Skip button and a safety
-     cleanup so it never lingers and blocks clicks.
+     Plays only on the first load of a visit. Once it has started,
+     a flag is saved in sessionStorage so navigating to other pages
+     and coming back (or pressing Back) skips it entirely. The flag
+     clears when the tab/browser is closed, so the next fresh visit
+     shows the intro again.
      ══════════════════════════════════════════════════════ -->
 <script>
 (function () {
@@ -664,17 +684,28 @@
     var skip    = document.getElementById('introSkip');
     if (!overlay) return;
 
+    var alreadySeen = false;
+    try { alreadySeen = sessionStorage.getItem('tulongIntroSeen') === '1'; } catch (e) {}
+
+    // Return visit in the same session: remove the splash (and its video) completely.
+    if (alreadySeen) {
+        overlay.remove();
+        return;
+    }
+
+    // First load: mark as seen right away so leaving mid-intro won't replay it.
+    try { sessionStorage.setItem('tulongIntroSeen', '1'); } catch (e) {}
+
     function dismissIntro() {
         overlay.style.transition = 'opacity .5s ease';
         overlay.style.opacity = '0';
         overlay.style.pointerEvents = 'none';
-        setTimeout(function () { overlay.style.display = 'none'; }, 520);
+        setTimeout(function () { overlay.remove(); }, 520);
     }
 
     if (skip) skip.addEventListener('click', dismissIntro);
 
-    // Safety net: guarantees the overlay is fully gone from the DOM
-    // flow even if something upstream prevented the CSS animation.
+    // Safety net: guarantees the overlay is fully gone even if the CSS animation didn't run.
     setTimeout(dismissIntro, 6500);
 })();
 </script>
