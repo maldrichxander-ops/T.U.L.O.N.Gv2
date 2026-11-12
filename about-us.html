@@ -215,7 +215,10 @@
         .stripes { position: absolute; inset: 0; background: repeating-linear-gradient(115deg, rgba(255,255,255,.05) 0 2px, transparent 2px 26px); animation: stripes 8s linear infinite; }
         @keyframes stripes { to { background-position: 104px 0; } }
         .strip-quote { font-family: var(--display); font-weight: 600; font-size: clamp(28px, 4.6vw, 54px); letter-spacing: 1.5px; line-height: 1.1; text-transform: uppercase; margin: 0; text-shadow: 0 4px 24px rgba(0,0,0,.5); }
-        .strip-quote em { font-style: normal; display: inline-block; color: #fff; animation: glowtext 3s ease-in-out infinite alternate; }
+        .hl { font-weight: 700; background: linear-gradient(90deg, var(--primary-accent), var(--gold), var(--primary-accent)); background-size: 200% 100%; -webkit-background-clip: text; background-clip: text; -webkit-text-fill-color: transparent; animation: shimmer 5s linear infinite alternate; }
+        .story-card strong.hl { color: transparent; font-size: 1.12em; letter-spacing: 1px; }
+        .value p .hl { font-size: 1.1em; letter-spacing: 1px; }
+        .strip-quote em { font-style: normal; display: inline-block; color: var(--gold); animation: glowtext 3s ease-in-out infinite alternate; }
         @keyframes glowtext { from { text-shadow: 0 0 6px rgba(255,255,255,.2); } to { text-shadow: 0 0 28px rgba(255,255,255,.9); } }
         .strip-note { margin: 12px 0 0; font-size: 11px; letter-spacing: 4px; text-transform: uppercase; color: rgba(255,255,255,.8); }
 
@@ -424,7 +427,7 @@
             <p class="lead reveal"><strong>Tactical Unit Locator &amp; Operations Network Grid (T.U.L.O.N.G.)</strong> was developed to revolutionize community-level emergency response within <strong>Cebu City</strong>.</p>
             <div class="story-side">
                 <p class="story-card reveal" style="--d:.1s">Traditional dispatch systems often struggle with the "last mile"&mdash;the critical gap between receiving an alarm and the arrival of responders in dense urban environments. Our grid provides real-time tactical data to bridge this gap, ensuring that help arrives exactly where it is needed, without delay.</p>
-                <p class="story-card reveal" style="--d:.2s">This system is built and maintained by the <strong>CTU researchers</strong> and is dedicated to the safety of our local community through technical innovation and research.</p>
+                <p class="story-card reveal" style="--d:.2s">This system is built and maintained by the <strong class="hl">T.U.L.O.N.G.</strong> team and is dedicated to the safety of our local community through technical innovation and research.</p>
             </div>
         </div>
     </section>
@@ -478,17 +481,17 @@
             <div class="values">
                 <div class="value reveal"><div class="ico"><svg viewBox="0 0 24 24"><path d="M13 2 4 14h7l-1 8 9-12h-7z"/></svg></div><h3>Speed</h3><p>Real-time data so responders spend less time searching and more time saving.</p></div>
                 <div class="value reveal" style="--d:.1s"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg></div><h3>Precision</h3><p>Every unit and every incident pinned to the map, down to the street.</p></div>
-                <div class="value reveal" style="--d:.2s"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg></div><h3>Community</h3><p>Built by CTU researchers for the neighbours they serve &mdash; safety that starts at the barangay.</p></div>
+                <div class="value reveal" style="--d:.2s"><div class="ico"><svg viewBox="0 0 24 24"><path d="M12 21s-7-4.4-9.3-9A5.4 5.4 0 0 1 12 6a5.4 5.4 0 0 1 9.3 6c-2.3 4.6-9.3 9-9.3 9z"/></svg></div><h3>Community</h3><p>Built by <b class="hl">T.U.L.O.N.G.</b> for the neighbours we serve &mdash; safety that starts at the barangay.</p></div>
             </div>
         </div>
     </section>
 
-    <!-- 8 · QUOTE -->
-    <section class="band s-quote" aria-label="Researchers">
+    <!-- 8 · QUOTE (T.U.L.O.N.G. team) -->
+    <section class="band s-quote" aria-label="T.U.L.O.N.G. team">
         <div class="deco" aria-hidden="true"><div class="stripes"></div></div>
         <div class="inner reveal">
-            <p class="strip-quote">Built by <em>researchers.</em> Driven by purpose.</p>
-            <p class="strip-note">CTU Researchers</p>
+            <p class="strip-quote">Built by <em>T.U.L.O.N.G.</em> Driven by purpose.</p>
+            <p class="strip-note">Team T.U.L.O.N.G.</p>
         </div>
     </section>
 
@@ -532,7 +535,7 @@
             <a href="/" class="back-btn">Return to Login Page</a>
             <div class="footer">
                 <span>&copy; 2026 T.U.L.O.N.G.</span>
-                <span>Cebu City &middot; CTU Researchers</span>
+                <span>Cebu City &middot; <b class="hl">T.U.L.O.N.G.</b> Team</span>
             </div>
         </div>
     </footer>
