@@ -37,42 +37,336 @@
     <link rel="icon" type="image/png" sizes="64x64" href="/favicon.png">
     <link rel="shortcut icon" href="/favicon.ico">
     <link rel="apple-touch-icon" href="/tulonglogo.png">
-    <link rel="stylesheet" href="/contactus.css">
+
+    <style>
+        :root {
+            --bg: #02101D;
+            --bg-2: #061b2e;
+            --card: rgba(255, 255, 255, 0.04);
+            --card-hover: rgba(255, 255, 255, 0.08);
+            --border: rgba(148, 197, 255, 0.16);
+            --text: #eaf2fb;
+            --muted: #8fa6bd;
+            --accent: #ff4d4f;      /* emergency red */
+            --accent-glow: rgba(255, 77, 79, 0.35);
+            --blue: #3aa0ff;
+            --ok: #2ee59d;
+            --radius: 16px;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        html { color-scheme: dark; }
+
+        body {
+            min-height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: var(--text);
+            background-color: var(--bg);
+            background-image:
+                radial-gradient(900px 500px at 85% -10%, rgba(58, 160, 255, 0.22), transparent 60%),
+                radial-gradient(700px 500px at -10% 110%, rgba(255, 77, 79, 0.18), transparent 60%),
+                linear-gradient(180deg, rgba(2, 16, 29, 0.72) 0%, rgba(2, 16, 29, 0.88) 100%),
+                url("/background.jpg");
+            background-size: auto, auto, auto, cover;
+            background-position: center, center, center, center;
+            background-repeat: no-repeat;
+            background-attachment: scroll, scroll, scroll, fixed;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 24px 16px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        /* faint tactical grid */
+        body::before {
+            content: "";
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(148, 197, 255, 0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(148, 197, 255, 0.05) 1px, transparent 1px);
+            background-size: 44px 44px;
+            mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+            -webkit-mask-image: radial-gradient(ellipse at center, #000 30%, transparent 75%);
+            pointer-events: none;
+        }
+
+        .comm-container {
+            position: relative;
+            width: 100%;
+            max-width: 560px;
+            background: linear-gradient(180deg, rgba(10, 33, 56, 0.78), rgba(4, 18, 32, 0.88));
+            border: 1px solid var(--border);
+            border-radius: 24px;
+            padding: 36px 28px 28px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.55), inset 0 1px 0 rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            -webkit-backdrop-filter: blur(10px);
+            animation: rise .5s ease both;
+        }
+
+        @keyframes rise {
+            from { opacity: 0; transform: translateY(12px); }
+            to   { opacity: 1; transform: none; }
+        }
+
+        header { text-align: center; margin-bottom: 26px; }
+
+        .logo {
+            width: 84px;
+            height: 84px;
+            object-fit: contain;
+            margin-bottom: 14px;
+            filter: drop-shadow(0 6px 18px rgba(58, 160, 255, 0.35));
+        }
+
+        .status {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--ok);
+            background: rgba(46, 229, 157, 0.08);
+            border: 1px solid rgba(46, 229, 157, 0.25);
+            padding: 5px 12px;
+            border-radius: 999px;
+            margin-bottom: 14px;
+        }
+        .status::before {
+            content: "";
+            width: 8px; height: 8px;
+            border-radius: 50%;
+            background: var(--ok);
+            box-shadow: 0 0 0 0 rgba(46, 229, 157, .6);
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            70%  { box-shadow: 0 0 0 9px rgba(46, 229, 157, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(46, 229, 157, 0); }
+        }
+
+        h1 {
+            font-size: clamp(22px, 5vw, 28px);
+            letter-spacing: .04em;
+            font-weight: 800;
+            line-height: 1.2;
+        }
+        h1 span { color: var(--blue); }
+
+        .subtitle {
+            margin-top: 8px;
+            color: var(--muted);
+            font-style: italic;
+            font-size: 15px;
+        }
+
+        .contact-list { display: grid; gap: 12px; }
+
+        .contact-item {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            padding: 16px;
+            border-radius: var(--radius);
+            background: var(--card);
+            border: 1px solid var(--border);
+            color: inherit;
+            text-decoration: none;
+            transition: transform .18s ease, background .18s ease, border-color .18s ease, box-shadow .18s ease;
+        }
+        .contact-item:hover,
+        .contact-item:focus-visible {
+            transform: translateY(-2px);
+            background: var(--card-hover);
+            border-color: rgba(58, 160, 255, 0.55);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.35);
+            outline: none;
+        }
+        .contact-item:focus-visible { box-shadow: 0 0 0 3px rgba(58, 160, 255, 0.5); }
+
+        .icon-box {
+            flex: 0 0 48px;
+            width: 48px; height: 48px;
+            display: grid;
+            place-items: center;
+            border-radius: 14px;
+            color: var(--blue);
+            background: rgba(58, 160, 255, 0.12);
+            border: 1px solid rgba(58, 160, 255, 0.28);
+        }
+        .icon-box svg { width: 24px; height: 24px; }
+
+        .contact-info { min-width: 0; flex: 1; }
+
+        .contact-label {
+            font-size: 11.5px;
+            font-weight: 600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .contact-value {
+            margin-top: 2px;
+            font-size: 17px;
+            font-weight: 600;
+            overflow-wrap: anywhere;
+        }
+
+        .arrow {
+            flex: 0 0 auto;
+            color: var(--muted);
+            transition: transform .18s ease, color .18s ease;
+        }
+        .arrow svg { width: 20px; height: 20px; display: block; }
+        .contact-item:hover .arrow { transform: translateX(3px); color: var(--text); }
+
+        /* Hotline = primary / emergency card */
+        .contact-item.primary {
+            background: linear-gradient(135deg, rgba(255, 77, 79, 0.2), rgba(255, 77, 79, 0.06));
+            border-color: rgba(255, 77, 79, 0.5);
+            box-shadow: 0 0 0 1px rgba(255, 77, 79, 0.1), 0 12px 32px var(--accent-glow);
+        }
+        .contact-item.primary:hover { border-color: var(--accent); }
+        .contact-item.primary .icon-box {
+            color: #fff;
+            background: var(--accent);
+            border-color: transparent;
+            box-shadow: 0 6px 18px var(--accent-glow);
+        }
+        .contact-item.primary .contact-value { font-size: 22px; letter-spacing: .03em; }
+
+        .badge {
+            display: inline-block;
+            margin-left: 8px;
+            padding: 1px 8px;
+            font-size: 10px;
+            letter-spacing: .1em;
+            color: #fff;
+            background: var(--accent);
+            border-radius: 999px;
+            vertical-align: middle;
+        }
+
+        .hint {
+            margin-top: 18px;
+            font-size: 13px;
+            color: var(--muted);
+            text-align: center;
+        }
+
+        .back-btn {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 22px;
+            padding: 14px 18px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            color: var(--text);
+            text-decoration: none;
+            font-weight: 600;
+            letter-spacing: .04em;
+            background: rgba(255, 255, 255, 0.03);
+            transition: background .18s ease, border-color .18s ease;
+        }
+        .back-btn:hover,
+        .back-btn:focus-visible {
+            background: var(--blue);
+            border-color: var(--blue);
+            color: #02101D;
+            outline: none;
+        }
+        .back-btn svg { width: 18px; height: 18px; }
+
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(143, 166, 189, 0.7);
+        }
+
+        @media (max-width: 420px) {
+            .comm-container { padding: 28px 18px 22px; border-radius: 20px; }
+            .contact-item { padding: 14px; gap: 12px; }
+            .contact-item.primary .contact-value { font-size: 19px; }
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+            *, *::before { animation: none !important; transition: none !important; }
+        }
+    </style>
 </head>
 <body>
 
-    <div class="comm-container">
-        <h1>HOW TO CONTACT T.U.L.O.N.G. TEAM</h1>
-        <div class="subtitle">"Bridging the Gap When Every Second Counts."</div>
+    <main class="comm-container">
+        <header>
+            <img class="logo" src="/tulonglogo.png" alt="T.U.L.O.N.G. shield logo" width="84" height="84">
+            <div><span class="status">Dispatch line active</span></div>
+            <h1>HOW TO CONTACT <span>T.U.L.O.N.G.</span> TEAM</h1>
+            <p class="subtitle">"Bridging the Gap When Every Second Counts."</p>
+        </header>
 
-        <div class="contact-list">
-            <a href="https://facebook.com/TinagoFireVolunteers" target="_blank" rel="noopener noreferrer" class="contact-item">
-                <div class="icon-box">📱</div>
+        <nav class="contact-list" aria-label="Contact options">
+
+            <!-- Hotline (primary) -->
+            <a href="tel:+639082918183" class="contact-item primary">
+                <div class="icon-box" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2z"/></svg>
+                </div>
+                <div class="contact-info">
+                    <div class="contact-label">Hotline / Dispatch <span class="badge">URGENT</span></div>
+                    <div class="contact-value">0908-291-8183</div>
+                </div>
+                <span class="arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+            </a>
+
+            <!-- Email -->
+            <a href="mailto:aldrichxanderm@gmail.com" class="contact-item">
+                <div class="icon-box" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                </div>
+                <div class="contact-info">
+                    <div class="contact-label">System Support Email</div>
+                    <div class="contact-value">aldrichxanderm@gmail.com</div>
+                </div>
+                <span class="arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+                </span>
+            </a>
+
+            <!-- Facebook -->
+            <a href="https://www.facebook.com/aldrichxandermorano" target="_blank" rel="noopener noreferrer" class="contact-item">
+                <div class="icon-box" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 2h-3a5 5 0 0 0-5 5v3H7v4h3v8h4v-8h3l1-4h-4V7a1 1 0 0 1 1-1h3z"/></svg>
+                </div>
                 <div class="contact-info">
                     <div class="contact-label">Facebook Page</div>
                     <div class="contact-value">TULONG TECHNOLOGIES</div>
                 </div>
+                <span class="arrow" aria-hidden="true">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 17 17 7M8 7h9v9"/></svg>
+                </span>
             </a>
+        </nav>
 
-            <a href="mailto:TULONGsupport@tulong.com" class="contact-item">
-                <div class="icon-box">📧</div>
-                <div class="contact-info">
-                    <div class="contact-label">System Support Email</div>
-                    <div class="contact-value">TULONGsupport@tulong.com</div>
-                </div>
-            </a>
+        <p class="hint">For life-threatening emergencies, call your local emergency hotline first.</p>
 
-            <a href="tel:+639662315218" class="contact-item">
-                <div class="icon-box">📞</div>
-                <div class="contact-info">
-                    <div class="contact-label">Hotline / Dispatch</div>
-                    <div class="contact-value">0966-231-5218</div>
-                </div>
-            </a>
-        </div>
+        <a href="/" class="back-btn">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+            Return to Login
+        </a>
 
-        <a href="/" class="back-btn">Return to Login</a>
-    </div>
+        <footer>&copy; T.U.L.O.N.G. &middot; Tactical Unit Locator &amp; Network Grid &middot; Cebu, Philippines</footer>
+    </main>
 
 </body>
 </html>
