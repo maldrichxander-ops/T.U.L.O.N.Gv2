@@ -304,8 +304,9 @@ window.fsArchiveDoc     = (id) => doc(db, 'incidentArchive', id);
     <div class="brand-badge">T.U.L.O.N.G.</div>
     <h2 style="flex:1; font-size:18px; margin:0; letter-spacing:1px;">Tactical Unit Locator &amp; Network Grid</h2>
     <button class="help-btn" id="help-open" type="button" onclick="openHelp()" title="How to use T.U.L.O.N.G. (manual)" aria-label="Open user manual">?</button>
-    <div style="text-align:right;">
-        <img src="TAGLINE.png" alt="T.U.L.O.N.G. — Where Technology Meets Public Safety for Real Time Response and Real Life Impact." class="tagline-img" onerror="this.style.display='none'"/>
+    <div class="tagline" role="note" aria-label="Where Technology Meets Public Safety for Real Time Response and Real Life Impact.">
+        <span class="tg-line1">Where <b>Technology</b> Meets <b>Public Safety</b></span>
+        <span class="tg-line2">for Real Time Response and Real Life Impact</span>
     </div>
 </div>
 
@@ -2785,6 +2786,17 @@ button, input, select, textarea{ font-family: inherit; }
 
 
 <style>
+/* ── HEADER TAGLINE (real text, replaces the tiny TAGLINE.png) ── */
+.tagline{
+  flex:0 1 auto; max-width:380px; text-align:right; line-height:1.15;
+  padding-left:16px; border-left:1px solid rgba(61,111,168,.5);
+  font-family:var(--font-display); text-transform:uppercase;
+}
+.tg-line1{display:block; font-size:19px; font-weight:700; letter-spacing:1.2px; color:#fff;}
+.tg-line1 b{color:#ff5a36; font-weight:700;}
+.tg-line2{display:block; margin-top:3px; font-size:13px; font-weight:500; letter-spacing:1.6px; color:#9aa5b1;}
+@media (max-width:1250px){ .tg-line1{font-size:16px;} .tg-line2{display:none;} }
+
 /* ── "?" HELP BUTTON ── */
 .help-btn{flex:0 0 auto;order:99;width:34px;height:34px;margin-left:6px;border-radius:50%;cursor:pointer;color:#6ea3e0;font-family:var(--font-display);
   font-size:19px;font-weight:700;line-height:1;display:flex;align-items:center;justify-content:center;padding:0;
