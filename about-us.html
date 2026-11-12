@@ -363,18 +363,14 @@
             <div class="stage" id="stage">
                 <div class="stage-glow"></div>
                 <div class="stage-floor"><i></i><i></i><i></i></div>
-                <div class="stage-hud"><span class="stage-tag"><span id="tagtxt">RPI BOX ASSY</span></span><b></b><b></b><b></b><b></b></div>
+                <div class="stage-hud"><span class="stage-tag"><span id="tagtxt">T.U.L.O.N.G. Product</span></span><b></b><b></b><b></b><b></b></div>
                 <div class="stage-load">Acquiring unit&hellip;</div>
-                <iframe id="rpi3d" title="3D model of the T.U.L.O.N.G. RPI box assembly" tabindex="-1" allowtransparency="true" scrolling="no"></iframe>
+                <iframe id="rpi3d" title="T.U.L.O.N.G. Product 3D model" tabindex="-1" allowtransparency="true" scrolling="no"></iframe>
             </div>
             <div class="embers" id="embers"></div>
         </div>
         <div class="inner">
             <div class="hero-copy">
-                <div class="brandrow">
-                    <img class="hero-logo" src="/tulonglogo.png" alt="T.U.L.O.N.G. logo" onerror="this.style.display='none'">
-                    <img class="tagline-img" src="/TAGLINE.png" alt="TULONG Technologies &mdash; Where Technology Meets Public Safety for Real-Time Response and Real-Life Impact." onerror="this.style.display='none'">
-                </div>
                 <div class="badge">CLASSIFIED: PROJECT TULONG</div>
                 <h1>T.U.L.O.N.G.</h1>
                 <p class="hero-sub">Tactical Unit Locator &amp; Operations Network Grid</p>
@@ -571,8 +567,6 @@
         if (e.data.tulong === 'failed') stage.classList.add('failed');
         if (e.data.tulong === 'phase') {
             stage.setAttribute('data-phase', e.data.name);
-            var tt = document.getElementById('tagtxt');
-            if (tt) tt.textContent = (e.data.name === 'assembled' || e.data.name === 'assembling') ? 'RPI BOX ASSY' : 'RPI BOX ASSY // EXPLODED VIEW';
         }
     });
     if ('IntersectionObserver' in window) {
