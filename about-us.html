@@ -120,18 +120,18 @@
         .stage { position: absolute; top: 0; bottom: 0; right: -1%; width: min(64%, 940px); z-index: 1; }
         .stage-glow { position: absolute; inset: 0; pointer-events: none;
             background:
-              radial-gradient(ellipse 46% 44% at 52% 46%, rgba(160,205,250,.46), rgba(61,111,168,.24) 46%, transparent 72%),
-              radial-gradient(ellipse 40% 12% at 52% 80%, rgba(255,90,54,.30), transparent 70%); }
+              radial-gradient(ellipse 46% 44% at 52% 50%, rgba(160,205,250,.46), rgba(61,111,168,.24) 46%, transparent 72%),
+              radial-gradient(ellipse 40% 12% at 52% 84%, rgba(255,90,54,.30), transparent 70%); }
         .stage-glow::after { content: ""; position: absolute; left: 26%; right: 20%; top: 0; height: 56%; opacity: .55;
             background: linear-gradient(180deg, rgba(190,220,255,.30), transparent); clip-path: polygon(30% 0, 70% 0, 100% 100%, 0 100%); filter: blur(22px); }
-        .stage-floor { position: absolute; left: 50%; bottom: 21%; width: 74%; aspect-ratio: 5 / 1; translate: -46% 0; pointer-events: none; }
+        .stage-floor { position: absolute; left: 50%; bottom: 13%; width: 74%; aspect-ratio: 5 / 1; translate: -46% 0; pointer-events: none; }
         .stage-floor i { position: absolute; inset: 0; border-radius: 50%; border: 1px solid rgba(110,160,220,.55); box-shadow: 0 0 22px rgba(61,111,168,.4), inset 0 0 22px rgba(61,111,168,.25); animation: floorring 4.8s ease-out infinite; }
         .stage-floor i:nth-child(2) { animation-delay: 1.6s; } .stage-floor i:nth-child(3) { animation-delay: 3.2s; }
         .stage-floor::before { content: ""; position: absolute; inset: 6% 8%; border-radius: 50%; background: radial-gradient(ellipse, rgba(2,16,29,.85), transparent 70%); }
         .stage-glow { transition: filter 1s ease; } .stage[data-phase=exploding] .stage-glow, .stage[data-phase=exploded] .stage-glow { filter: brightness(1.45) saturate(1.2); }
         .stage-floor i { transition: border-color 1s; } .stage[data-phase=exploded] .stage-floor i { border-color: rgba(255,130,90,.7); }
         @keyframes floorring { from { transform: scale(.55); opacity: .95; } to { transform: scale(1.12); opacity: 0; } }
-        .stage-hud { position: absolute; left: 16%; right: 8%; top: 12%; bottom: 20%; pointer-events: none; opacity: 0; transition: opacity 1.2s ease .6s; }
+        .stage-hud { position: absolute; left: 16%; right: 8%; top: 14%; bottom: 14%; pointer-events: none; opacity: 0; transition: opacity 1.2s ease .6s; }
         .stage.ready .stage-hud { opacity: 1; }
         .stage-hud b { position: absolute; width: 26px; height: 26px; border: 2px solid var(--primary-accent); }
         .stage-hud b:nth-of-type(1) { left: 0; top: 0; border-right: 0; border-bottom: 0; } .stage-hud b:nth-of-type(2) { right: 0; top: 0; border-left: 0; border-bottom: 0; }
@@ -141,10 +141,10 @@
         .stage-load { position: absolute; left: 50%; top: 46%; translate: -50% -50%; font-family: var(--display); font-size: 16px; letter-spacing: 5px; text-transform: uppercase; color: var(--grey); animation: fade 1.6s ease-in-out infinite alternate; transition: opacity .6s; }
         .stage.ready .stage-load, .stage.failed .stage-load { opacity: 0; animation: none; }
         @keyframes fade { from { opacity: .35; } to { opacity: 1; } }
-        .stage-poster { position: absolute; left: 0; width: 100%; top: -4%; height: 84%; object-fit: contain; pointer-events: none; opacity: 0; transition: opacity .9s ease; }
+        .stage-poster { position: absolute; left: 0; width: 100%; top: 6%; height: 84%; object-fit: contain; pointer-events: none; opacity: 0; transition: opacity .9s ease; }
         .stage-poster.on { opacity: 1; }
         .stage.ready .stage-poster { opacity: 0; transition-duration: 1.2s; }
-        #rpi3d { position: absolute; left: 0; width: 100%; top: -4%; height: 84%; border: 0; background: transparent; pointer-events: none; opacity: 0; transform: scale(.94) translateY(14px); transition: opacity 1.1s ease, transform 1.4s cubic-bezier(.16,1,.3,1); }
+        #rpi3d { position: absolute; left: 0; width: 100%; top: 6%; height: 84%; border: 0; background: transparent; pointer-events: none; opacity: 0; transform: scale(.94) translateY(14px); transition: opacity 1.1s ease, transform 1.4s cubic-bezier(.16,1,.3,1); }
         .stage.ready #rpi3d { opacity: 1; transform: none; }
 
         /* ═════ 2 · TICKER ═════ */
