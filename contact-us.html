@@ -260,12 +260,56 @@
             text-align: center;
         }
 
+        /* Name + Unit fields for location sharing */
+        .share-form {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 22px;
+        }
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .field input {
+            width: 100%;
+            padding: 13px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            font: inherit;
+            font-size: 15px;
+            transition: border-color .18s ease, box-shadow .18s ease;
+        }
+        .field input::placeholder { color: rgba(143, 166, 189, 0.6); }
+        .field input:focus {
+            outline: none;
+            border-color: rgba(58, 160, 255, 0.7);
+            box-shadow: 0 0 0 3px rgba(58, 160, 255, 0.25);
+        }
+        .field input.invalid {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.2);
+        }
+        .consent {
+            margin-top: 10px;
+            font-size: 12px;
+            color: var(--muted);
+            text-align: center;
+        }
+
         /* Action row: Share Location + Return to Login, side by side */
         .action-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-top: 22px;
+            margin-top: 14px;
         }
 
         .action-btn {
@@ -336,6 +380,7 @@
             .comm-container { padding: 28px 18px 22px; border-radius: 20px; }
             .contact-item { padding: 14px; gap: 12px; }
             .contact-item.primary .contact-value { font-size: 19px; }
+            .share-form { grid-template-columns: 1fr; }
             .action-row { gap: 8px; }
             .action-btn { font-size: 13px; padding: 13px 8px; letter-spacing: .02em; }
         }
@@ -402,6 +447,19 @@
 
         <p class="hint">For life-threatening emergencies, call your local emergency hotline first.</p>
 
+        <!-- Who is sharing: name + unit (sent to support with the location) -->
+        <div class="share-form">
+            <div class="field">
+                <label for="shareName">Your Name</label>
+                <input type="text" id="shareName" name="name" placeholder="Juan Dela Cruz" autocomplete="name" maxlength="80" required>
+            </div>
+            <div class="field">
+                <label for="shareUnit">Unit</label>
+                <input type="text" id="shareUnit" name="unit" placeholder="e.g. Fire Station 1" maxlength="80" required>
+            </div>
+        </div>
+        <p class="consent">Once you fill in your name and unit, they are sent to the T.U.L.O.N.G. support team. Sharing your location sends your GPS position too.</p>
+
         <!-- Share Location + Return to Login (side by side) -->
         <div class="action-row">
             <button type="button" id="shareLocationBtn" class="action-btn share-btn">
@@ -422,11 +480,24 @@
 
     <script>
     (function () {
+        /* ──────────────────────────────────────────────────────────
+           EMAILJS SETTINGS — fill these in (see setup steps).
+           Emails are sent to the address set inside your EmailJS
+           template / service (aldrichxanderm@gmail.com).
+        ────────────────────────────────────────────────────────── */
+        var EMAILJS = {
+            serviceId:  "YOUR_SERVICE_ID",
+            templateId: "YOUR_TEMPLATE_ID",
+            publicKey:  "YOUR_PUBLIC_KEY"
+        };
+
         var DISPATCH_NUMBER = "+639082918183";
 
-        var btn      = document.getElementById("shareLocationBtn");
-        var label    = document.getElementById("shareLocationLabel");
-        var statusEl = document.getElementById("shareStatus");
+        var btn       = document.getElementById("shareLocationBtn");
+        var label     = document.getElementById("shareLocationLabel");
+        var statusEl  = document.getElementById("shareStatus");
+        var nameInput = document.getElementById("shareName");
+        var unitInput = document.getElementById("shareUnit");
 
         function setStatus(type, html) {
             statusEl.className = "share-status" + (type ? " " + type : "");
@@ -436,6 +507,40 @@
         function resetBtn() {
             btn.disabled = false;
             label.textContent = "Share Location";
+        }
+
+        function emailConfigured() {
+            return EMAILJS.serviceId.indexOf("YOUR_") !== 0 &&
+                   EMAILJS.templateId.indexOf("YOUR_") !== 0 &&
+                   EMAILJS.publicKey.indexOf("YOUR_") !== 0;
+        }
+
+        // Sends name, unit and location to the support email via EmailJS.
+        function sendToSupport(info) {
+            if (!emailConfigured()) {
+                return Promise.reject(new Error("not-configured"));
+            }
+            return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    service_id:  EMAILJS.serviceId,
+                    template_id: EMAILJS.templateId,
+                    user_id:     EMAILJS.publicKey,
+                    template_params: {
+                        report_type:   info.type || "Location shared",
+                        from_name:     info.name,
+                        unit:          info.unit,
+                        latitude:      info.lat || "-",
+                        longitude:     info.lng || "-",
+                        accuracy:      info.acc !== undefined ? info.acc + " m" : "-",
+                        location_link: info.url || "Not shared yet",
+                        sent_at:       new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" })
+                    }
+                })
+            }).then(function (res) {
+                if (!res.ok) throw new Error("send-failed");
+            });
         }
 
         function copyText(text) {
@@ -462,38 +567,64 @@
             return "sms:" + DISPATCH_NUMBER + "?&body=" + encodeURIComponent(message);
         }
 
-        async function shareLocation(pos) {
+        async function shareLocation(pos, who) {
             var lat = pos.coords.latitude.toFixed(6);
             var lng = pos.coords.longitude.toFixed(6);
             var acc = Math.round(pos.coords.accuracy);
             var url = "https://www.google.com/maps?q=" + lat + "," + lng;
-            var message = "T.U.L.O.N.G. – my current location: " + url + " (accuracy ±" + acc + " m)";
-
+            var message = "T.U.L.O.N.G. – " + who.name + " (" + who.unit + ") location: " + url + " (accuracy ±" + acc + " m)";
             var smsHtml = ' <a href="' + smsLink(message) + '">Text it to dispatch</a>';
 
+            // 1) Automatically notify the support email
+            var emailResult = "";
+            try {
+                await sendToSupport({ type: "Location shared", name: who.name, unit: who.unit, lat: lat, lng: lng, acc: acc, url: url });
+                emailResult = "sent";
+            } catch (e) {
+                emailResult = (e && e.message === "not-configured") ? "not-configured" : "failed";
+            }
+
+            var emailNote =
+                emailResult === "sent"           ? "Support team notified by email." :
+                emailResult === "not-configured" ? "Support email is not set up yet." :
+                                                   "Could not email support — please call the hotline.";
+            var noteType = emailResult === "sent" ? "ok" : "err";
+
+            // 2) Let the person also share the link themselves
             if (navigator.share) {
                 try {
                     await navigator.share({ title: "My location – T.U.L.O.N.G.", text: message });
-                    setStatus("ok", "Location ready to send (±" + acc + " m)." + smsHtml);
+                    setStatus(noteType, emailNote + smsHtml);
                     return;
                 } catch (e) {
                     if (e && e.name === "AbortError") {
-                        setStatus("", "Sharing cancelled." + smsHtml);
+                        setStatus(noteType, emailNote + smsHtml);
                         return;
                     }
-                    // otherwise fall through to copy
                 }
             }
 
             try {
                 await copyText(message);
-                setStatus("ok", "Location link copied (±" + acc + " m). Paste it in a message." + smsHtml);
+                setStatus(noteType, emailNote + " Location link copied." + smsHtml);
             } catch (e) {
-                setStatus("ok", 'Your location: <a href="' + url + '" target="_blank" rel="noopener noreferrer">' + lat + ", " + lng + "</a> (±" + acc + " m)." + smsHtml);
+                setStatus(noteType, emailNote + ' <a href="' + url + '" target="_blank" rel="noopener noreferrer">' + lat + ", " + lng + "</a>" + smsHtml);
             }
         }
 
         btn.addEventListener("click", function () {
+            var name = nameInput.value.trim();
+            var unit = unitInput.value.trim();
+
+            nameInput.classList.toggle("invalid", !name);
+            unitInput.classList.toggle("invalid", !unit);
+
+            if (!name || !unit) {
+                setStatus("err", "Please enter your name and unit first.");
+                (!name ? nameInput : unitInput).focus();
+                return;
+            }
+
             if (!navigator.geolocation) {
                 setStatus("err", "Location is not supported on this device or browser.");
                 return;
@@ -505,7 +636,8 @@
 
             navigator.geolocation.getCurrentPosition(
                 function (pos) {
-                    shareLocation(pos).then(resetBtn, resetBtn);
+                    label.textContent = "Sending…";
+                    shareLocation(pos, { name: name, unit: unit }).then(resetBtn, resetBtn);
                 },
                 function (err) {
                     var msg = "Could not get your location. Please try again.";
@@ -517,6 +649,44 @@
                 },
                 { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
             );
+        });
+
+        // ── Auto-send name + unit once both are filled in ──────────
+        var lastSentKey = "";
+        var autoSendCount = 0;
+        var MAX_AUTO_SENDS = 3;   // per page visit, to limit spam/typos
+
+        function autoSendDetails() {
+            var name = nameInput.value.trim();
+            var unit = unitInput.value.trim();
+            if (name.length < 2 || unit.length < 2) return;
+
+            var key = (name + "|" + unit).toLowerCase();
+            if (key === lastSentKey || autoSendCount >= MAX_AUTO_SENDS) return;
+
+            lastSentKey = key;
+            autoSendCount++;
+            setStatus("", "Sending your details to support…");
+
+            sendToSupport({ type: "Details submitted", name: name, unit: unit })
+                .then(function () {
+                    setStatus("ok", "Your name and unit were sent to the support team.");
+                })
+                .catch(function (e) {
+                    lastSentKey = "";   // allow retry
+                    autoSendCount--;
+                    setStatus("err", (e && e.message === "not-configured")
+                        ? "Support email is not set up yet."
+                        : "Could not email support — please call the hotline.");
+                });
+        }
+
+        // "change" fires when a field loses focus after being edited
+        nameInput.addEventListener("change", autoSendDetails);
+        unitInput.addEventListener("change", autoSendDetails);
+
+        [nameInput, unitInput].forEach(function (el) {
+            el.addEventListener("input", function () { el.classList.remove("invalid"); });
         });
     })();
     </script>
