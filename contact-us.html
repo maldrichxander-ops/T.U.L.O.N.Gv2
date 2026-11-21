@@ -260,22 +260,33 @@
             text-align: center;
         }
 
-        .back-btn {
+        /* Action row: Share Location + Return to Login, side by side */
+        .action-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-top: 22px;
+        }
+
+        .action-btn {
             display: flex;
             align-items: center;
             justify-content: center;
             gap: 8px;
-            margin-top: 22px;
-            padding: 14px 18px;
+            padding: 14px 12px;
             border-radius: 12px;
             border: 1px solid var(--border);
             color: var(--text);
             text-decoration: none;
+            font: inherit;
             font-weight: 600;
             letter-spacing: .04em;
             background: rgba(255, 255, 255, 0.03);
-            transition: background .18s ease, border-color .18s ease;
+            cursor: pointer;
+            transition: background .18s ease, border-color .18s ease, color .18s ease;
         }
+        .action-btn svg { width: 18px; height: 18px; flex: 0 0 auto; }
+
         .back-btn:hover,
         .back-btn:focus-visible {
             background: var(--blue);
@@ -283,7 +294,36 @@
             color: #02101D;
             outline: none;
         }
-        .back-btn svg { width: 18px; height: 18px; }
+
+        .share-btn {
+            background: rgba(46, 229, 157, 0.1);
+            border-color: rgba(46, 229, 157, 0.45);
+            color: var(--ok);
+        }
+        .share-btn:hover,
+        .share-btn:focus-visible {
+            background: var(--ok);
+            border-color: var(--ok);
+            color: #02101D;
+            outline: none;
+        }
+        .share-btn:disabled { opacity: .6; cursor: wait; }
+
+        .share-status {
+            margin-top: 14px;
+            font-size: 13px;
+            text-align: center;
+            color: var(--muted);
+            min-height: 1.5em;
+            overflow-wrap: anywhere;
+        }
+        .share-status.ok  { color: var(--ok); }
+        .share-status.err { color: #ff8a8c; }
+        .share-status a {
+            color: var(--blue);
+            font-weight: 600;
+            text-decoration: underline;
+        }
 
         footer {
             margin-top: 20px;
@@ -296,6 +336,8 @@
             .comm-container { padding: 28px 18px 22px; border-radius: 20px; }
             .contact-item { padding: 14px; gap: 12px; }
             .contact-item.primary .contact-value { font-size: 19px; }
+            .action-row { gap: 8px; }
+            .action-btn { font-size: 13px; padding: 13px 8px; letter-spacing: .02em; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -360,13 +402,124 @@
 
         <p class="hint">For life-threatening emergencies, call your local emergency hotline first.</p>
 
-        <a href="/" class="back-btn">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
-            Return to Login
-        </a>
+        <!-- Share Location + Return to Login (side by side) -->
+        <div class="action-row">
+            <button type="button" id="shareLocationBtn" class="action-btn share-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                <span id="shareLocationLabel">Share Location</span>
+            </button>
+
+            <a href="/" class="action-btn back-btn">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M19 12H5M11 18l-6-6 6-6"/></svg>
+                Return to Login
+            </a>
+        </div>
+
+        <p class="share-status" id="shareStatus" role="status" aria-live="polite"></p>
 
         <footer>&copy; T.U.L.O.N.G. &middot; Tactical Unit Locator &amp; Network Grid &middot; Cebu, Philippines</footer>
     </main>
+
+    <script>
+    (function () {
+        var DISPATCH_NUMBER = "+639082918183";
+
+        var btn      = document.getElementById("shareLocationBtn");
+        var label    = document.getElementById("shareLocationLabel");
+        var statusEl = document.getElementById("shareStatus");
+
+        function setStatus(type, html) {
+            statusEl.className = "share-status" + (type ? " " + type : "");
+            statusEl.innerHTML = html;
+        }
+
+        function resetBtn() {
+            btn.disabled = false;
+            label.textContent = "Share Location";
+        }
+
+        function copyText(text) {
+            if (navigator.clipboard && window.isSecureContext) {
+                return navigator.clipboard.writeText(text);
+            }
+            return new Promise(function (resolve, reject) {
+                try {
+                    var ta = document.createElement("textarea");
+                    ta.value = text;
+                    ta.style.position = "fixed";
+                    ta.style.opacity = "0";
+                    document.body.appendChild(ta);
+                    ta.select();
+                    var ok = document.execCommand("copy");
+                    document.body.removeChild(ta);
+                    ok ? resolve() : reject();
+                } catch (e) { reject(e); }
+            });
+        }
+
+        function smsLink(message) {
+            // "?&body=" works on both iOS and Android
+            return "sms:" + DISPATCH_NUMBER + "?&body=" + encodeURIComponent(message);
+        }
+
+        async function shareLocation(pos) {
+            var lat = pos.coords.latitude.toFixed(6);
+            var lng = pos.coords.longitude.toFixed(6);
+            var acc = Math.round(pos.coords.accuracy);
+            var url = "https://www.google.com/maps?q=" + lat + "," + lng;
+            var message = "T.U.L.O.N.G. – my current location: " + url + " (accuracy ±" + acc + " m)";
+
+            var smsHtml = ' <a href="' + smsLink(message) + '">Text it to dispatch</a>';
+
+            if (navigator.share) {
+                try {
+                    await navigator.share({ title: "My location – T.U.L.O.N.G.", text: message });
+                    setStatus("ok", "Location ready to send (±" + acc + " m)." + smsHtml);
+                    return;
+                } catch (e) {
+                    if (e && e.name === "AbortError") {
+                        setStatus("", "Sharing cancelled." + smsHtml);
+                        return;
+                    }
+                    // otherwise fall through to copy
+                }
+            }
+
+            try {
+                await copyText(message);
+                setStatus("ok", "Location link copied (±" + acc + " m). Paste it in a message." + smsHtml);
+            } catch (e) {
+                setStatus("ok", 'Your location: <a href="' + url + '" target="_blank" rel="noopener noreferrer">' + lat + ", " + lng + "</a> (±" + acc + " m)." + smsHtml);
+            }
+        }
+
+        btn.addEventListener("click", function () {
+            if (!navigator.geolocation) {
+                setStatus("err", "Location is not supported on this device or browser.");
+                return;
+            }
+
+            btn.disabled = true;
+            label.textContent = "Locating…";
+            setStatus("", "Getting your location…");
+
+            navigator.geolocation.getCurrentPosition(
+                function (pos) {
+                    shareLocation(pos).then(resetBtn, resetBtn);
+                },
+                function (err) {
+                    var msg = "Could not get your location. Please try again.";
+                    if (err.code === 1) msg = "Location permission denied. Allow location access in your browser settings and try again.";
+                    else if (err.code === 2) msg = "Location unavailable. Check your GPS or connection and try again.";
+                    else if (err.code === 3) msg = "Location request timed out. Please try again.";
+                    setStatus("err", msg);
+                    resetBtn();
+                },
+                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+            );
+        });
+    })();
+    </script>
 
 </body>
 </html>
