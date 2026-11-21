@@ -493,6 +493,15 @@
 
         var DISPATCH_NUMBER = "+639082918183";
 
+        window.addEventListener("error", function (e) {
+            var el = document.getElementById("shareStatus");
+            if (el) { el.className = "share-status err"; el.textContent = "Script error: " + (e.message || "unknown"); }
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+            var el = document.getElementById("shareStatus");
+            if (el) { el.className = "share-status err"; el.textContent = "Error: " + ((e.reason && e.reason.message) || e.reason || "unknown"); }
+        });
+
         var btn       = document.getElementById("shareLocationBtn");
         var label     = document.getElementById("shareLocationLabel");
         var statusEl  = document.getElementById("shareStatus");
@@ -634,20 +643,32 @@
             label.textContent = "Locating…";
             setStatus("", "Getting your location…");
 
+            function onPos(pos) {
+                label.textContent = "Sending…";
+                shareLocation(pos, { name: name, unit: unit }).then(resetBtn, resetBtn);
+            }
+            function onFail(err) {
+                var msg = "Could not get your location. Please try again.";
+                if (err.code === 1) msg = "Location permission denied. Allow location access for this site in your browser settings and try again.";
+                else if (err.code === 2) msg = "Location unavailable. Turn on Location Services / GPS on your device and try again.";
+                else if (err.code === 3) msg = "Location request timed out. Please try again.";
+                setStatus("err", msg);
+                resetBtn();
+            }
+
+            // First try precise (GPS); if that fails for any reason except
+            // permission denied, retry with the faster network-based location.
             navigator.geolocation.getCurrentPosition(
-                function (pos) {
-                    label.textContent = "Sending…";
-                    shareLocation(pos, { name: name, unit: unit }).then(resetBtn, resetBtn);
-                },
+                onPos,
                 function (err) {
-                    var msg = "Could not get your location. Please try again.";
-                    if (err.code === 1) msg = "Location permission denied. Allow location access in your browser settings and try again.";
-                    else if (err.code === 2) msg = "Location unavailable. Check your GPS or connection and try again.";
-                    else if (err.code === 3) msg = "Location request timed out. Please try again.";
-                    setStatus("err", msg);
-                    resetBtn();
+                    if (err.code === 1) { onFail(err); return; }
+                    setStatus("", "Trying again with approximate location…");
+                    navigator.geolocation.getCurrentPosition(
+                        onPos, onFail,
+                        { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
+                    );
                 },
-                { enableHighAccuracy: true, timeout: 15000, maximumAge: 0 }
+                { enableHighAccuracy: true, timeout: 10000, maximumAge: 0 }
             );
         });
 
