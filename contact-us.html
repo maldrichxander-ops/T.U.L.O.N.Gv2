@@ -47,7 +47,7 @@
             --border: rgba(148, 197, 255, 0.16);
             --text: #eaf2fb;
             --muted: #8fa6bd;
-            --accent: #ff4d4f;      /* emergency red */
+            --accent: #ff4d4f;
             --accent-glow: rgba(255, 77, 79, 0.35);
             --blue: #3aa0ff;
             --ok: #2ee59d;
@@ -80,7 +80,6 @@
             position: relative;
         }
 
-        /* faint tactical grid */
         body::before {
             content: "";
             position: fixed;
@@ -226,7 +225,6 @@
         .arrow svg { width: 20px; height: 20px; display: block; }
         .contact-item:hover .arrow { transform: translateX(3px); color: var(--text); }
 
-        /* Hotline = primary / emergency card */
         .contact-item.primary {
             background: linear-gradient(135deg, rgba(255, 77, 79, 0.2), rgba(255, 77, 79, 0.06));
             border-color: rgba(255, 77, 79, 0.5);
@@ -260,56 +258,12 @@
             text-align: center;
         }
 
-        /* Name + Unit fields for location sharing */
-        .share-form {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 12px;
-            margin-top: 22px;
-        }
-        .field label {
-            display: block;
-            margin-bottom: 6px;
-            font-size: 11.5px;
-            font-weight: 600;
-            letter-spacing: .12em;
-            text-transform: uppercase;
-            color: var(--muted);
-        }
-        .field input {
-            width: 100%;
-            padding: 13px 14px;
-            border-radius: 12px;
-            border: 1px solid var(--border);
-            background: rgba(255, 255, 255, 0.04);
-            color: var(--text);
-            font: inherit;
-            font-size: 15px;
-            transition: border-color .18s ease, box-shadow .18s ease;
-        }
-        .field input::placeholder { color: rgba(143, 166, 189, 0.6); }
-        .field input:focus {
-            outline: none;
-            border-color: rgba(58, 160, 255, 0.7);
-            box-shadow: 0 0 0 3px rgba(58, 160, 255, 0.25);
-        }
-        .field input.invalid {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.2);
-        }
-        .consent {
-            margin-top: 10px;
-            font-size: 12px;
-            color: var(--muted);
-            text-align: center;
-        }
-
-        /* Action row: Share Location + Return to Login, side by side */
+        /* Action row: Email Us + Return to Login */
         .action-row {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 12px;
-            margin-top: 14px;
+            margin-top: 18px;
         }
 
         .action-btn {
@@ -353,8 +307,158 @@
         }
         .share-btn:disabled { opacity: .6; cursor: wait; }
 
+        footer {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: rgba(143, 166, 189, 0.7);
+        }
+
+        /* ───────── Email Us pop-up form ───────── */
+        .modal-overlay {
+            position: fixed;
+            inset: 0;
+            z-index: 100;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 16px;
+            background: rgba(1, 8, 15, 0.75);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+        }
+        .modal-overlay.open { display: flex; }
+
+        .modal {
+            position: relative;
+            width: 100%;
+            max-width: 480px;
+            max-height: calc(100vh - 32px);
+            overflow-y: auto;
+            background: linear-gradient(180deg, #0a2138, #04121f);
+            border: 1px solid var(--border);
+            border-radius: 20px;
+            padding: 26px 22px 22px;
+            box-shadow: 0 30px 80px rgba(0, 0, 0, 0.6);
+            animation: rise .25s ease both;
+        }
+        .modal h2 {
+            font-size: 20px;
+            letter-spacing: .04em;
+            padding-right: 36px;
+        }
+        .modal h2 span { color: var(--blue); }
+        .modal-sub {
+            margin-top: 4px;
+            margin-bottom: 18px;
+            font-size: 13px;
+            color: var(--muted);
+        }
+        .modal-close {
+            position: absolute;
+            top: 14px; right: 14px;
+            width: 34px; height: 34px;
+            display: grid;
+            place-items: center;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--muted);
+            cursor: pointer;
+            font-size: 18px;
+            line-height: 1;
+        }
+        .modal-close:hover { color: var(--text); background: var(--card-hover); }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .field { display: block; }
+        .field.full { grid-column: 1 / -1; }
+        .field label {
+            display: block;
+            margin-bottom: 6px;
+            font-size: 11.5px;
+            font-weight: 600;
+            letter-spacing: .12em;
+            text-transform: uppercase;
+            color: var(--muted);
+        }
+        .field label .opt {
+            text-transform: none;
+            letter-spacing: 0;
+            font-weight: 500;
+            opacity: .75;
+        }
+        .field input,
+        .field textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            background: rgba(255, 255, 255, 0.04);
+            color: var(--text);
+            font: inherit;
+            font-size: 15px;
+            transition: border-color .18s ease, box-shadow .18s ease;
+        }
+        .field textarea { resize: vertical; min-height: 96px; }
+        .field input::placeholder,
+        .field textarea::placeholder { color: rgba(143, 166, 189, 0.6); }
+        .field input:focus,
+        .field textarea:focus {
+            outline: none;
+            border-color: rgba(58, 160, 255, 0.7);
+            box-shadow: 0 0 0 3px rgba(58, 160, 255, 0.25);
+        }
+        .field .invalid {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(255, 77, 79, 0.2);
+        }
+
+        .loc-row { display: flex; gap: 8px; }
+        .loc-row input { flex: 1; min-width: 0; }
+        .loc-btn {
+            flex: 0 0 auto;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            padding: 0 12px;
+            border-radius: 12px;
+            border: 1px solid rgba(58, 160, 255, 0.4);
+            background: rgba(58, 160, 255, 0.12);
+            color: var(--blue);
+            font: inherit;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        .loc-btn svg { width: 16px; height: 16px; }
+        .loc-btn:hover { background: var(--blue); color: #02101D; }
+        .loc-btn:disabled { opacity: .6; cursor: wait; }
+
+        .form-actions { margin-top: 18px; }
+        .submit-btn {
+            width: 100%;
+            padding: 14px;
+            border-radius: 12px;
+            border: 1px solid var(--accent);
+            background: var(--accent);
+            color: #fff;
+            font: inherit;
+            font-weight: 700;
+            letter-spacing: .06em;
+            cursor: pointer;
+            box-shadow: 0 8px 22px var(--accent-glow);
+            transition: filter .18s ease;
+        }
+        .submit-btn:hover { filter: brightness(1.1); }
+        .submit-btn:disabled { opacity: .6; cursor: wait; }
+
         .share-status {
-            margin-top: 14px;
+            margin-top: 12px;
             font-size: 13px;
             text-align: center;
             color: var(--muted);
@@ -363,26 +467,14 @@
         }
         .share-status.ok  { color: var(--ok); }
         .share-status.err { color: #ff8a8c; }
-        .share-status a {
-            color: var(--blue);
-            font-weight: 600;
-            text-decoration: underline;
-        }
-
-        footer {
-            margin-top: 20px;
-            text-align: center;
-            font-size: 12px;
-            color: rgba(143, 166, 189, 0.7);
-        }
 
         @media (max-width: 420px) {
             .comm-container { padding: 28px 18px 22px; border-radius: 20px; }
             .contact-item { padding: 14px; gap: 12px; }
             .contact-item.primary .contact-value { font-size: 19px; }
-            .share-form { grid-template-columns: 1fr; }
             .action-row { gap: 8px; }
             .action-btn { font-size: 13px; padding: 13px 8px; letter-spacing: .02em; }
+            .form-grid { grid-template-columns: 1fr; }
         }
 
         @media (prefers-reduced-motion: reduce) {
@@ -447,24 +539,11 @@
 
         <p class="hint">For life-threatening emergencies, call your local emergency hotline first.</p>
 
-        <!-- Who is sharing: name + unit (sent to support with the location) -->
-        <div class="share-form">
-            <div class="field">
-                <label for="shareName">Your Name</label>
-                <input type="text" id="shareName" name="name" placeholder="Juan Dela Cruz" autocomplete="name" maxlength="80" required>
-            </div>
-            <div class="field">
-                <label for="shareUnit">Unit</label>
-                <input type="text" id="shareUnit" name="unit" placeholder="e.g. Fire Station 1" maxlength="80" required>
-            </div>
-        </div>
-        <p class="consent">Once you fill in your name and unit, they are sent to the T.U.L.O.N.G. support team. Sharing your location sends your GPS position too.</p>
-
-        <!-- Share Location + Return to Login (side by side) -->
+        <!-- Email Us (opens pop-up form) + Return to Login -->
         <div class="action-row">
-            <button type="button" id="shareLocationBtn" class="action-btn share-btn">
-                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
-                <span id="shareLocationLabel">Share Location</span>
+            <button type="button" id="emailUsBtn" class="action-btn share-btn" aria-haspopup="dialog">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="m3 7 9 6 9-6"/></svg>
+                <span>Email Us</span>
             </button>
 
             <a href="/" class="action-btn back-btn">
@@ -473,196 +552,148 @@
             </a>
         </div>
 
-        <p class="share-status" id="shareStatus" role="status" aria-live="polite"></p>
-
         <footer>&copy; T.U.L.O.N.G. &middot; Tactical Unit Locator &amp; Network Grid &middot; Cebu, Philippines</footer>
     </main>
 
+    <!-- Email Us pop-up -->
+    <div class="modal-overlay" id="emailModal" aria-hidden="true">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="emailTitle">
+            <button type="button" class="modal-close" id="emailClose" aria-label="Close">&times;</button>
+            <h2 id="emailTitle">EMAIL <span>US</span></h2>
+            <p class="modal-sub">Tell us what happened and our support team will get back to you.</p>
+
+            <form id="emailForm" novalidate>
+                <div class="form-grid">
+                    <div class="field full">
+                        <label for="fName">Name</label>
+                        <input type="text" id="fName" placeholder="e.g. Christian Diaz" autocomplete="name" maxlength="80" required>
+                    </div>
+                    <div class="field">
+                        <label for="fPhone">No. <span class="opt">(optional)</span></label>
+                        <input type="tel" id="fPhone" placeholder="0917-123-4567" autocomplete="tel" maxlength="30">
+                    </div>
+                    <div class="field">
+                        <label for="fEmail">Email <span class="opt">(optional)</span></label>
+                        <input type="email" id="fEmail" placeholder="you@email.com" autocomplete="email" maxlength="120">
+                    </div>
+                    <div class="field full">
+                        <label for="fUnit">Unit</label>
+                        <input type="text" id="fUnit" placeholder="e.g. A-001" maxlength="80" required>
+                    </div>
+                    <div class="field full">
+                        <label for="fLocation">Location</label>
+                        <div class="loc-row">
+                            <input type="text" id="fLocation" placeholder="Type your location or use GPS" maxlength="300" required>
+                            <button type="button" class="loc-btn" id="locBtn">
+                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 1 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>
+                                <span id="locLabel">Use GPS</span>
+                            </button>
+                        </div>
+                    </div>
+                    <div class="field full">
+                        <label for="fIssue">Issue</label>
+                        <textarea id="fIssue" placeholder="Describe the problem you experienced so we can fix it." maxlength="1500" required></textarea>
+                    </div>
+                </div>
+
+                <div class="form-actions">
+                    <button type="submit" class="submit-btn" id="submitBtn">SEND EMAIL</button>
+                </div>
+                <p class="share-status" id="formStatus" role="status" aria-live="polite"></p>
+            </form>
+        </div>
+    </div>
+
     <script>
     (function () {
-        /* ──────────────────────────────────────────────────────────
-           EMAILJS SETTINGS — fill these in (see setup steps).
-           Emails are sent to the address set inside your EmailJS
-           template / service (aldrichxanderm@gmail.com).
-        ────────────────────────────────────────────────────────── */
+        /* EmailJS settings */
         var EMAILJS = {
             serviceId:  "service_ngdks0l",
             templateId: "template_s9nqou3",
             publicKey:  "WA0MwL2t3ob9dX4zF"
         };
 
-        var DISPATCH_NUMBER = "+639082918183";
+        var overlay   = document.getElementById("emailModal");
+        var openBtn   = document.getElementById("emailUsBtn");
+        var closeBtn  = document.getElementById("emailClose");
+        var form      = document.getElementById("emailForm");
+        var statusEl  = document.getElementById("formStatus");
+        var submitBtn = document.getElementById("submitBtn");
+        var locBtn    = document.getElementById("locBtn");
+        var locLabel  = document.getElementById("locLabel");
 
-        window.addEventListener("error", function (e) {
-            var el = document.getElementById("shareStatus");
-            if (el) { el.className = "share-status err"; el.textContent = "Script error: " + (e.message || "unknown"); }
-        });
-        window.addEventListener("unhandledrejection", function (e) {
-            var el = document.getElementById("shareStatus");
-            if (el) { el.className = "share-status err"; el.textContent = "Error: " + ((e.reason && e.reason.message) || e.reason || "unknown"); }
-        });
+        var f = {
+            name:     document.getElementById("fName"),
+            phone:    document.getElementById("fPhone"),
+            email:    document.getElementById("fEmail"),
+            unit:     document.getElementById("fUnit"),
+            location: document.getElementById("fLocation"),
+            issue:    document.getElementById("fIssue")
+        };
 
-        var btn       = document.getElementById("shareLocationBtn");
-        var label     = document.getElementById("shareLocationLabel");
-        var statusEl  = document.getElementById("shareStatus");
-        var nameInput = document.getElementById("shareName");
-        var unitInput = document.getElementById("shareUnit");
+        var gps = { lat: "", lng: "", acc: "", url: "" };
 
-        function setStatus(type, html) {
+        function setStatus(type, text) {
             statusEl.className = "share-status" + (type ? " " + type : "");
-            statusEl.innerHTML = html;
+            statusEl.textContent = text;
         }
 
-        function resetBtn() {
-            btn.disabled = false;
-            label.textContent = "Share Location";
+        function openModal() {
+            overlay.classList.add("open");
+            overlay.setAttribute("aria-hidden", "false");
+            document.body.style.overflow = "hidden";
+            setTimeout(function () { f.name.focus(); }, 50);
+        }
+        function closeModal() {
+            overlay.classList.remove("open");
+            overlay.setAttribute("aria-hidden", "true");
+            document.body.style.overflow = "";
+            openBtn.focus();
         }
 
-        function emailConfigured() {
-            return EMAILJS.serviceId.indexOf("YOUR_") !== 0 &&
-                   EMAILJS.templateId.indexOf("YOUR_") !== 0 &&
-                   EMAILJS.publicKey.indexOf("YOUR_") !== 0;
-        }
+        openBtn.addEventListener("click", openModal);
+        closeBtn.addEventListener("click", closeModal);
+        overlay.addEventListener("mousedown", function (e) { if (e.target === overlay) closeModal(); });
+        document.addEventListener("keydown", function (e) {
+            if (e.key === "Escape" && overlay.classList.contains("open")) closeModal();
+        });
 
-        // Sends name, unit and location to the support email via EmailJS.
-        function sendToSupport(info) {
-            if (!emailConfigured()) {
-                return Promise.reject(new Error("not-configured"));
-            }
-            return fetch("https://api.emailjs.com/api/v1.0/email/send", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    service_id:  EMAILJS.serviceId,
-                    template_id: EMAILJS.templateId,
-                    user_id:     EMAILJS.publicKey,
-                    template_params: {
-                        report_type:   info.type || "Location shared",
-                        from_name:     info.name,
-                        unit:          info.unit,
-                        latitude:      info.lat || "-",
-                        longitude:     info.lng || "-",
-                        accuracy:      info.acc !== undefined ? info.acc + " m" : "-",
-                        location_link: info.url || "Not shared yet",
-                        sent_at:       new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" })
-                    }
-                })
-            }).then(function (res) {
-                if (!res.ok) throw new Error("send-failed");
-            });
-        }
+        Object.keys(f).forEach(function (k) {
+            f[k].addEventListener("input", function () { f[k].classList.remove("invalid"); });
+        });
 
-        function copyText(text) {
-            if (navigator.clipboard && window.isSecureContext) {
-                return navigator.clipboard.writeText(text);
-            }
-            return new Promise(function (resolve, reject) {
-                try {
-                    var ta = document.createElement("textarea");
-                    ta.value = text;
-                    ta.style.position = "fixed";
-                    ta.style.opacity = "0";
-                    document.body.appendChild(ta);
-                    ta.select();
-                    var ok = document.execCommand("copy");
-                    document.body.removeChild(ta);
-                    ok ? resolve() : reject();
-                } catch (e) { reject(e); }
-            });
-        }
-
-        function smsLink(message) {
-            // "?&body=" works on both iOS and Android
-            return "sms:" + DISPATCH_NUMBER + "?&body=" + encodeURIComponent(message);
-        }
-
-        async function shareLocation(pos, who) {
-            var lat = pos.coords.latitude.toFixed(6);
-            var lng = pos.coords.longitude.toFixed(6);
-            var acc = Math.round(pos.coords.accuracy);
-            var url = "https://www.google.com/maps?q=" + lat + "," + lng;
-            var message = "T.U.L.O.N.G. – " + who.name + " (" + who.unit + ") location: " + url + " (accuracy ±" + acc + " m)";
-            var smsHtml = ' <a href="' + smsLink(message) + '">Text it to dispatch</a>';
-
-            // 1) Automatically notify the support email
-            var emailResult = "";
-            try {
-                await sendToSupport({ type: "Location shared", name: who.name, unit: who.unit, lat: lat, lng: lng, acc: acc, url: url });
-                emailResult = "sent";
-            } catch (e) {
-                emailResult = (e && e.message === "not-configured") ? "not-configured" : "failed";
-            }
-
-            var emailNote =
-                emailResult === "sent"           ? "Support team notified by email." :
-                emailResult === "not-configured" ? "Support email is not set up yet." :
-                                                   "Could not email support — please call the hotline.";
-            var noteType = emailResult === "sent" ? "ok" : "err";
-
-            // 2) Let the person also share the link themselves
-            if (navigator.share) {
-                try {
-                    await navigator.share({ title: "My location – T.U.L.O.N.G.", text: message });
-                    setStatus(noteType, emailNote + smsHtml);
-                    return;
-                } catch (e) {
-                    if (e && e.name === "AbortError") {
-                        setStatus(noteType, emailNote + smsHtml);
-                        return;
-                    }
-                }
-            }
-
-            try {
-                await copyText(message);
-                setStatus(noteType, emailNote + " Location link copied." + smsHtml);
-            } catch (e) {
-                setStatus(noteType, emailNote + ' <a href="' + url + '" target="_blank" rel="noopener noreferrer">' + lat + ", " + lng + "</a>" + smsHtml);
-            }
-        }
-
-        btn.addEventListener("click", function () {
-            var name = nameInput.value.trim();
-            var unit = unitInput.value.trim();
-
-            nameInput.classList.toggle("invalid", !name);
-            unitInput.classList.toggle("invalid", !unit);
-
-            if (!name || !unit) {
-                setStatus("err", "Please enter your name and unit first.");
-                (!name ? nameInput : unitInput).focus();
-                return;
-            }
-
+        // Optional: fill the Location field using GPS
+        locBtn.addEventListener("click", function () {
             if (!navigator.geolocation) {
                 setStatus("err", "Location is not supported on this device or browser.");
                 return;
             }
+            locBtn.disabled = true;
+            locLabel.textContent = "Locating…";
+            setStatus("", "");
 
-            btn.disabled = true;
-            label.textContent = "Locating…";
-            setStatus("", "Getting your location…");
-
+            function done() { locBtn.disabled = false; locLabel.textContent = "Use GPS"; }
             function onPos(pos) {
-                label.textContent = "Sending…";
-                shareLocation(pos, { name: name, unit: unit }).then(resetBtn, resetBtn);
+                gps.lat = pos.coords.latitude.toFixed(6);
+                gps.lng = pos.coords.longitude.toFixed(6);
+                gps.acc = Math.round(pos.coords.accuracy);
+                gps.url = "https://www.google.com/maps?q=" + gps.lat + "," + gps.lng;
+                f.location.value = gps.lat + ", " + gps.lng;
+                f.location.classList.remove("invalid");
+                done();
             }
             function onFail(err) {
-                var msg = "Could not get your location. Please try again.";
-                if (err.code === 1) msg = "Location permission denied. Allow location access for this site in your browser settings and try again.";
-                else if (err.code === 2) msg = "Location unavailable. Turn on Location Services / GPS on your device and try again.";
+                var msg = "Could not get your location. Please type it instead.";
+                if (err.code === 1) msg = "Location permission denied. Please type your location instead.";
+                else if (err.code === 2) msg = "Location unavailable. Turn on GPS or type your location.";
                 else if (err.code === 3) msg = "Location request timed out. Please try again.";
                 setStatus("err", msg);
-                resetBtn();
+                done();
             }
-
-            // First try precise (GPS); if that fails for any reason except
-            // permission denied, retry with the faster network-based location.
             navigator.geolocation.getCurrentPosition(
                 onPos,
                 function (err) {
                     if (err.code === 1) { onFail(err); return; }
-                    setStatus("", "Trying again with approximate location…");
                     navigator.geolocation.getCurrentPosition(
                         onPos, onFail,
                         { enableHighAccuracy: false, timeout: 15000, maximumAge: 60000 }
@@ -672,42 +703,78 @@
             );
         });
 
-        // ── Auto-send name + unit once both are filled in ──────────
-        var lastSentKey = "";
-        var autoSendCount = 0;
-        var MAX_AUTO_SENDS = 3;   // per page visit, to limit spam/typos
-
-        function autoSendDetails() {
-            var name = nameInput.value.trim();
-            var unit = unitInput.value.trim();
-            if (name.length < 2 || unit.length < 2) return;
-
-            var key = (name + "|" + unit).toLowerCase();
-            if (key === lastSentKey || autoSendCount >= MAX_AUTO_SENDS) return;
-
-            lastSentKey = key;
-            autoSendCount++;
-            setStatus("", "Sending your details to support…");
-
-            sendToSupport({ type: "Details submitted", name: name, unit: unit })
-                .then(function () {
-                    setStatus("ok", "Your name and unit were sent to the support team.");
+        function sendToSupport(data) {
+            return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                    service_id:  EMAILJS.serviceId,
+                    template_id: EMAILJS.templateId,
+                    user_id:     EMAILJS.publicKey,
+                    template_params: {
+                        report_type:   "Email Us – Issue report",
+                        from_name:     data.name,
+                        contact_no:    data.phone || "-",
+                        from_email:    data.email || "-",
+                        reply_to:      data.email || "",
+                        unit:          data.unit,
+                        location:      data.location,
+                        issue:         data.issue,
+                        latitude:      gps.lat || "-",
+                        longitude:     gps.lng || "-",
+                        accuracy:      gps.acc !== "" ? gps.acc + " m" : "-",
+                        location_link: gps.url || "Not shared",
+                        sent_at:       new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" })
+                    }
                 })
-                .catch(function (e) {
-                    lastSentKey = "";   // allow retry
-                    autoSendCount--;
-                    setStatus("err", (e && e.message === "not-configured")
-                        ? "Support email is not set up yet."
-                        : "Could not email support — please call the hotline.");
-                });
+            }).then(function (res) {
+                if (!res.ok) throw new Error("send-failed");
+            });
         }
 
-        // "change" fires when a field loses focus after being edited
-        nameInput.addEventListener("change", autoSendDetails);
-        unitInput.addEventListener("change", autoSendDetails);
+        form.addEventListener("submit", function (e) {
+            e.preventDefault();
 
-        [nameInput, unitInput].forEach(function (el) {
-            el.addEventListener("input", function () { el.classList.remove("invalid"); });
+            var data = {
+                name:     f.name.value.trim(),
+                phone:    f.phone.value.trim(),
+                email:    f.email.value.trim(),
+                unit:     f.unit.value.trim(),
+                location: f.location.value.trim(),
+                issue:    f.issue.value.trim()
+            };
+
+            var missing = ["name", "unit", "location", "issue"].filter(function (k) { return !data[k]; });
+            ["name", "unit", "location", "issue"].forEach(function (k) {
+                f[k].classList.toggle("invalid", !data[k]);
+            });
+            if (missing.length) {
+                setStatus("err", "Please fill in the required fields.");
+                f[missing[0]].focus();
+                return;
+            }
+            if (data.email && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(data.email)) {
+                f.email.classList.add("invalid");
+                setStatus("err", "Please enter a valid email address or leave it blank.");
+                f.email.focus();
+                return;
+            }
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = "SENDING…";
+            setStatus("", "Sending your message…");
+
+            sendToSupport(data).then(function () {
+                setStatus("ok", "Thank you! Your message was sent to the support team.");
+                form.reset();
+                gps = { lat: "", lng: "", acc: "", url: "" };
+                setTimeout(closeModal, 2200);
+            }).catch(function () {
+                setStatus("err", "Could not send your message. Please try again or call the hotline.");
+            }).then(function () {
+                submitBtn.disabled = false;
+                submitBtn.textContent = "SEND EMAIL";
+            });
         });
     })();
     </script>
