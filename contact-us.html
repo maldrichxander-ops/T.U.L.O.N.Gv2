@@ -569,7 +569,7 @@
                         <input type="text" id="fName" placeholder="e.g. Christian Diaz" autocomplete="name" maxlength="80" required>
                     </div>
                     <div class="field">
-                        <label for="fPhone">No. <span class="opt">(optional)</span></label>
+                        <label for="fPhone">Phone Number <span class="opt">(optional)</span></label>
                         <input type="tel" id="fPhone" placeholder="0917-123-4567" autocomplete="tel" maxlength="30">
                     </div>
                     <div class="field">
@@ -707,16 +707,11 @@
             }
             var locationLine = data.location + (gps.url ? " (" + gps.url + ")" : "");
             var message =
-                "Name: "         + data.name     + "
-" +
-                "Unit: "         + data.unit     + "
-" +
-                "Phone Number: " + data.phone    + "
-" +
-                "Email: "        + data.email    + "
-" +
-                "Location: "     + locationLine  + "
-" +
+                "Name: "         + data.name     + "\n" +
+                "Unit: "         + data.unit     + "\n" +
+                "Phone Number: " + data.phone    + "\n" +
+                "Email: "        + data.email    + "\n" +
+                "Location: "     + locationLine  + "\n" +
                 "Issue: "        + data.issue;
 
             var subject = "T.U.L.O.N.G. Support Request - " + data.name + (data.unit ? " (" + data.unit + ")" : "");
