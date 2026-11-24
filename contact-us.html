@@ -566,10 +566,10 @@
                 <div class="form-grid">
                     <div class="field full">
                         <label for="fName">Name</label>
-                        <input type="text" id="fName" placeholder="e.g. xxxx xx" autocomplete="name" maxlength="80" required>
+                        <input type="text" id="fName" placeholder="e.g. Christian Diaz" autocomplete="name" maxlength="80" required>
                     </div>
                     <div class="field">
-                        <label for="fPhone">Phone Number <span class="opt">(optional)</span></label>
+                        <label for="fPhone">No. <span class="opt">(optional)</span></label>
                         <input type="tel" id="fPhone" placeholder="0917-123-4567" autocomplete="tel" maxlength="30">
                     </div>
                     <div class="field">
@@ -606,12 +606,10 @@
 
     <script>
     (function () {
-        /* EmailJS settings */
-        var EMAILJS = {
-            serviceId:  "service_ngdks0l",
-            templateId: "template_s9nqou3",
-            publicKey:  "WA0MwL2t3ob9dX4zF"
-        };
+        /* Email service: Web3Forms (free public API, no backend, your email stays hidden).
+           Get a free Access Key at https://web3forms.com (enter your support email there,
+           they send the key to that inbox), then paste it below. */
+        var WEB3FORMS_KEY = "YOUR_WEB3FORMS_ACCESS_KEY";
 
         var overlay   = document.getElementById("emailModal");
         var openBtn   = document.getElementById("emailUsBtn");
@@ -704,31 +702,41 @@
         });
 
         function sendToSupport(data) {
-            return fetch("https://api.emailjs.com/api/v1.0/email/send", {
+            if (WEB3FORMS_KEY.indexOf("YOUR_") === 0) {
+                return Promise.reject(new Error("not-configured"));
+            }
+            var locationLine = data.location + (gps.url ? " (" + gps.url + ")" : "");
+            var message =
+                "Name: "         + data.name     + "
+" +
+                "Unit: "         + data.unit     + "
+" +
+                "Phone Number: " + data.phone    + "
+" +
+                "Email: "        + data.email    + "
+" +
+                "Location: "     + locationLine  + "
+" +
+                "Issue: "        + data.issue;
+
+            var subject = "T.U.L.O.N.G. Support Request - " + data.name + (data.unit ? " (" + data.unit + ")" : "");
+
+            var payload = {
+                access_key: WEB3FORMS_KEY,
+                subject:    subject,
+                from_name:  "T.U.L.O.N.G. Contact Form",
+                message:    message
+            };
+            if (data.email) payload.replyto = data.email;
+
+            return fetch("https://api.web3forms.com/submit", {
                 method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    service_id:  EMAILJS.serviceId,
-                    template_id: EMAILJS.templateId,
-                    user_id:     EMAILJS.publicKey,
-                    template_params: {
-                        report_type:   "Email Us – Issue report",
-                        from_name:     data.name,
-                        contact_no:    data.phone || "-",
-                        from_email:    data.email || "-",
-                        reply_to:      data.email || "",
-                        unit:          data.unit,
-                        location:      data.location,
-                        issue:         data.issue,
-                        latitude:      gps.lat || "-",
-                        longitude:     gps.lng || "-",
-                        accuracy:      gps.acc !== "" ? gps.acc + " m" : "-",
-                        location_link: gps.url || "Not shared",
-                        sent_at:       new Date().toLocaleString("en-PH", { timeZone: "Asia/Manila" })
-                    }
-                })
+                headers: { "Content-Type": "application/json", "Accept": "application/json" },
+                body: JSON.stringify(payload)
             }).then(function (res) {
-                if (!res.ok) throw new Error("send-failed");
+                return res.json().catch(function () { return {}; }).then(function (j) {
+                    if (!res.ok || j.success === false) throw new Error("send-failed");
+                });
             });
         }
 
@@ -769,8 +777,10 @@
                 form.reset();
                 gps = { lat: "", lng: "", acc: "", url: "" };
                 setTimeout(closeModal, 2200);
-            }).catch(function () {
-                setStatus("err", "Could not send your message. Please try again or call the hotline.");
+            }).catch(function (err) {
+                setStatus("err", (err && err.message === "not-configured")
+                    ? "Email service is not set up yet. Please call the hotline."
+                    : "Could not send your message. Please try again or call the hotline.");
             }).then(function () {
                 submitBtn.disabled = false;
                 submitBtn.textContent = "SEND EMAIL";
