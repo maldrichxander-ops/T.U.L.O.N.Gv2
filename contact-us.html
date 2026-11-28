@@ -716,7 +716,7 @@
                 "Location: "     + locationLine                   + "\n" +
                 "Issue: "        + data.issue;
 
-            var subject = "Message " + data.unit;
+            var subject = "Unit " + data.unit.replace(/^unit\s+/i, "") + " - Support Request";
 
             var payload = {
                 access_key: WEB3FORMS_KEY,
