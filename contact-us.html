@@ -609,7 +609,7 @@
         /* Email service: Web3Forms (free public API, no backend, your email stays hidden).
            Get a free Access Key at https://web3forms.com (enter your support email there,
            they send the key to that inbox), then paste it below. */
-        var WEB3FORMS_KEY = "YOUR_WEB3FORMS_ACCESS_KEY";
+        var WEB3FORMS_KEY = "4e2c0520-0c9d-4e6a-92db-a4d0022843ba";
 
         var overlay   = document.getElementById("emailModal");
         var openBtn   = document.getElementById("emailUsBtn");
@@ -705,16 +705,18 @@
             if (WEB3FORMS_KEY.indexOf("YOUR_") === 0) {
                 return Promise.reject(new Error("not-configured"));
             }
-            var locationLine = data.location + (gps.url ? " (" + gps.url + ")" : "");
+            // Add the map link only if the location is still the GPS result
+            var usedGps = gps.url && data.location === gps.lat + ", " + gps.lng;
+            var locationLine = data.location + (usedGps ? " (" + gps.url + ")" : "");
             var message =
-                "Name: "         + data.name     + "\n" +
-                "Unit: "         + data.unit     + "\n" +
-                "Phone Number: " + data.phone    + "\n" +
-                "Email: "        + data.email    + "\n" +
-                "Location: "     + locationLine  + "\n" +
+                "Name: "         + data.name                      + "\n" +
+                "Unit: "         + data.unit                      + "\n" +
+                "Phone Number: " + (data.phone || "Not provided") + "\n" +
+                "Email: "        + (data.email || "Not provided") + "\n" +
+                "Location: "     + locationLine                   + "\n" +
                 "Issue: "        + data.issue;
 
-            var subject = "T.U.L.O.N.G. Support Request - " + data.name + (data.unit ? " (" + data.unit + ")" : "");
+            var subject = "Message " + data.unit;
 
             var payload = {
                 access_key: WEB3FORMS_KEY,
